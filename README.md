@@ -5,6 +5,12 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](package.json)
 [![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 
+<p align="center">
+  <img src="docs/assets/harnessimo.jpg"
+       alt="Robots in a server room wrestling a firehose of data while one of them holds a loop of it steady, under a sign reading HARNESSIMO"
+       width="720">
+</p>
+
 **A capable model with a bad harness produces work that looks finished and is not.**
 
 Harnessimo is the harness: eight checks that turn *"I believe this is done"* into *"a command
