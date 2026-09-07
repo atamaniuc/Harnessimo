@@ -23,16 +23,35 @@
     "harnessimo": "bin/harnessimo.mjs"
   },
   "exports": {
-    ".": "./src/index.mjs",
-    "./proof": "./src/proof.mjs",
-    "./tracks": "./src/tracks.mjs",
-    "./tasks": "./src/tasks.mjs",
-    "./queue": "./src/queue.mjs",
-    "./readiness": "./src/readiness.mjs"
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.mjs"
+    },
+    "./proof": {
+      "types": "./types/index.d.ts",
+      "default": "./src/proof.mjs"
+    },
+    "./tracks": {
+      "types": "./types/index.d.ts",
+      "default": "./src/tracks.mjs"
+    },
+    "./tasks": {
+      "types": "./types/index.d.ts",
+      "default": "./src/tasks.mjs"
+    },
+    "./queue": {
+      "types": "./types/index.d.ts",
+      "default": "./src/queue.mjs"
+    },
+    "./readiness": {
+      "types": "./types/index.d.ts",
+      "default": "./src/readiness.mjs"
+    }
   },
   "files": [
     "bin",
     "src",
+    "types",
     "templates",
     "schema",
     "README.md",
@@ -45,5 +64,6 @@
   "homepage": "https://github.com/atamaniuc/Harnessimo#readme",
   "bugs": {
     "url": "https://github.com/atamaniuc/Harnessimo/issues"
-  }
+  },
+  "types": "./types/index.d.ts"
 }
