@@ -224,7 +224,10 @@ function runCleanExit(base, head) {
   try {
     changed = git("diff", "--name-only", `${base}..${head}`).split("\n").filter(Boolean);
   } catch {
-    return { problems: [], summary: `cannot diff ${base}..${head} (shallow clone?), skipped` };
+    return {
+      problems: [],
+      summary: `cannot resolve ${base}..${head} — unknown revision, or a clone too shallow to hold it; skipped`,
+    };
   }
   const inScope = new Set(collectFiles(ROOT, { scan: clean.scan, skip: cfg.docs?.skip ?? [] }));
   const touched = changed.filter((p) => inScope.has(p) && existsSync(join(ROOT, p)));

@@ -8,6 +8,29 @@ test("a debug marker that compiles is still debris", () => {
   assert.deepEqual(problems.map((p) => p.target).sort(), ["TODO", "console.log("]);
 });
 
+test("a word marker counts as an annotation, not as prose mentioning it", () => {
+  // Regression: run over a real codebase, the first version of this rule
+  // reported three findings and all three were sentences *about* markers.
+  const prose = [
+    { path: "src/page.tsx", text: "// the honest limitations live in the README's TODO, not here\n" },
+    { path: "src/proof.ts", text: "// three screens above a TODO admitting it was not computed\n" },
+  ];
+  assert.deepEqual(debrisProblems(prose), []);
+
+  const real = [
+    { path: "src/a.ts", text: "// TODO handle the empty case\n" },
+    { path: "src/b.ts", text: "  * FIXME: this drops the last row\n" },
+    { path: "src/c.ts", text: "# TODO(alice) split this\n" },
+    { path: "src/d.ts", text: "  debugger;\n" },
+  ];
+  assert.equal(debrisProblems(real).length, 4);
+});
+
+test("a marker carrying its own punctuation is matched literally", () => {
+  const files = [{ path: "test/a.test.ts", text: "test.only('x', () => {});\n" }];
+  assert.equal(debrisProblems(files, { markers: [".only("] }).length, 1);
+});
+
 test("a project chooses its own markers", () => {
   const files = [{ path: "src/a.ts", text: "debugger;\n" }];
   assert.equal(debrisProblems(files, { markers: ["TODO"] }).length, 0);
@@ -36,6 +59,10 @@ test("a documentation-only change does not owe a progress update", () => {
 
 test("a session that wrote its progress down passes", () => {
   assert.deepEqual(progressProblems({ changed: ["src/a.ts", "P.md"], progressFile: "P.md" }), []);
+});
+
+test("a project with no single progress file is not asked to pretend it has one", () => {
+  assert.deepEqual(progressProblems({ changed: ["src/a.ts"], progressFile: null }), []);
 });
 
 test("nothing changed, nothing owed", () => {

@@ -30,7 +30,7 @@ const SECTION_DEFAULTS = {
     markers: null, // null means the module's defaults
     allow: [],
     scan: [],
-    progressFile: ".harness/4-state/PROGRESS.md",
+    progressFile: ".harness/4-state/PROGRESS.md", // null turns the progress rule off
     codePrefixes: [],
     requireCleanTree: false,
   },

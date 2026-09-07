@@ -129,7 +129,7 @@ missing one:
 ## Development
 
 ```bash
-npm test        # 70 tests, no install needed — the package has no dependencies
+npm test        # 73 tests, no install needed — the package has no dependencies
 npm run check   # the tests, then this repository's own gates
 ```
 

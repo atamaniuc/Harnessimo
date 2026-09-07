@@ -20,6 +20,34 @@
  */
 export const DEFAULT_MARKERS = ["TODO", "FIXME", "XXX", "HACK", "console.log(", "debugger", ".only(", ".skip("];
 
+/** A marker made only of word characters — TODO, FIXME, debugger — as opposed to
+ * one carrying its own punctuation, like `console.log(` or `.only(`. */
+const isWordMarker = (marker) => /^[A-Za-z0-9_]+$/.test(marker);
+
+/**
+ * Is this word-marker an annotation, or just the word appearing in prose?
+ *
+ * The distinction has to exist, and running the first version of this rule over
+ * a real codebase is what proved it: three of its three findings were sentences
+ * *about* markers — a comment explaining that a README once carried a TODO, and
+ * one describing this very defect. A rule that fires on any occurrence of the
+ * word cannot be left on, and a rule that gets turned off enforces nothing.
+ *
+ * An annotation is the marker opening a line (after indentation and any comment
+ * punctuation), or one carrying `:` or `(` — `TODO:`, `TODO(alice)`. Prose that
+ * merely mentions the word is left alone.
+ */
+function isAnnotation(lineText, marker) {
+  // Opening a line, e.g. `debugger;` or `* TODO finish this`.
+  const opens = new RegExp(`^\\s*(?:[/*#;<>!-]|\\*/)*\\s*${marker}\\b`);
+  // Immediately after a comment opener, including a trailing one:
+  // `doWork(); // TODO tidy`.
+  const afterComment = new RegExp(`(?://|/\\*|#|--|<!--|\\*)\\s*${marker}\\b`);
+  // Carrying its own label: `TODO:` or `TODO(alice)`.
+  const labelled = new RegExp(`\\b${marker}\\s*[:(]`);
+  return opens.test(lineText) || afterComment.test(lineText) || labelled.test(lineText);
+}
+
 /**
  * @param {{ path: string, text: string }[]} files  the files a session touched
  * @param {{ markers?: string[], allow?: string[] }} options
@@ -34,6 +62,7 @@ export function debrisProblems(files, options = {}) {
     file.text.split("\n").forEach((lineText, index) => {
       for (const marker of markers) {
         if (!lineText.includes(marker)) continue;
+        if (isWordMarker(marker) && !isAnnotation(lineText, marker)) continue;
         problems.push({
           file: file.path,
           line: index + 1,
@@ -59,6 +88,12 @@ export function debrisProblems(files, options = {}) {
  * @returns {import("./proof.mjs").Problem[]}
  */
 export function progressProblems({ changed, progressFile, codePrefixes = [] }) {
+  // A project may have no single progress file: in a handoff-driven repository
+  // "where I stopped" lives in the handoff of whichever track was worked, and
+  // which one that should have been is not machine-decidable. Turning the rule
+  // off is then the honest answer — simulating it against an index file that
+  // means something else produces failures nobody can act on.
+  if (!progressFile) return [];
   if (changed.length === 0) return [];
   if (changed.includes(progressFile)) return [];
   const touchedCode =
