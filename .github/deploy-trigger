@@ -1,0 +1,3 @@
+trigger: mkdocs deploy
+
+This file exists only to trigger the MkDocs deploy workflow.
