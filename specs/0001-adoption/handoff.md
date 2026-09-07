@@ -27,8 +27,22 @@ application; reading it will consume a session's budget and change nothing about
 
 ## State
 
-Nothing has been changed in either repository for this lane yet — the two commits already
-pushed there are the CI fixes, not adoption.
+**Both repositories now carry the half they were missing, on a branch each:**
+
+- `code-knowledge-base` → `feat/shared-harness-hdd`: `harness.config.json` translating
+  every check it already enforces, `specs/TRACKS.md` + `TRACKS-LOG.md`, a handoff of its
+  own, and proof markers in `AGENTS.md`.
+- `ledger-lens` → `claude/harness-repo-consolidation-phemlr`: `harness.config.json`,
+  `.harness/locked-baseline`, and track 0018 with its handoff.
+
+**Verified, and the number to keep:** run against `ledger-lens`, this package reproduces
+its own gate exactly — 183 proof markers across 71 documents, task gate scoping to 2 live
+lanes with 15 closed ones out of scope. The migration there is a delegation, not a
+behaviour change. If those numbers ever differ after the switch, the difference is the bug.
+
+**Not landed in either:** the dependency itself and the switch of `Makefile` / `Taskfile`
+/ CI onto the shared CLI, because the package is not installable until this repository is
+public and carries a tag.
 
 The consuming side is designed and not yet exercised:
 
@@ -56,8 +70,9 @@ The consuming side is designed and not yet exercised:
 
 ## First step
 
-In `code-knowledge-base`: add the dependency, write `harness.config.json` translating the
-existing checks (locked paths from `locked-surfaces.sh`, cold-start commands from
-`cold-start.sh`, the queue file at `.harness/4-state/feature_list.json`), then run
-`pnpm exec harness doctor` and compare its output line by line against what the Makefile
-runs today. Delete nothing until that comparison is written down.
+Cut `v0.1.0` here, then in `code-knowledge-base`'s branch:
+`pnpm add -D github:atamaniuc/harness#v0.1.0`, run `pnpm exec harness doctor`, and compare
+its output line by line against what `make check` and CI run today. Write the comparison
+into that repository's handoff before deleting `.harness/2-tools/harness.ts`,
+`locked-surfaces.sh`, `cold-start.sh` or `packages/harness/` — the config claims to cover
+them, and that claim is the thing to check.

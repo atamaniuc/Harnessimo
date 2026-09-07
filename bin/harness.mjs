@@ -19,6 +19,7 @@ import { collectDocs, createResolver, readAll } from "../src/resolver.mjs";
 import { findMarkers, verifyProofs } from "../src/proof.mjs";
 import { checkHandoffRefs, checkTracks, trackLines } from "../src/tracks.mjs";
 import { verifyTaskGates } from "../src/tasks.mjs";
+import { liveTrackSpecDirs } from "../src/tracks.mjs";
 import {
   HarnessError,
   activate,
@@ -164,7 +165,17 @@ function runTasks() {
     specsDir: tracks.specsDir,
     taskFile: tracks.taskFile,
   });
-  return { problems, summary: `checked boxes in ${files.length} live task list(s) name a passing check` };
+  // Count what was actually gated, not what was read. A summary that reports
+  // every task list in the repository as "live" overstates the gate's reach —
+  // the same defect this tool refuses everywhere else.
+  const live = new Set(liveTrackSpecDirs(tracksText, tracks.specsDir));
+  const gated = files.filter((f) => live.has(f.path.slice(0, -(tracks.taskFile.length + 1))));
+  return {
+    problems,
+    summary:
+      `checked boxes in ${gated.length} live task list(s) name a passing check` +
+      (files.length > gated.length ? ` (${files.length - gated.length} closed lane(s) not gated)` : ""),
+  };
 }
 
 function readQueue(cfg) {

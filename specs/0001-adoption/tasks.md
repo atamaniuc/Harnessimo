@@ -14,9 +14,12 @@ P0 gates the lane. A checked box carries the marker that proves it.
       command rather than a copying exercise
       <!-- proof: test/cli.test.mjs#init scaffolds a working harness that immediately passes its own check -->
 - [ ] **T4** `code-knowledge-base` depends on the package; its vendored scripts are
-      deleted and CI runs the shared CLI
+      deleted and CI runs the shared CLI — its config, track index and handoff are on
+      `feat/shared-harness-hdd`; the dependency waits on a tag
 - [ ] **T5** `ledger-lens` depends on the package; its documentation gate delegates to the
-      shared implementation
+      shared implementation — its config, baseline and track 0018 are on
+      `claude/harness-repo-consolidation-phemlr`; equivalence already verified at 183
+      markers across 71 documents
 - [ ] **T6** CI is green in both repositories after adoption
 
 ## P1

@@ -13,6 +13,9 @@ against this repository by `npm run check`.
   only code that touches the world.
 - `harness init` scaffolds a working harness that passes its own check immediately —
   proven end to end in `test/cli.test.mjs`, not asserted here.
+- Run against `ledger-lens`, this package reproduces that repository's own gate exactly:
+  183 proof markers across 71 documents, same scoping of the task gate. The rules moved
+  without changing behaviour, which is the only evidence that matters for adoption.
 
 ## Done
 
