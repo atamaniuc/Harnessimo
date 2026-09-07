@@ -1,0 +1,672 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Гайд на 15 минут - Harnessimo Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#15" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Harnessimo Docs" class="md-header__button md-logo" aria-label="Harnessimo Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Harnessimo Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Гайд на 15 минут
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/atamaniuc/Harnessimo" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Harnessimo Docs" class="md-nav__button md-logo" aria-label="Harnessimo Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Harnessimo Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/atamaniuc/Harnessimo" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../STANDARD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Зачем
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Идея одним предложением
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Три минуты до зелёной проверки
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Включайте то, что болит
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Как выглядит рабочая сессия
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Незаконченная работа переживает конец сессии
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. В CI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Вопросы, которые задают на самом деле
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Дальше
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="15">Гайд на 15 минут</h1>
+<p>Что это, зачем оно вам и как получить зелёную проверку в своём репозитории. Читается
+сверху вниз за один присест.</p>
+<p>English version: <a href="../GUIDE/">GUIDE.md</a>.</p>
+<h2 id="1">1. Зачем</h2>
+<p>Вы просите агента сделать фичу. Он пишет код, гоняет тест и рапортует об успехе. Шесть
+таких отчётов правдивы. Седьмой выглядит точно так же и правдивым не является: тест ничего
+не проверяет, документация описывает возможность, которой никогда не было, а в списке
+задач стоит галочка, которую не к чему привязать.</p>
+<p>Проблема не в модели. Проблема в том, что <strong>«готово» решил тот, кто делал работу.</strong></p>
+<div class="highlight"><pre><span></span><code>flowchart LR
+    A["Агент закончил работу"] --&gt; B{"Кто решает,&lt;br/&gt;что готово?"}
+    B -- "сам агент" --&gt; C["Выглядит готовым.&lt;br/&gt;Иногда является."]
+    B -- "команда" --&gt; D["Готово —&lt;br/&gt;или падает громко."]
+    C -.-&gt;|"выясняется через недели"| E["Переделка, недоверие,&lt;br/&gt;README, которому не верят"]
+
+    style C stroke-dasharray: 4 4
+    style D stroke-width:3px
+</code></pre></div>
+<p>Курс <a href="https://walkinglabs.github.io/learn-harness-engineering/ru/">Learn Harness Engineering</a>
+называет это «экстернализировать суждение о завершении»: современные модели систематически
+сверх-уверены в собственной работе, поэтому судить о готовности должно что-то внешнее. Этот
+инструмент — исполняемая версия того же принципа.</p>
+<h2 id="2">2. Идея одним предложением</h2>
+<p><strong>Каждое утверждение называет то, что его доказывает, а команда перепроверяет их все.</strong></p>
+<p>Утверждение — это утверждение, где бы оно ни жило, поэтому все три их вида проходят через
+один и тот же чекер:</p>
+<table>
+<thead>
+<tr>
+<th>Где живёт утверждение</th>
+<th>Что его доказывает</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Фраза в документе</td>
+<td><code>&lt;!-- proof: path/to/file.ts:&lt;aSymbol&gt; --&gt;</code></td>
+</tr>
+<tr>
+<td>Галочка в списке задач</td>
+<td>тот же маркер, на самой задаче</td>
+</tr>
+<tr>
+<td>Пункт очереди работ</td>
+<td>его команда верификации, перезапускаемая в CI</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3">3. Три минуты до зелёной проверки</h2>
+<div class="highlight"><pre><span></span><code>pnpm<span class="w"> </span>add<span class="w"> </span>-D<span class="w"> </span>github:atamaniuc/Harnessimo<span class="w">     </span><span class="c1"># или: npm i -D github:atamaniuc/Harnessimo</span>
+pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>harnessimo<span class="w"> </span>init
+pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>harnessimo<span class="w"> </span>check
+</code></pre></div>
+<p><code>init</code> сначала читает ваш репозиторий — чем запускаются команды, где исходники, есть ли
+миграции и CI — и пишет конфиг, который уже проходит. Затем создаёт ровно три вещи:</p>
+<div class="highlight"><pre><span></span><code>.harness/            пять подсистем со стартовыми документами
+  1-instructions/    ваши правила — перепишите, они лежат как примеры
+  2-tools/           что проект умеет запускать
+  3-environment/     как воспроизводится и что агенту трогать нельзя
+  4-state/           PROGRESS.md, DECISIONS.md, очередь работ
+  5-feedback/        карта ваших проверок
+specs/               TRACKS.md (живая работа), шаблоны спеки и handoff
+harnessimo.config.json  какие проверки вы включили
+</code></pre></div>
+<p>Скаффолд сразу проходит собственную проверку, поэтому первый зелёный прогон ничего не
+стоит — а каждый красный после него что-то значит.</p>
+<p>Дальше:</p>
+<div class="highlight"><pre><span></span><code>pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>harnessimo<span class="w"> </span>doctor
+</code></pre></div>
+<p>Печатает, что реально включено, а что нет. <strong>Секция, которую вы не указали в конфиге, —
+это проверка, которая не работает, и <code>doctor</code> об этом говорит.</strong> В этой честности весь
+смысл: команда, верящая в несуществующую проверку, перестаёт искать недостающую.</p>
+<h2 id="4">4. Включайте то, что болит</h2>
+<p>Не включайте все восемь сразу. Возьмите ту, что отвечает реальной боли, добейтесь зелёного,
+закоммитьте — потом следующую.</p>
+<table>
+<thead>
+<tr>
+<th>Ваша боль</th>
+<th>Включить</th>
+<th>Падает, когда</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>README описывает то, чего уже нет</td>
+<td><code>docs</code></td>
+<td>файл, тест или команда из утверждения исчезли</td>
+</tr>
+<tr>
+<td>Каждая сессия начинается заново</td>
+<td><code>tracks</code></td>
+<td>у трека нет статуса или ссылка на удалённый handoff</td>
+</tr>
+<tr>
+<td>Галочки, которые не к чему привязать</td>
+<td><code>tracks.gateTasks</code></td>
+<td>отмеченная задача не называет проверку</td>
+</tr>
+<tr>
+<td>«Готово», которое оказалось не готово</td>
+<td><code>queue</code></td>
+<td>пункт со статусом passing падает при перезапуске</td>
+</tr>
+<tr>
+<td>Работает только на машине автора</td>
+<td><code>coldStart</code></td>
+<td>свежий клон не может себя проверить</td>
+</tr>
+<tr>
+<td>Отладочный мусор, устаревший PROGRESS</td>
+<td><code>cleanExit</code></td>
+<td>сессия оставила мусор или ничего не записала</td>
+</tr>
+<tr>
+<td>Файл инструкций разросся в мануал на 600 строк</td>
+<td><code>instructions</code></td>
+<td>он вышел за лимит строк</td>
+</tr>
+<tr>
+<td>Агент правит то, что его оценивает</td>
+<td><code>locked</code></td>
+<td>коммит агента тронул эти пути</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5">5. Как выглядит рабочая сессия</h2>
+<p>Ежедневный цикл после настройки. Две команды из пяти — это харнесс, остальное — обычная
+работа.</p>
+<div class="highlight"><pre><span></span><code>flowchart TD
+    S(["Сессия началась"]) --&gt; R["Читаем PROGRESS.md → DECISIONS.md → TRACKS.md"]
+    R --&gt; Q{"Берём живой&lt;br/&gt;трек?"}
+    Q -- да --&gt; HO["&lt;b&gt;Сначала загрузить его handoff&lt;/b&gt;&lt;br/&gt;там сказано, что читать — и что НЕ читать"]
+    Q -- нет --&gt; PICK["Берём пункт из очереди"]
+    HO --&gt; PICK
+    PICK --&gt; WORK["Делаем работу"]
+    WORK --&gt; V["&lt;b&gt;harnessimo queue verify &amp;lt;id&amp;gt;&lt;/b&gt;&lt;br/&gt;харнесс сам запускает проверку пункта"]
+    V -- упало --&gt; WORK
+    V -- прошло --&gt; WRITE["Обновляем PROGRESS.md&lt;br/&gt;и handoff, если не закончили"]
+    WRITE --&gt; C["&lt;b&gt;harnessimo check&lt;/b&gt;"]
+    C -- красный --&gt; WORK
+    C -- зелёный --&gt; COMMIT(["Коммит"])
+</code></pre></div>
+<p>Две вещи делают это рабочим, и обе принудительны, а не по договорённости:</p>
+<ul>
+<li><strong>Вы никогда не пишете <code>passing</code> сами.</strong> Это делает только <code>harnessimo queue verify</code> и
+  только после запуска команды самого пункта. Курс называет это «гейт по состоянию
+  passing». CI перезапускает каждое такое утверждение, поэтому вручную выставленный статус
+  обнаруживается, а не принимается на веру.</li>
+<li><strong>Один пункт за раз.</strong> Рассеянное внимание рождает работу, начатую везде и не законченную
+  нигде.</li>
+</ul>
+<h2 id="6">6. Незаконченная работа переживает конец сессии</h2>
+<p>Сессия закончилась — её память исчезла. Очередь говорит, <em>какой</em> пункт в работе; она не
+говорит, где вы остановились, что уже пробовали и — самое ценное — что следующей сессии
+читать <strong>не надо</strong>.</p>
+<div class="highlight"><pre><span></span><code>flowchart LR
+    W["Работа начинается"] --&gt; T["Строка в &lt;b&gt;TRACKS.md&lt;/b&gt;&lt;br/&gt;суть · статус · следующий шаг"]
+    T --&gt; H["&lt;b&gt;handoff.md&lt;/b&gt; рядом со спекой&lt;br/&gt;контекст · что загрузить&lt;br/&gt;&lt;b&gt;что НЕ загружать&lt;/b&gt; · состояние&lt;br/&gt;решения · первый шаг"]
+    H -- "сессия закончилась" --&gt; U["Handoff обновлён на месте"]
+    U --&gt; H
+    H -- "трек закрыт" --&gt; D["Итог → TRACKS-LOG.md&lt;br/&gt;решения → DECISIONS.md&lt;br/&gt;&lt;b&gt;handoff удалён&lt;/b&gt;"]
+</code></pre></div>
+<p>Индекс проверяется машиной, потому что <strong>лживый handoff хуже, чем его отсутствие</strong> —
+следующая сессия ему верит. Строка без статуса или ссылка на удалённый handoff роняет гейт.</p>
+<p>Раздел «что НЕ загружать» все пропускают — и именно он окупает всю практику: бюджет свежей
+сессии уходит на то, что вы не отсекли заранее.</p>
+<h2 id="7-ci">7. В CI</h2>
+<p>Одна джоба. Она запускает ту же команду, что и вы локально, поэтому спорить про «у меня
+работает» не о чем:</p>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pnpm exec harnessimo check --reverify</span>
+</code></pre></div>
+<p><code>--reverify</code> перезапускает каждый пункт, который claims passing. Именно эта строка
+превращает evidence очереди в доказательство, а не в строку, которую кто-то напечатал.</p>
+<p>Двум проверкам нужен диапазон коммитов, поэтому у них свой шаг:</p>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pnpm exec harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pnpm exec harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD</span>
+</code></pre></div>
+<h2 id="8">8. Вопросы, которые задают на самом деле</h2>
+<p><strong>Обязательно внедрять всё?</strong> Нет. Одна проверка — уже улучшение, а <code>doctor</code> продолжит
+честно говорить правду про остальные семь.</p>
+<p><strong>Это заменяет тесты?</strong> Нет. Оно проверяет, что ваши утверждения указывают на существующее
+и всё ещё проходящее. Тест, который ничего не проверяет, удовлетворяет всем правилам здесь.</p>
+<p><strong>У меня не JavaScript.</strong> Нормально: проверки читают файлы, запускают ваши команды и ходят
+в git. Укажите <code>docs.commands</code> на свой <code>Makefile</code> — и всё. Node нужен только чтобы запустить
+сам инструмент.</p>
+<p><strong>Не многовато церемоний?</strong> Очередь — для работы размером в сессию; мелкие правки идут
+напрямую. Церемония, которая стоит дороже ошибки, которую предотвращает, — это не
+дисциплина, а накладные расходы, а гейт, который обходят, не защищает ничего.</p>
+<p><strong>Стоит ли ещё поставить code-graph / codebase-memory?</strong> Да — и отдельно. Те инструменты
+индексируют репозиторий и отдают его агенту по MCP: они отвечают на вопрос «что мне нужно
+прочитать». Этот отвечает на «готово ли». Они бьют в одно и то же трение с разных сторон:
+раздел handoff'а «что НЕ загружать» и граф кода оба нужны, чтобы сессия не открывала
+репозиторий заново. Держите их отдельными установками — в README раздел «What pairs with
+it» объясняет, почему связывать их дороже, чем полезно.</p>
+<p><strong>Что делать, если правило неверное?</strong> Issue или PR. Правило, существующее дважды — здесь и
+форком у вас, — это ровно та проблема, ради устранения которой всё написано.</p>
+<h2 id="9">9. Дальше</h2>
+<ul>
+<li><a href="../ADOPTING/"><code>ADOPTING.md</code></a> — миграция репозитория, у которого уже есть свои проверки.</li>
+<li><a href="../STANDARD/"><code>STANDARD.md</code></a> — обоснование каждого правила и лекция курса, из которой оно
+  выросло.</li>
+<li><code>harnessimo help</code> — все команды с аргументами.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
