@@ -609,7 +609,7 @@ self-report, and self-reports are where unattended runs go wrong.</p>
 command says so"</em>, plus the structure that makes those checks possible — rules, a work
 queue, protected scoring, and state that survives a session ending.</p>
 <p>Zero dependencies, no build step, one config file.</p>
-<div class="highlight"><pre><span></span><code>pnpm<span class="w"> </span>add<span class="w"> </span>-D<span class="w"> </span>github:atamaniuc/Harnessimo
+<div class="highlight"><pre><span></span><code>pnpm<span class="w"> </span>add<span class="w"> </span>-D<span class="w"> </span>github:atamaniuc/Harnessimo#v0.1.0
 pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>harnessimo<span class="w"> </span>init<span class="w">      </span><span class="c1"># reads your repo and writes a config that already passes</span>
 pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>harnessimo<span class="w"> </span>doctor<span class="w">    </span><span class="c1"># what is actually enforced here</span>
 pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>harnessimo<span class="w"> </span>check<span class="w">     </span><span class="c1"># the one command CI runs</span>
