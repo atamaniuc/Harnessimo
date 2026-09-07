@@ -1,14 +1,19 @@
 name: Deploy MkDocs to GitHub Pages
 
-# Publishes docs/ to GitHub Pages through the official Pages pipeline rather
-# than a third-party branch push. Two reasons it was rewritten:
+# Builds docs/ strictly and publishes it to the gh-pages branch.
 #
-#   * The previous version deployed to a gh-pages branch and reported success
-#     while the site served 404, because Pages itself was never switched on in
-#     the repository settings. `configure-pages` with `enablement: true` turns
-#     it on from here, so a green run and a working site are the same thing.
-#   * `mkdocs build` ran without --strict, so a broken link or a page missing
-#     from nav shipped silently. It is strict now; the build is clean under it.
+# Two things this file learned the hard way:
+#
+#   * `mkdocs build` without --strict shipped three pages that were unreachable
+#     from nav and nine mermaid diagrams rendered as source text, without a word
+#     of complaint. It is strict now.
+#   * A green deploy is not a live site. The first version pushed gh-pages,
+#     reported success, and the URL served 404 because Pages had never been
+#     switched on. Switching it on from here was tried and refused: the Actions
+#     token cannot create a Pages site in this repository ("Resource not
+#     accessible by integration"), so it stays a human action — and the last
+#     step below states plainly whether the site actually answers, rather than
+#     letting a green tick imply it.
 
 on:
   push:
@@ -16,44 +21,55 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# One deployment at a time; a queued run supersedes an older one rather than
-# racing it.
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
           cache: pip
-      - run: pip install -r requirements.txt
-      # --strict turns a warning into a failed build: a link that no longer
-      # resolves, or a page that exists in docs/ and is unreachable from nav.
-      - run: mkdocs build --strict
-      - uses: actions/configure-pages@v5
-        with:
-          # Switches Pages on if it is off. Without this the deploy succeeds
-          # and the site 404s, which is the exact failure this file had.
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - run: pip install -r requirements.txt
+
+      # --strict fails on a link that no longer resolves, or a page in docs/
+      # that nothing in nav points at.
+      - name: Build the site
+        run: mkdocs build --strict
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+
+      # Publishing and serving are two different facts, and conflating them is
+      # how a site 404s behind a green badge for a day. This reports which one
+      # is true; it does not fail the run, because the missing switch is not
+      # something this workflow is allowed to flip.
+      - name: Report whether the site actually serves
+        run: |
+          URL="https://atamaniuc.github.io/Harnessimo/"
+          sleep 20
+          CODE="$(curl -s -o /dev/null -w '%{http_code}' -L "$URL" || echo 000)"
+          if [ "$CODE" = "200" ]; then
+            echo "### Docs are live: $URL" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### The site is built and published, and does not serve (HTTP $CODE)"
+              echo
+              echo "GitHub Pages is not enabled for this repository. The Actions token is not"
+              echo "permitted to enable it, so this is one manual switch:"
+              echo
+              echo "**Settings → Pages → Build and deployment → Source: _Deploy from a branch_ →"
+              echo "\`gh-pages\` / \`/ (root)\`**"
+              echo
+              echo "Nothing links to $URL until it answers."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
