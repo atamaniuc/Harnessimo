@@ -237,6 +237,7 @@ function runCleanExit(base, head) {
   const problems = debrisProblems(readAll(ROOT, touched), { markers: clean.markers ?? undefined, allow: clean.allow });
   // Line counts, so the progress rule can stay quiet for a typo fix and speak
   // for a session's worth of work.
+  /** @type {Record<string, number>} */
   const changedLines = {};
   try {
     for (const row of git("diff", "--numstat", `${base}..${head}`).split("\n").filter(Boolean)) {
@@ -290,6 +291,7 @@ function cmdCheck() {
     );
   }
   const enabled = enabledChecks(cfg);
+  /** @type {[string, { problems: any[], summary: string }][]} */
   const results = [];
   if (enabled.proof) results.push(["proof markers", runProof({ strict: true })]);
   if (enabled.tracks) results.push(["work tracks", runTracks()]);
@@ -317,6 +319,7 @@ function cmdDoctor() {
   const enabled = enabledChecks(cfg);
   ok(`harnessimo ${readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8").match(/"version":\s*"([^"]+)"/)[1]} — ${cfg.path}\n`);
   ok("what this repository has asked to be enforced:\n");
+  /** @type {[string, boolean, string][]} */
   const rows = [
     ["proof markers", enabled.proof, "docs claims resolve to real files, tests and commands"],
     ["work tracks", enabled.tracks, "the track index resolves and every track carries a status"],

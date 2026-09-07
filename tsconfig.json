@@ -1,0 +1,26 @@
+{
+  "$comment": [
+    "There is no TypeScript in this package and there is not going to be: it ships",
+    "as the .mjs files you see, with no build step, which is what makes installing it",
+    "from a git tag and running it from a fresh clone work with nothing installed.",
+    "",
+    "This file exists so `npm run typecheck` can read the JSDoc that is already there",
+    "and tell us when an annotation has drifted from the code. It found two on the day",
+    "it was added: a parameter documented as a number that is a map, and a config type",
+    "missing three of its sections. Both were wrong in the types consumers import.",
+    "",
+    "noImplicitAny stays off on purpose. The rules pass around plain objects parsed",
+    "from JSON and Markdown; turning it on produces a hundred annotations that make",
+    "the callbacks noisier without making one of them safer."
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "es2023",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.mjs", "bin/**/*.mjs"]
+}

@@ -61,11 +61,16 @@
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "check": "node --test test/*.test.mjs && node bin/harnessimo.mjs check"
+    "check": "node --test test/*.test.mjs && node bin/harnessimo.mjs check",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "homepage": "https://atamaniuc.github.io/Harnessimo/",
   "bugs": {
     "url": "https://github.com/atamaniuc/Harnessimo/issues"
   },
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
 }

@@ -13,6 +13,12 @@ npm run check   # the tests, then this repository's own gates
 
 No install step: the package has no dependencies, by rule. Node >= 22.
 
+`npm run typecheck` is the one thing that does need `npm i` — it runs `tsc --checkJs` over
+the JSDoc that is already in `src/`, and it is dev-only: `typescript` and `@types/node` are
+devDependencies, nothing ships with the package. It is worth running before a push, because
+an annotation that has drifted from its signature is wrong in the types consumers import
+and no test would catch it.
+
 ## The three rules a change has to meet
 
 1. **No runtime dependency.** A harness that can break the project it guards is worse than

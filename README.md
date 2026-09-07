@@ -157,12 +157,19 @@ This repo runs all eight checks on itself, including from a fresh clone.
 ## Development
 
 ```bash
-npm test        # 105 tests, no install needed — there are no dependencies
-npm run check   # tests, then this repo's own checks
+npm test          # 105 tests, no install needed — the package has no dependencies
+npm run check     # tests, then this repo's own checks
+npm run typecheck # tsc over the JSDoc (needs npm i first — dev-only)
 ```
 
 Rules live in `src/` as plain functions; `src/resolver.mjs` and `bin/harnessimo.mjs` are the
 only files that touch the disk. <!-- proof: test/cli.test.mjs -->
+
+It ships as the `.mjs` files you see. There is no build step and no TypeScript to compile,
+which is what makes installing it from a git tag and running it from a fresh clone work with
+nothing installed — the types consumers import are hand-written in `types/index.d.ts`, and a
+test fails when they drift from the real exports.
+<!-- proof: test/types.test.mjs -->
 
 ## License
 

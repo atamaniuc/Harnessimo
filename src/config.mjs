@@ -44,7 +44,8 @@ export class ConfigError extends Error {}
 /**
  * @param {string} root
  * @returns {{ root: string, path: string | null, docs?: object, tracks?: object,
- *             queue?: object, locked?: object, coldStart?: object }}
+ *             queue?: object, locked?: object, coldStart?: object,
+ *             cleanExit?: object, instructions?: object, hooks?: object }}
  */
 export function loadConfig(root = process.cwd()) {
   const path = join(root, CONFIG_FILE);
