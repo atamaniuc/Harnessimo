@@ -6,9 +6,10 @@ runs.
 
 A harness is everything in the engineering infrastructure outside the model's weights: the
 instructions it is given, the tools it can run, the environment it runs in, the state it
-carries between sessions, and the checks that tell it whether it succeeded. A capable model
-with a bad harness produces work that looks finished and is not; that is the problem this
-folder exists to solve.
+carries between sessions, and the checks that tell it whether it succeeded.
+
+Without one, "done" is whatever the worker believes — and an unattended run cannot be built
+on a belief. That is the problem this folder exists to solve.
 
 ```mermaid
 flowchart LR

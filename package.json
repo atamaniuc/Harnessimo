@@ -1,7 +1,7 @@
 {
   "name": "harnessimo",
   "version": "0.1.0",
-  "description": "Harnessimo \u2014 a harness for agent-driven engineering: eight checks that turn \"I believe this is done\" into \"a command says so\". Five subsystems, handoffs between sessions, zero dependencies.",
+  "description": "Harnessimo \u2014 the arbiter that lets an agent run unattended: eight checks that decide when work is finished, from proof markers to a re-verified work queue, locked scoring and a cold-start test. Five subsystems, handoffs between sessions, zero dependencies.",
   "keywords": [
     "harness",
     "agents",

@@ -178,6 +178,13 @@ tool, nothing else.
 straight in. Ceremony that costs more than the error it prevents is not discipline, it is
 overhead — and a gate people bypass enforces nothing.
 
+**Should I also run a code-graph / codebase-memory tool?** Yes, and separately. Those index
+your repository and serve it to the agent over MCP — they answer "what do I need to read".
+This answers "is it finished". They meet the same friction from opposite ends: a handoff's
+*what NOT to load* and a code graph both stop a session rediscovering the repository. Keep
+them as separate installs; the README's "What pairs with it" says why bundling them would
+cost more than it gives.
+
 **What happens when a rule is wrong?** Open an issue or a PR. A rule that exists twice,
 once here and once forked into your repository, is the problem this was built to remove.
 

@@ -11,11 +11,15 @@
        width="720">
 </p>
 
-**A capable model with a bad harness produces work that looks finished and is not.**
+## Autonomy needs an arbiter
 
-Harnessimo is the harness: eight checks that turn *"I believe this is done"* into *"a command
-says so"*, and a structure for the parts of a project that decide whether that command can
-exist at all.
+An agent runs unattended exactly as far as something **other than the agent** decides when
+the work is done. Take that away and you are not supervising less — you are trusting a
+self-report, and self-reports are where unattended runs go wrong.
+
+Harnessimo is that arbiter: eight checks that turn *"I believe this is done"* into *"a
+command says so"*, plus the structure that makes those checks possible — rules, a work
+queue, protected scoring, and state that survives a session ending.
 
 Zero dependencies, no build step, one config file. <!-- proof: package.json:"files" -->
 
@@ -97,6 +101,43 @@ Failures are written to be acted on, not just read:
         no make command named "deploy"
 ```
 
+## What actually runs unattended
+
+Five of the eight checks exist so an agent can work without someone reading every diff. The
+loop below is the whole mechanism: the agent never writes the word `passing`, and CI re-runs
+every claim that says it.
+
+```mermaid
+flowchart TB
+    subgraph LOOP["Runs without a human"]
+      direction TB
+      A["Pick one item<br/><i>WIP = 1 · Definition of Ready enforced</i>"] --> B["Work"]
+      B --> V["<b>harnessimo queue verify</b><br/><i>the harness runs the item's own check</i>"]
+      V -- "command fails" --> B
+      V -- "command passes" --> E["Evidence recorded<br/><i>by the command, never by the claim</i>"]
+      E --> C["<b>harnessimo check --reverify</b> in CI<br/><i>every passing claim re-run from scratch</i>"]
+      C -- red --> B
+      C -- green --> M["Merged · handoff updated · no debris left"]
+      M --> A
+    end
+
+    H(["A human is needed for<br/>four things — and only these"]) --> R["change the gates<br/>widen the locked surfaces<br/>add scope to the queue<br/>decide to abandon a direction"]
+```
+
+What makes each turn of that loop safe to leave alone:
+
+- **The agent cannot mark its own work done.** Only `queue verify` writes state, and only
+  after the item's own command exits zero. <!-- proof: src/queue.mjs:verifyItem -->
+- **A claim is re-run, not believed.** `--reverify` executes every passing item's command
+  again in CI, so a state edited by hand fails there.
+- **The scoring is out of reach.** An agent commit that touches the files defining success
+  fails the build — because a loop that can edit its own scorer will.
+  <!-- proof: src/locked.mjs:lockedViolations -->
+- **The next session starts from written state, not memory.** Track index, handoffs,
+  decisions log — and a check that fails when any of them has gone stale.
+- **Nothing is left behind.** No debris, no unwritten progress, and a fresh clone still
+  runs. <!-- proof: src/coldstart.mjs:coldStartProblems -->
+
 ## The problem, concretely
 
 Every failure below is real, taken from the two repositories this was extracted from:
@@ -133,6 +174,36 @@ that does not run** — `harnessimo doctor` reports it as not set rather than im
 ```
 
 Adopting an existing repository, step by step: [`docs/ADOPTING.md`](docs/ADOPTING.md).
+
+## What pairs with it (and why it is not bundled)
+
+The most common question: should a code-graph or codebase-memory tool —
+[codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp),
+[CodeGraph](https://github.com/codegraph-ai/CodeGraph),
+[CodeGraphContext](https://github.com/CodeGraphContext/CodeGraphContext) — be part of this?
+
+**They belong together and they are not the same job.** Those tools index a repository into a
+local graph of functions, calls and imports, and serve it to the agent over MCP; they answer
+*"what do I need to read"*. Harnessimo answers *"is this finished"*. One shapes the input to
+a session, the other gates its output.
+
+They also attack the same friction from opposite ends: a handoff's **what NOT to load**
+section and a code graph both exist to stop a session spending its budget rediscovering the
+repository.
+
+Three reasons the graph stays a separate install rather than a dependency here:
+
+- **Zero dependencies and zero services is a property, not a pose.** It is what makes
+  `harnessimo cold-start` measure the repository instead of a package registry, and what
+  lets `npm test` run on a clean checkout with no install step at all.
+- **They run in different places.** An MCP server lives in the agent's environment; these
+  gates run in CI, where no agent and no MCP client exists.
+- **An index is a cache, and a gate must not depend on one.** A stale index misleads; a gate
+  that trusts it inherits the lie. If you keep one, treat it as state: gitignore the index,
+  document the rebuild command in `.harness/2-tools/`, and — if it matters enough — make
+  rebuilding it a queue item with its own verification, which needs no code from here.
+
+Use both. Wire neither into the other.
 
 ## What this does not do
 

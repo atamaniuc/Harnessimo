@@ -15,10 +15,10 @@ the engineering infrastructure outside the model's weights
 ([lecture 02](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-02-what-a-harness-actually-is/)).
 Infrastructure decides which of a model's capabilities actually show up in practice.
 
-The failure mode is specific. A capable model does not usually fail by producing obvious
-nonsense; it fails by producing work that **looks finished and is not** — a documented
-capability that was never built, a ticked box nobody re-ran, a test suite that stopped
-asserting anything. Every one of those is invisible to a reader and visible to a command.
+The failure mode is specific. A capable model rarely fails by producing obvious nonsense.
+It fails by **declaring victory**: a documented capability nobody built, a ticked box nobody
+re-ran, a test suite that quietly stopped asserting anything. Each is invisible to a reader
+and visible to a command — which is the whole opening.
 
 So the design principle is: **move every judgement about "done" out of prose and into
 something that exits non-zero.** Lecture 09 calls this *«экстернализировать суждение о
