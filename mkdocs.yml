@@ -3,7 +3,10 @@ site_description: Eight checks that stop an AI coding agent from calling unfinis
 site_url: https://atamaniuc.github.io/Harnessimo/
 repo_url: https://github.com/atamaniuc/Harnessimo
 repo_name: atamaniuc/Harnessimo
-edit_uri: edit/main/docs/
+# Points the page's source action at the rendered file on GitHub rather than
+# the editor: a reader following it wants to read the Markdown, and GitHub's
+# own Edit button is right there for anyone who wants to change it.
+edit_uri: blob/main/docs/
 
 nav:
   - Home: index.md
@@ -21,6 +24,13 @@ theme:
     - navigation.instant
     - navigation.top
     - content.code.copy
+    # Every page links back to its source: "view" opens the Markdown on GitHub,
+    # "edit" opens it ready to change. A documentation site with no way back to
+    # the file it was built from invites a fix to be written twice.
+    - content.action.edit
+  icon:
+    # The action is "read the source", so the icon says GitHub, not a pencil.
+    edit: material/github
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
