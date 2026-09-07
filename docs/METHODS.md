@@ -110,6 +110,27 @@ and **workflow state** (`queue`).
 If your tests are good, `queue` costs you one line of JSON per item, because the command it
 runs is the test you already have.
 
+## Lineage: what was taken from each, and what was left
+
+None of this was invented here. The checks are what survived from six methods after the
+parts that need a runtime, a persona or a 300-line template were dropped — because a harness
+that needs its own framework installed is one more thing to keep alive.
+
+| Source | What this implements | What it deliberately leaves out |
+|---|---|---|
+| [OpenSpec](https://github.com/Fission-AI/OpenSpec) | `specs/` as the current truth: one spec, one deliverable, archived after it ships. `init` scaffolds it; `tracks` keeps the index honest | the CLI and its change/archive machinery — a directory and a Markdown file need no binary |
+| [Agent OS](https://buildermethods.com/agent-os) | standards live apart from the specs and are never copied into them; the instruction file stays a router, and `instructions` enforces that with a line limit | the layered document hierarchy and the role scaffolding |
+| [Spec Kit](https://github.com/github/spec-kit) | the one rule worth keeping: **an acceptance criterion must be executable** — a test name, an eval case, a query. `tasks` refuses a tick that names none | the long templates and the slash-command bindings. Generate your specs however you like |
+| [BMAD](https://github.com/bmad-code-org/BMAD-METHOD) | that verification is a step with its own artifact: a queue item is a story carrying the command that settles it | the agent personas. No prompts ship in this package |
+| SDD | the lane contract — a spec directory whose acceptance criteria are the commands that have to pass, code and spec shipping together | the ceremony around it: proposal documents, solution documents, a change-management CLI |
+| [HDD](https://github.com/yetanothervan/handoff-driven-development) | tracks and handoffs, plus the rule that closing a track distils the outcome and deletes the handoff. `tracks` checks it, `brief` delivers it | the as-built spec genres and the separate audit script — the audit is a check inside the same gate |
+| [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/) | the five-subsystem model `init` scaffolds, the vocabulary, and the principle underneath all of it: externalise the judgement about completion | nothing — it is the course this implements. [The standard](STANDARD.md) says which lecture each check comes from |
+
+And the one part that is not borrowed: **documentation verified by the build**. A claim names
+its evidence, and evidence that goes stale fails the gate. Every method above produces
+documents; none of them re-checks that the documents are still true.
+<!-- proof: src/proof.mjs:verifyProofs -->
+
 ## What this does not decide for you
 
 No personas, no prompt templates, no opinion on how a spec should be written or how big a
