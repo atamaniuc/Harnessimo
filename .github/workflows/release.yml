@@ -1,0 +1,60 @@
+name: Release
+
+# Creates an annotated tag and a GitHub release for the current commit.
+#
+# It exists because tags could not be pushed from the environment this project
+# was built in: branch pushes succeeded and tag pushes were cut off mid-stream
+# every time. A tag created here is created by GitHub itself, which sidesteps
+# the transport entirely — and, unlike a hand-cut tag, records who asked for it
+# and against which commit.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to create, e.g. v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # A release must not be cut from a commit that does not pass its own
+      # gates. This is the same command CI runs.
+      - name: The commit being tagged passes its own checks
+        run: |
+          npm test
+          node bin/harnessimo.mjs check --reverify
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.payload.inputs.tag;
+            const sha = context.sha;
+            try {
+              await github.rest.git.createRef({
+                ...context.repo,
+                ref: `refs/tags/${tag}`,
+                sha,
+              });
+              core.info(`created tag ${tag} at ${sha}`);
+            } catch (error) {
+              if (error.status !== 422) throw error;
+              core.info(`tag ${tag} already exists, continuing to the release`);
+            }
+            await github.rest.repos.createRelease({
+              ...context.repo,
+              tag_name: tag,
+              name: tag,
+              generate_release_notes: true,
+            });
+            core.info(`released ${tag}`);
