@@ -1,5 +1,5 @@
 site_name: Harnessimo
-site_description: The arbiter that lets an agent run unattended — eight checks that decide when work is finished.
+site_description: Eight checks that stop an AI coding agent from calling unfinished work done.
 site_url: https://atamaniuc.github.io/Harnessimo/
 repo_url: https://github.com/atamaniuc/Harnessimo
 repo_name: atamaniuc/Harnessimo
@@ -9,6 +9,8 @@ nav:
   - Home: index.md
   - Guide (15 min): GUIDE.md
   - Гайд (15 минут): GUIDE.ru.md
+  - Use cases: USE-CASES.md
+  - SDD, HDD, BMAD: METHODS.md
   - The standard: STANDARD.md
   - Adopting an existing repo: ADOPTING.md
   - Contributing: https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md

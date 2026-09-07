@@ -148,6 +148,8 @@ This repo runs all eight checks on itself, including from a fresh clone.
 **<https://atamaniuc.github.io/Harnessimo/>**
 
 - [15-minute guide](https://atamaniuc.github.io/Harnessimo/GUIDE/) · [по-русски](https://atamaniuc.github.io/Harnessimo/GUIDE.ru/)
+- [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/) — seven situations, and how it runs itself once installed
+- [SDD, HDD, BMAD](https://atamaniuc.github.io/Harnessimo/METHODS/) — where this sits next to the method you already use
 - [Why each rule exists](https://atamaniuc.github.io/Harnessimo/STANDARD/)
 - [Adopting an existing repo](https://atamaniuc.github.io/Harnessimo/ADOPTING/)
 - [Contributing](CONTRIBUTING.md)
