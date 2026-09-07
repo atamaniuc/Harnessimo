@@ -1,0 +1,5 @@
+# The commit from which the locked-surface rule applies. The bootstrap commit
+# necessarily created .github/workflows/ and CONSTRAINTS.md, so enforcement
+# starts after it. Moving this forward widens what an agent may change, which
+# is a human decision.
+9d391936520458775f93e11783b4e339cc3d047c

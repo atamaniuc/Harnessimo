@@ -65,8 +65,9 @@
       "kind": "code",
       "behavior": "This repository passes every check it defines, so the standard is demonstrated by its own repository rather than only described in it.",
       "verification": "node bin/harness.mjs check",
-      "state": "not_started",
-      "evidence": null
+      "state": "passing",
+      "evidence": "ok    proof markers  25 proof marker(s) across 18 document(s) all resolve |   ok    work tracks    2 live track(s) in specs/TRACKS.md resolve and carry a status |   ok    task gate      checked boxes in 1 live task list(s) name a passing check |   ok    queue          queue invariants hold (nested run: invariants only) | harness: every configured check passes.",
+      "last_failure": null
     }
   ]
 }
