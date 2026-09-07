@@ -6,78 +6,121 @@
        width="720">
 </p>
 
-> **An agent runs unattended exactly as far as something other than the agent decides when
-> the work is done.** Harnessimo is that something: eight checks that turn *"I believe this
-> is done"* into *"a command says so"*.
+**Checks that stop an AI agent from calling unfinished work done.**
+
+Eight of them. You turn on the ones you need. They run in CI and before every commit, and
+they fail with a file, a line and a fix.
 
 ```bash
 pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
-pnpm exec harnessimo init            # reads your repo, writes a config that already passes
-pnpm exec harnessimo hooks install --agent   # every session starts knowing where things stand
-pnpm exec harnessimo check           # the one command CI runs
+pnpm exec harnessimo init      # scans your repo, writes a config that already passes
+pnpm exec harnessimo check     # run this in CI
 ```
 
-Zero dependencies, no build step, one config file. It reads your files, runs your commands
-and walks your git history, so the language of your project does not matter.
+Zero dependencies, one config file, any language — it reads your files, runs your commands,
+walks your git history.
 
-## The three ways agent work rots
+## What it catches
 
-Each is a real failure from the repositories this came out of.
+Three real failures from the repos this came out of.
 
-1. **The docs describe software that does not exist.** A README claimed infrastructure
-   "stood up through a single Pulumi program in `infra/`" while `infra/` had never been
-   created. Ten such claims came out of one audit.
-2. **"Done" is a self-report.** A queue item sat at `passing` with invented evidence, and
-   nothing ever re-ran it.
-3. **Every session starts from zero.** Context dies with the session; the next one
-   re-derives it, re-decides settled questions, and re-reads what it should have skipped.
+**A README that lies.** It said infrastructure was "stood up through a single Pulumi program
+in `infra/`". There was no `infra/`. Ten claims like that turned up in one audit.
 
-A capable model does not fix any of these. It produces them faster.
+```
+FAIL  proof markers
+  README.md:14  make deploy
+      no make command named "deploy"
+```
 
-## What you get
+Every claim in your docs names the file, test or command behind it. Delete that, and the
+build breaks.
 
-| Killer feature | What it means |
+**A task marked done that nobody re-ran.** It sat at `passing` with made-up evidence.
+
+```
+FAIL  queue
+  "rls-proof" claims passing but its verification fails now
+    command: npm test -- rls
+    fix:  fix the regression, or the claim was never true
+```
+
+Only the tool writes `passing`, and only after the task's own command exits 0. CI re-runs
+every one of them.
+
+**A session that starts blind.** The agent reopens half the repo to work out where the last
+one stopped. Now it gets handed the answer at startup:
+
+```
+$ harnessimo brief
+== specs/TRACKS.md (live work tracks — load a track's handoff first) ==
+- Retrieval quality — [handoff](specs/0004-retrieval/handoff.md) — active, next: T3 recall eval
+
+== work queue ==
+active: rls-proof — a non-owner org receives zero rows from every table
+  verify with: harnessimo queue verify rls-proof
+
+== enforced here ==
+proof, tracks, tasks, queue, coldStart, cleanExit
+not enforced: locked, instructions
+```
+
+One command wires that into your agent: `harnessimo hooks install --agent`.
+
+## All eight checks
+
+| Command | Fails when |
 |---|---|
-| **The agent cannot mark its own work done** | Only `queue verify` writes state, after the item's own command exits zero — and CI re-runs every passing claim |
-| **Documentation that cannot lie** | Every claim names its evidence; delete the test and the build goes red |
-| **Sessions inherit state, not memory** | Tracks, handoffs, and a SessionStart hook that hands them to the agent at startup |
-| **The scoring is out of reach** | An agent commit touching the files that define success fails the build |
-| **A fresh clone must actually run** | Cold start, in an empty directory, using only what the repository says |
-| **No debris left behind** | Leftover `TODO`, `debugger`, `.only(`, a progress file gone stale |
-| **Honest about its own gaps** | `doctor` lists the checks you did *not* turn on |
-| **Adoption is one command** | `init` writes a config whose first run is green |
+| `harnessimo proof` | a documented claim's file, test or command is gone |
+| `harnessimo queue` | a task claiming `passing` fails when re-run |
+| `harnessimo tracks` | a work track links a handoff that was deleted |
+| `harnessimo tasks` | a ticked checkbox names no check |
+| `harnessimo locked` | an agent commit touched the files that grade it |
+| `harnessimo cold-start` | a fresh clone can't install and verify itself |
+| `harnessimo clean-exit` | a session left `TODO`, `debugger`, `.only(` behind |
+| `harnessimo instructions` | your AGENTS.md grew past the line limit you set |
 
-## Greenfield or brownfield
+`harnessimo doctor` prints which of these are on — and which are off. Nothing is switched on
+that you didn't ask for.
 
-**Greenfield:** `harnessimo init` and the discipline exists before the first bad habit does.
+## New project or existing one
 
-**Brownfield:** nothing switches on that you did not ask for. Take the check that matches a
-problem you actually have, make it green, commit, take the next. Both paths are in
-[Adopting](ADOPTING.md).
+**New:** `harnessimo init`, and the rules exist before the first bad habit does. You also get
+`.harness/` (rules, tools, environment, state, feedback) and `specs/` (work tracks and
+handoffs) scaffolded.
 
-## Where to start
+**Existing:** turn on one check, make it green, commit. Then the next one. Nothing switches
+on by itself. The table of "what's going wrong → which check" is in
+[Adopting an existing repo](ADOPTING.md).
+
+## Where to go next
 
 | If you want to… | Read |
 |---|---|
-| understand it in fifteen minutes and get a green check | [The guide](GUIDE.md) · [по-русски](GUIDE.ru.md) |
-| know why each rule exists, and which lecture it came from | [The standard](STANDARD.md) |
-| migrate a repository that already has its own checks | [Adopting](ADOPTING.md) |
+| get a green check in fifteen minutes | [The guide](GUIDE.md) · [по-русски](GUIDE.ru.md) |
+| know why each rule exists | [The standard](STANDARD.md) |
+| migrate a repo that already has its own checks | [Adopting](ADOPTING.md) |
 
-## Proof it survives real repositories
+## Who runs it
 
-- [`ledger-lens`](https://github.com/atamaniuc/ledger-lens) — Next.js, Supabase, Python,
-  evals. Delegated its documentation gates to the package: all 38 of its own unit tests
-  passed untouched, and the numbers matched to the marker.
-- [`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) — deleted its
-  queue tool, locked-surface and cold-start scripts; gained proof markers, work tracks and
-  the task gate for the price of a config file.
+Two production repos, both of which deleted their own versions of these checks:
 
-## What it does not do
+- [`ledger-lens`](https://github.com/atamaniuc/ledger-lens) — Next.js, Supabase, Python.
+  Swapped its documentation gates for this package; all 38 of its own unit tests passed
+  without edits, and the counts matched exactly (183 markers across 71 documents).
+- [`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) — dropped four
+  local scripts, picked up proof markers, work tracks and the task gate.
 
-`locked` is drift detection, not a sandbox. It cannot tell whether a check is any *good* —
-a test that asserts nothing satisfies every rule here. It does not review code. And it is
-not a context tool: pair it with a code-graph or codebase-memory MCP, which answers "what do
-I need to read" while this answers "is it finished".
+Harnessimo runs all eight checks on itself, including from a fresh clone.
+
+## What it isn't
+
+- **Not a sandbox.** `locked` catches an agent editing its own scoring *in CI*. It won't stop
+  someone determined to work around it.
+- **Not a code reviewer.** It doesn't judge correctness, security or style.
+- **Not a test-quality checker.** A test that asserts nothing passes every rule here.
+- **Not a context tool.** Pair it with a code-graph or codebase-memory MCP — those answer
+  "what should I read", this answers "is it done".
 
 ---
 
