@@ -4,4 +4,4 @@
 # shared CLI in CI, and once to switch GitHub Pages on from the workflow, build
 # the docs strictly, and add the release job. Widening what an agent may change
 # is a human decision, and this line is where that decision is recorded.
-34599444ed63cf17063be34b8bf5c24718608249
+44bdbe78c8db03b856d9f77f72e4a9a1abb9808e
