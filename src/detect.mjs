@@ -91,6 +91,9 @@ export function detectConfig(repo) {
     found.push(`migrations in ${migrations}`);
   }
   found.push(`documents under ${roots.join(", ")}`);
+  if (mustCarryProof.length > 0) {
+    found.push(`strict mode on for ${mustCarryProof.join(", ")} (they already carry markers)`);
+  }
   if (mustCarryProof.length === 0) {
     missing.push(
       candidates.length === 0
