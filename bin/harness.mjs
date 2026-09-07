@@ -15,7 +15,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { loadConfig, enabledChecks, ConfigError } from "../src/config.mjs";
-import { collectDocs, createResolver, readAll } from "../src/resolver.mjs";
+import { collectDocs, collectFiles, createResolver, readAll } from "../src/resolver.mjs";
 import { findMarkers, verifyProofs } from "../src/proof.mjs";
 import { checkHandoffRefs, checkTracks, trackLines } from "../src/tracks.mjs";
 import { verifyTaskGates } from "../src/tasks.mjs";
@@ -30,6 +30,7 @@ import {
 } from "../src/queue.mjs";
 import { formatLockedViolations, lockedViolations } from "../src/locked.mjs";
 import { coldStartProblems } from "../src/coldstart.mjs";
+import { debrisProblems, instructionProblems, progressProblems } from "../src/cleanexit.mjs";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ROOT = process.cwd();
@@ -209,6 +210,50 @@ function runQueueCheck({ reverify }) {
   };
 }
 
+/**
+ * Clean state at session exit (lecture 12). Scoped to what the session
+ * actually changed: a repository adopting this should not be blocked by debris
+ * that predates the rule, and the rule is about what a session leaves, not
+ * about history.
+ */
+function runCleanExit(base, head) {
+  const cfg = config();
+  const clean = requireSection(cfg, "cleanExit", 'add a "cleanExit" section naming what to scan');
+  if (!clean.scan.length) return { problems: [], summary: "no paths configured to scan" };
+  let changed = [];
+  try {
+    changed = git("diff", "--name-only", `${base}..${head}`).split("\n").filter(Boolean);
+  } catch {
+    return { problems: [], summary: `cannot diff ${base}..${head} (shallow clone?), skipped` };
+  }
+  const inScope = new Set(collectFiles(ROOT, { scan: clean.scan, skip: cfg.docs?.skip ?? [] }));
+  const touched = changed.filter((p) => inScope.has(p) && existsSync(join(ROOT, p)));
+  const problems = debrisProblems(readAll(ROOT, touched), { markers: clean.markers ?? undefined, allow: clean.allow });
+  problems.push(...progressProblems({ changed, progressFile: clean.progressFile, codePrefixes: clean.codePrefixes }));
+  if (clean.requireCleanTree) {
+    const dirty = git("status", "--porcelain").split("\n").filter(Boolean);
+    if (dirty.length > 0) {
+      problems.push({
+        file: "(working tree)",
+        line: 1,
+        target: `${dirty.length} uncommitted change(s)`,
+        reason: "a session ends with its work committed; what is not committed does not exist for the next one",
+      });
+    }
+  }
+  return { problems, summary: `${touched.length} changed file(s) carry no debris, and progress is written down` };
+}
+
+/** The instruction file, kept a router rather than a manual (lecture 04). */
+function runInstructions() {
+  const cfg = config();
+  const instructions = requireSection(cfg, "instructions", 'add an "instructions" section with per-file line limits');
+  const limits = instructions.limits ?? {};
+  const paths = Object.keys(limits).filter((p) => existsSync(join(ROOT, p)));
+  const problems = instructionProblems(readAll(ROOT, paths), limits);
+  return { problems, summary: `${paths.length} instruction file(s) within their line limits` };
+}
+
 // ---------------------------------------------------------------- commands
 
 function cmdCheck() {
@@ -225,6 +270,7 @@ function cmdCheck() {
   if (enabled.tracks) results.push(["work tracks", runTracks()]);
   if (enabled.tasks) results.push(["task gate", runTasks()]);
   if (enabled.queue) results.push(["queue", runQueueCheck({ reverify: flags.has("--reverify") })]);
+  if (enabled.instructions) results.push(["instructions", runInstructions()]);
 
   let failed = 0;
   for (const [name, result] of results) {
@@ -253,6 +299,8 @@ function cmdDoctor() {
     ["queue", enabled.queue, "state moves only through a passing verification"],
     ["locked surfaces", enabled.locked, "the files defining success are out of the agent's reach"],
     ["cold start", enabled.coldStart, "a fresh clone runs from the repository alone"],
+    ["clean exit", enabled.cleanExit, "a session leaves no debris and writes down where it got to"],
+    ["instructions", enabled.instructions, "the instruction file stays a router, not a manual"],
   ];
   for (const [name, on, what] of rows) {
     ok(`  ${on ? "enforced " : "not set  "} ${name.padEnd(16)} ${what}`);
@@ -438,6 +486,8 @@ usage: harness <command> [options]
   queue <sub> [id]       status | activate <id> | verify <id> | check [--reverify]
   locked [base] [head]   commits by an agent did not touch the files defining success
   cold-start             a fresh clone installs and verifies from the repo alone
+  clean-exit [base] [head]  the session left no debris and wrote down where it got to
+  instructions           the instruction file is still a router, not a manual
   init [--force]         scaffold .harness/, specs/ and harness.config.json
 
 Configuration lives in harness.config.json. A section you leave out is a check
@@ -478,6 +528,12 @@ switch (command) {
     break;
   case "cold-start":
     cmdColdStart();
+    break;
+  case "clean-exit":
+    single("clean state", runCleanExit(positional[0] || "HEAD~1", positional[1] || "HEAD"));
+    break;
+  case "instructions":
+    single("the instruction files", runInstructions());
     break;
   case "init":
     cmdInit();

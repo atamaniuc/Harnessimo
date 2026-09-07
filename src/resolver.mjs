@@ -85,6 +85,35 @@ export function collectDocs(root, docs) {
   return [...new Set(out)].sort();
 }
 
+/**
+ * Every file under the configured prefixes, whatever its extension — the
+ * clean-state check reads code, not only documents.
+ *
+ * @param {string} root
+ * @param {{ scan: string[], skip?: string[], maxDepth?: number }} options
+ * @returns {string[]} repo-relative paths, sorted
+ */
+export function collectFiles(root, { scan, skip = [], maxDepth = 8 }) {
+  const skipped = new Set(skip);
+  const out = [];
+  const walk = (dir, depth) => {
+    if (depth > maxDepth || !existsSync(dir)) return;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name.startsWith(".") || skipped.has(entry.name)) continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, depth + 1);
+      else out.push(relative(root, full));
+    }
+  };
+  for (const sub of scan) {
+    const dir = join(root, sub);
+    if (!existsSync(dir)) continue;
+    if (statSync(dir).isDirectory()) walk(dir, 0);
+    else out.push(sub);
+  }
+  return [...new Set(out)].sort();
+}
+
 /** @param {string} root @param {string[]} paths */
 export function readAll(root, paths) {
   return paths.map((path) => ({ path, text: readFileSync(join(root, path), "utf8") }));

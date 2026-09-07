@@ -3,6 +3,9 @@
 Two paths: a new repository, which is one command, and an existing one, which is a
 translation exercise. The second is the interesting case and most of this document.
 
+If you have not met the tool yet, read [`GUIDE.md`](GUIDE.md) first — it covers the "why"
+in fifteen minutes and this document assumes it.
+
 ## A new repository
 
 ```bash
@@ -59,6 +62,8 @@ Each section of `harness.config.json` maps onto something you probably already h
 | A feature list or item queue with states | `queue.file` |
 | A hand-maintained index of in-flight work | `tracks.file`, plus a handoff per track |
 | A docs audit script | `docs.roots`, `docs.mustCarryProof`, `docs.commands` |
+| A grep for `TODO` / `console.log` in review | `cleanExit.markers` + `cleanExit.scan` |
+| A note asking people to keep `AGENTS.md` short | `instructions.limits` |
 
 Turn one on, run `harness check`, fix what it finds, commit. Then the next. A migration that
 turns on six checks at once produces one enormous red run that nobody can read.

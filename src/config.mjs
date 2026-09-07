@@ -26,6 +26,15 @@ const SECTION_DEFAULTS = {
   queue: { file: ".harness/4-state/feature_list.json", timeoutMinutes: 10, terminalByKind: { content: "awaiting_gates" } },
   locked: { paths: [], baseline: ".harness/3-environment/locked-baseline", agentTrailer: "Co-Authored-By: Claude" },
   coldStart: { requiredFiles: [], entryDocs: [], commands: [] },
+  cleanExit: {
+    markers: null, // null means the module's defaults
+    allow: [],
+    scan: [],
+    progressFile: ".harness/4-state/PROGRESS.md",
+    codePrefixes: [],
+    requireCleanTree: false,
+  },
+  instructions: { limits: {} },
 };
 
 export class ConfigError extends Error {}
@@ -55,7 +64,19 @@ export function loadConfig(root = process.cwd()) {
     if (raw[section] === null || typeof raw[section] !== "object") {
       throw new ConfigError(`${CONFIG_FILE}: "${section}" must be an object`);
     }
-    config[section] = { ...defaults, ...raw[section] };
+    // A per-section "$comment" is documentation, not configuration: a project
+    // explaining why it chose a setting should not have to explain it
+    // somewhere else.
+    const declared = Object.fromEntries(Object.entries(raw[section]).filter(([k]) => !k.startsWith("$")));
+    const unknownKeys = Object.keys(declared).filter((k) => !(k in defaults));
+    if (unknownKeys.length > 0) {
+      throw new ConfigError(
+        `${CONFIG_FILE}: unknown key(s) ${unknownKeys.join(", ")} in "${section}"\n` +
+          `  why:  a misspelled key silently keeps the default, which is the failure this rejects\n` +
+          `  fix:  known keys are ${Object.keys(defaults).join(", ")}`,
+      );
+    }
+    config[section] = { ...defaults, ...declared };
   }
   const unknown = Object.keys(raw).filter((k) => !k.startsWith("$") && !(k in SECTION_DEFAULTS));
   if (unknown.length > 0) {
@@ -77,5 +98,7 @@ export function enabledChecks(config) {
     queue: Boolean(config.queue),
     locked: Boolean(config.locked?.paths?.length),
     coldStart: Boolean(config.coldStart?.commands?.length),
+    cleanExit: Boolean(config.cleanExit?.scan?.length),
+    instructions: Boolean(Object.keys(config.instructions?.limits ?? {}).length),
   };
 }

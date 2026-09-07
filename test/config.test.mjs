@@ -47,6 +47,20 @@ test("unreadable configuration fails loudly instead of skipping every check", ()
   });
 });
 
+test("a per-section $comment is documentation, not a typo", () => {
+  withConfig('{"cleanExit":{"$comment":"why we chose these","scan":["src"]}}', (dir) => {
+    assert.equal(enabledChecks(loadConfig(dir)).cleanExit, true);
+  });
+});
+
+test("a misspelled key inside a section is rejected too", () => {
+  // The dangerous shape: the section is right, one key is wrong, so the check
+  // runs with a default nobody chose and reports green.
+  withConfig('{"cleanExit":{"scann":["src"]}}', (dir) => {
+    assert.throws(() => loadConfig(dir), (e) => e instanceof ConfigError && /unknown key/.test(e.message));
+  });
+});
+
 test("locked surfaces count as enforced only when paths are actually listed", () => {
   withConfig('{"locked":{"paths":[]}}', (dir) => assert.equal(enabledChecks(loadConfig(dir)).locked, false));
   withConfig('{"locked":{"paths":["src/evaluator/"]}}', (dir) => assert.equal(enabledChecks(loadConfig(dir)).locked, true));

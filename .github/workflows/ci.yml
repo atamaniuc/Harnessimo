@@ -6,7 +6,8 @@ name: CI
 #   check       the rules and the wiring, on every supported Node version
 #   self-host   this repository's own gates, including re-verification of
 #               every queue claim — a state edited by hand fails here
-#   locked      an agent commit did not touch the files defining success
+#   session-hygiene  an agent commit did not touch the files defining success,
+#               and the session left no debris behind
 #   cold-start  a fresh clone runs from the repository alone
 
 on:
@@ -51,8 +52,10 @@ jobs:
       - run: node bin/harness.mjs check --reverify
       - run: node bin/harness.mjs doctor
 
-  locked:
-    name: locked surfaces
+  session-hygiene:
+    name: locked surfaces and clean exit
+    # Both checks read a commit range rather than a snapshot: they judge what
+    # this change did, not what the repository looks like.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -68,6 +71,12 @@ jobs:
         run: |
           BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
           node bin/harness.mjs locked "$BASE" HEAD
+      # Lecture 12: the debris a build compiles happily, and a progress file
+      # that went stale while the code around it changed.
+      - name: The session left a clean state
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          node bin/harness.mjs clean-exit "$BASE" HEAD
 
   cold-start:
     name: a fresh clone verifies itself

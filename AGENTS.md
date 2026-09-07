@@ -17,6 +17,11 @@ node bin/harness.mjs doctor    # what is enforced here
 node bin/harness.mjs help      # every command
 ```
 
+Eight checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clean-exit`,
+`instructions`. What each is for, and which lecture of
+[Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/) it
+comes from: `docs/STANDARD.md`. The fastest way in for a newcomer: `docs/GUIDE.md`.
+
 Node >= 22. There is nothing to provision and no key to configure.
 
 ## Layout
@@ -51,5 +56,7 @@ starts in minutes.
 - **A rule ships with a test proving it fires on bad input.** A rule with no failing test is
   an assumption wearing a rule's clothes.
 - **Enforcement is labelled honestly.** If a rule is caught only in review, it says so.
+- **Leave a clean state.** No debris, `PROGRESS.md` updated, work committed. Enforced by
+  `harness clean-exit`, which reads what this session changed rather than the whole tree.
 
 Hard constraints: `.harness/1-instructions/CONSTRAINTS.md`. Read it before changing a rule.

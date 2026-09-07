@@ -68,6 +68,17 @@
       "state": "passing",
       "evidence": "ok    proof markers  25 proof marker(s) across 18 document(s) all resolve |   ok    work tracks    2 live track(s) in specs/TRACKS.md resolve and carry a status |   ok    task gate      checked boxes in 1 live task list(s) name a passing check |   ok    queue          queue invariants hold (nested run: invariants only) | harness: every configured check passes.",
       "last_failure": null
+    },
+    {
+      "id": "clean-state-and-instructions",
+      "phase": "1",
+      "kind": "code",
+      "behavior": "Debris a build compiles happily — a leftover marker, a stale progress file, an instruction file that grew into a manual — fails a check scoped to what the session actually changed.",
+      "verification": "node --test test/cleanexit.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 9 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 115.183574",
+      "notes": "Lectures 12 and 04 of Learn Harness Engineering. Added on explicit human instruction to use the course's concepts where they fit.",
+      "last_failure": null
     }
   ]
 }

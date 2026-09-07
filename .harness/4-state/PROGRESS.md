@@ -4,11 +4,15 @@ State carried between sessions. Read this first; update it before you stop.
 
 ## Now
 
-**The tool is complete and self-hosting.** Six checks — proof markers, work tracks, the
-task gate, the queue, locked surfaces, cold start — all implemented, tested, and enforced
-against this repository by `npm run check`.
+**The tool is complete and self-hosting.** Eight checks — proof markers, work tracks, the
+task gate, the queue, locked surfaces, cold start, clean exit and the instruction-file
+limit — all implemented, tested, and enforced against this repository by `npm run check`.
 
-- 59 tests, zero dependencies, no build step.
+- 70 tests, zero dependencies, no build step.
+- Documentation is now anchored to
+  [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/):
+  every check names the lecture it comes from, and `docs/GUIDE.md` (plus a Russian version)
+  is the fifteen-minute way in, with diagrams for the session loop and the handoff cycle.
 - The rules are pure functions in `src/`; `bin/harness.mjs` and `src/resolver.mjs` are the
   only code that touches the world.
 - `harness init` scaffolds a working harness that passes its own check immediately —

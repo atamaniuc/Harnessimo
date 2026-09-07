@@ -57,5 +57,38 @@
       "npm test",
       "node bin/harness.mjs check"
     ]
+  },
+  "cleanExit": {
+    "$comment": "console.log is deliberately not a marker here: this is a command-line tool and its output is the product. A project picks the markers that mean 'unfinished' in its own code.",
+    "scan": [
+      "src",
+      "bin",
+      "test"
+    ],
+    "markers": [
+      "TODO",
+      "FIXME",
+      "XXX",
+      "HACK",
+      "debugger",
+      ".only(",
+      ".skip("
+    ],
+    "allow": [
+      "test/cleanexit.test.mjs",
+      "src/cleanexit.mjs"
+    ],
+    "progressFile": ".harness/4-state/PROGRESS.md",
+    "codePrefixes": [
+      "src/",
+      "bin/",
+      "test/"
+    ]
+  },
+  "instructions": {
+    "limits": {
+      "AGENTS.md": 120,
+      ".harness/1-instructions/CONSTRAINTS.md": 90
+    }
   }
 }

@@ -1,13 +1,20 @@
 # harness
 
 [![CI](https://github.com/atamaniuc/harness/actions/workflows/ci.yml/badge.svg)](https://github.com/atamaniuc/harness/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](package.json)
+[![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 
-A capable model with a bad harness produces work that looks finished and is not. This is
-the harness: six checks that turn "I believe this is done" into "a command says so", and a
-structure for the parts of a project that decide whether that command can exist at all.
+**A capable model with a bad harness produces work that looks finished and is not.**
 
-Zero runtime dependencies, no build step, one config file.
-<!-- proof: package.json:"files" -->
+This is the harness: eight checks that turn *"I believe this is done"* into *"a command
+says so"*, and a structure for the parts of a project that decide whether that command can
+exist at all.
+
+Zero dependencies, no build step, one config file. <!-- proof: package.json:"files" -->
+
+> **New here? Read the [15-minute guide](docs/GUIDE.md)** ([по-русски](docs/GUIDE.ru.md)).
+> It is the shortest path from "what is this" to a green check in your own repository.
 
 ```bash
 pnpm add -D github:atamaniuc/harness
@@ -16,31 +23,50 @@ pnpm exec harness doctor    # what is actually enforced here
 pnpm exec harness check     # the one command CI runs
 ```
 
-## The problem it solves
+## What a harness is
 
-Every failure below is real, taken from the two repositories this was extracted from:
+Everything in the engineering infrastructure outside the model's weights. It has five
+subsystems, and the kitchen comparison is the clearest way in: a kitchen with no knives is
+still a kitchen, and you will not cook in it.
 
-- A README claimed "all deployable infrastructure is stood up through a single Pulumi
-  program in `infra/`" while `infra/` did not exist. Ten such claims came out of one audit.
-- A queue item was marked `passing` with invented evidence. Nothing re-ran it.
-- A harness reorganisation moved a script and left the command that verifies it pointing at
-  the old path. CI failed on every push for a day before anyone read the log.
-- An agent file routed the reader to a plans directory in the author's home folder,
-  outside the repository. The project only documented itself for the person who wrote it.
+```mermaid
+flowchart TB
+    M(["A capable model"]) --> H
 
-None of these are exotic. They are what happens when the thing that decides "done" is
-prose, memory, or a copy of a script that drifted. Each has a check here.
+    subgraph H["The harness — everything outside the model's weights"]
+      direction LR
+      I["<b>1 · Instructions</b><br/><i>the recipe shelf</i><br/>short rules, each labelled<br/>with what enforces it"]
+      T["<b>2 · Tools</b><br/><i>the knife rack</i><br/>one command surface;<br/>the queue is a command"]
+      E["<b>3 · Environment</b><br/><i>the stove</i><br/>reproducible, and the<br/>scoring is out of reach"]
+      S["<b>4 · State</b><br/><i>the prep table</i><br/>what survives a<br/>session ending"]
+      F["<b>5 · Feedback</b><br/><i>the QC window</i><br/>how it knows<br/>it worked"]
+    end
+
+    H --> W(["Work that is finished<br/>because a command says so"])
+```
+
+The five subsystems say how a project is governed. They say nothing about what happens when
+a session ends **mid-task**, which is the normal case — so a sixth thing sits on top:
+**handoff-driven development**, an index of live work tracks and a handoff per track,
+written for a reader with none of your context.
+
+The model, the vocabulary and the kitchen comparison come from
+[**Learn Harness Engineering**](https://walkinglabs.github.io/learn-harness-engineering/ru/).
+This repository is one executable implementation of it —
+[`docs/STANDARD.md`](docs/STANDARD.md) maps every check to the lecture it comes from.
 
 ## What it checks
 
-| Check | What fails | Why it exists |
+| Check | Fails when | Lecture |
 |---|---|---|
-| `harness proof` | A documented claim whose test, file or command no longer exists <!-- proof: src/proof.mjs:checkTarget --> | Prose cannot be trusted to stay true on its own |
-| `harness tracks` | A work-track index linking a handoff that was deleted, or a track with no status <!-- proof: src/tracks.mjs:checkTracks --> | Unfinished work has to cross a session boundary intact |
-| `harness tasks` | A checked box that names no executable check <!-- proof: src/tasks.mjs:checkTaskGate --> | A tick written by whoever wrote the code is not evidence |
-| `harness queue` | An item claiming to pass whose verification fails when re-run <!-- proof: src/queue.mjs:checkQueue --> | Models are over-confident about their own work |
-| `harness locked` | An agent commit touching the files that define success <!-- proof: src/locked.mjs:lockedViolations --> | A loop that can edit its own scorer will |
-| `harness cold-start` | A fresh clone that cannot install and verify itself <!-- proof: src/coldstart.mjs:coldStartProblems --> | Every session after the first arrives fresh |
+| `harness proof` | a documented claim's test, file or command no longer exists <!-- proof: src/proof.mjs:checkTarget --> | 03 · repository as source of truth |
+| `harness tracks` | a track links a deleted handoff, or carries no status <!-- proof: src/tracks.mjs:checkTracks --> | 05 · continuity between sessions |
+| `harness tasks` | a checked box names no executable check <!-- proof: src/tasks.mjs:checkTaskGate --> | 08 · feature lists as primitives |
+| `harness queue` | an item claiming `passing` fails when re-run <!-- proof: src/queue.mjs:checkQueue --> | 08, 09 · the passing-state gate |
+| `harness cold-start` | a fresh clone cannot install and verify itself <!-- proof: src/coldstart.mjs:coldStartProblems --> | 03, 10 · end-to-end as ground truth |
+| `harness clean-exit` | a session left debris, or never wrote down where it got to <!-- proof: src/cleanexit.mjs:debrisProblems --> | 12 · clean state |
+| `harness instructions` | the instruction file grew from a router into a manual <!-- proof: src/cleanexit.mjs:instructionProblems --> | 04 · one giant file fails |
+| `harness locked` | an agent commit touched the files that define success <!-- proof: src/locked.mjs:lockedViolations --> | — |
 
 Failures are written to be acted on, not just read:
 
@@ -50,30 +76,20 @@ Failures are written to be acted on, not just read:
         no "make" command named "deploy"
 ```
 
-## The model
+## The problem, concretely
 
-A harness has five parts. The folder structure states them, so a newcomer reads the design
-instead of reconstructing it from artifacts:
+Every failure below is real, taken from the two repositories this was extracted from:
 
-```
-.harness/
-  1-instructions/   the rules, each labelled with what enforces it   (the recipe shelf)
-  2-tools/          what the project can run                          (the knife rack)
-  3-environment/    what it runs in, and what is out of reach         (the cooking surface)
-  4-state/          what survives a session ending                    (the prep table)
-  5-feedback/       how it knows it worked                  (the quality-control window)
-specs/
-  TRACKS.md         the index of live work tracks
-  NNNN-<slug>/      spec.md, tasks.md, handoff.md per lane
-```
+- A README claimed "all deployable infrastructure is stood up through a single Pulumi
+  program in `infra/`" while `infra/` did not exist. Ten such claims came out of one audit.
+- A queue item was marked `passing` with invented evidence. Nothing re-ran it.
+- A reorganisation moved a script and left the command that verifies it pointing at the old
+  path. CI failed on every push for a day before anyone read the log.
+- An agent file routed the reader to a plans directory in the author's home folder, outside
+  the repository. The project only documented itself for the person who wrote it.
 
-The five layers say how a project is governed. They say nothing about what happens when a
-session ends mid-lane — so handoff-driven development supplies the sixth thing: an index of
-live tracks, a handoff per track written for a reader with none of your context, and a rule
-that a handoff is deleted when its track closes. A handoff that lies is worse than none,
-which is why the index is machine-checked.
-
-Full reasoning, and where each idea came from: [`docs/STANDARD.md`](docs/STANDARD.md).
+None are exotic. They are what happens when the thing that decides "done" is prose, memory,
+or a copy of a script that drifted. Each has a check here.
 
 ## Configuration
 
@@ -89,7 +105,9 @@ that does not run** — `harness doctor` reports it as not set rather than imply
   "tracks": { "file": "specs/TRACKS.md", "gateTasks": true },
   "queue":  { "file": ".harness/4-state/feature_list.json" },
   "locked": { "paths": [".github/workflows/"], "agentTrailer": "Co-Authored-By: Claude" },
-  "coldStart": { "requiredFiles": ["AGENTS.md"], "commands": ["make setup", "make check"] }
+  "coldStart":    { "requiredFiles": ["AGENTS.md"], "commands": ["make setup", "make check"] },
+  "cleanExit":    { "scan": ["src"], "progressFile": ".harness/4-state/PROGRESS.md" },
+  "instructions": { "limits": { "AGENTS.md": 200 } }
 }
 ```
 
@@ -101,18 +119,17 @@ Stated plainly, because a check that overstates its guarantee stops anyone looki
 missing one:
 
 - **`harness locked` is drift detection, not a sandbox.** It assumes commits pass through
-  CI. An agent with push access that strips its own authorship trailer defeats it. Closing
-  that properly means filesystem-level read-only paths in the run environment.
+  CI. An agent with push access that strips its own authorship trailer defeats it.
 - **It cannot tell whether a check is any good.** A test that asserts nothing satisfies
   every rule here. The harness makes claims falsifiable; it does not make them true.
-- **It does not review code.** Nothing here reads for correctness, security or taste.
-- **Four of this repository's own nine constraints are review-only**, and
+- **It does not review code** for correctness, security or taste.
+- **Four of this repository's own constraints are review-only**, and
   [say so](.harness/1-instructions/CONSTRAINTS.md).
 
 ## Development
 
 ```bash
-npm test        # 59 tests, no install needed — the package has no dependencies
+npm test        # 70 tests, no install needed — the package has no dependencies
 npm run check   # the tests, then this repository's own gates
 ```
 
@@ -121,22 +138,27 @@ The rules in `src/` are pure functions over strings and in-memory trees;
 That split is why the rule layer is exhaustively tested and the wiring gets end-to-end
 tests against real directories. <!-- proof: test/cli.test.mjs -->
 
-This repository runs every check it defines against itself, including from a fresh clone.
+This repository runs every check it defines against itself, from a fresh clone included.
 A standard whose own repository does not meet it is a suggestion. <!-- proof: npm run check -->
 
 ## Where it came from
 
-Two repositories, each with half of it:
-[`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) contributed the
-five-layer structure, the queue that owns state transitions, locked surfaces and the
-cold-start test; [`ledger-lens`](https://github.com/atamaniuc/ledger-lens) contributed
-proof markers, handoff-driven development and the task gate. Neither could use the other's
-half without copying it, and a copied check is a fork the day after it is copied.
-
-The ideas behind the five layers and the queue come from the *Learn Harness Engineering*
-material; handoff-driven development comes from
+The model and its vocabulary come from
+[Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/).
+Handoff-driven development comes from
 [yetanothervan/handoff-driven-development](https://github.com/yetanothervan/handoff-driven-development).
 
-## License
+The implementation was extracted from two repositories, each of which had grown half of it:
+[`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) contributed the
+five-subsystem structure, the queue, locked surfaces and the cold-start test;
+[`ledger-lens`](https://github.com/atamaniuc/ledger-lens) contributed proof markers,
+handoff-driven development and the task gate. Neither could use the other's half without
+copying it, and a copied check is a fork the day after it is copied.
 
-MIT.
+## License and reuse
+
+[MIT](LICENSE) — fork it, vendor it, rename it, ship it in a commercial product. No
+attribution beyond the licence text, no obligation to contribute anything back.
+
+If you extend a rule, the useful shape is a pull request rather than a fork: a rule that
+exists twice is the problem this repository was built to remove.

@@ -9,6 +9,15 @@ suggestion, and the fastest way to find out that a rule is unworkable is to be b
 while writing the tool that enforces it. Two rules in `1-instructions/CONSTRAINTS.md` exist
 because they caught something here first.
 
+```mermaid
+flowchart LR
+    I["<b>1 · Instructions</b><br/>the recipe shelf"] --> T["<b>2 · Tools</b><br/>the knife rack"]
+    T --> E["<b>3 · Environment</b><br/>the stove"]
+    E --> S["<b>4 · State</b><br/>the prep table"]
+    S --> F["<b>5 · Feedback</b><br/>the quality-control window"]
+    F -.->|"what the checks find<br/>becomes a new rule"| I
+```
+
 | Folder | What it holds |
 |---|---|
 | `1-instructions/` | The rules for working in this repository, each labelled with what enforces it |
@@ -20,4 +29,6 @@ because they caught something here first.
 Unfinished work crosses sessions through [`../specs/TRACKS.md`](../specs/TRACKS.md).
 
 For what the *standard* is, rather than how this repository runs, read
-[`../docs/STANDARD.md`](../docs/STANDARD.md).
+[`../docs/STANDARD.md`](../docs/STANDARD.md); for the fastest way in,
+[`../docs/GUIDE.md`](../docs/GUIDE.md). The model comes from
+[Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/).

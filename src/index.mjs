@@ -7,5 +7,6 @@ export { readiness, doneness, formatViolations } from "./readiness.mjs";
 export { activate, checkQueue, verifyItem, formatStatus, findItem, HarnessError } from "./queue.mjs";
 export { lockedViolations, formatLockedViolations } from "./locked.mjs";
 export { coldStartProblems } from "./coldstart.mjs";
+export { debrisProblems, progressProblems, instructionProblems, DEFAULT_MARKERS } from "./cleanexit.mjs";
 export { loadConfig, enabledChecks, ConfigError } from "./config.mjs";
 export { createResolver, collectDocs, readAll } from "./resolver.mjs";

@@ -3,49 +3,100 @@
 What a harness is, what the parts are for, and why each rule here exists. The tool is the
 enforcement; this is the thing being enforced.
 
+The model and its vocabulary come from
+[**Learn Harness Engineering**](https://walkinglabs.github.io/learn-harness-engineering/ru/).
+This document does not restate the course — it says which of its ideas are implemented here,
+how, and where this implementation makes a choice the course leaves open.
+
 ## The claim
 
-A harness is everything around the model: the instructions it is given, the tools it can
-run, the environment it runs in, the state it carries between sessions, and the checks that
-tell it whether it succeeded.
+A harness is *«всё в инженерной инфраструктуре за пределами весов модели»* — everything in
+the engineering infrastructure outside the model's weights
+([lecture 02](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-02-what-a-harness-actually-is/)).
+Infrastructure decides which of a model's capabilities actually show up in practice.
 
-The failure mode it addresses is specific. A capable model does not usually fail by
-producing obvious nonsense; it fails by producing work that **looks finished and is not** —
-a documented capability that was never built, a ticked box nobody re-ran, a passing test
-suite that stopped asserting anything. Every one of those is invisible to a reader and
-visible to a command. So the design principle is: **move every judgement about "done" out
-of prose and into something that exits non-zero.**
+The failure mode is specific. A capable model does not usually fail by producing obvious
+nonsense; it fails by producing work that **looks finished and is not** — a documented
+capability that was never built, a ticked box nobody re-ran, a test suite that stopped
+asserting anything. Every one of those is invisible to a reader and visible to a command.
+
+So the design principle is: **move every judgement about "done" out of prose and into
+something that exits non-zero.** Lecture 09 calls this *«экстернализировать суждение о
+завершении»* — externalising the completion judgement — on the grounds that
+*«современные нейронные сети систематически сверх-уверены»*.
 <!-- proof: src/queue.mjs:checkQueue -->
 
-## Layer 1 — Instructions: the rules, each labelled with what enforces it
+## Where each check comes from
 
-Deliberately short. A long instruction file eats working memory and buries the important
-parts in the middle, where they get ignored.
+| Lecture | Idea | Implemented as |
+|---|---|---|
+| 02 · what a harness is | five subsystems, kitchen metaphor | the `.harness/` layout |
+| 03 · repository as source of truth | nothing outside the repo exists | `harness proof`, `harness cold-start` |
+| 04 · one giant instruction file fails | instructions are a router | `harness instructions` |
+| 05 · continuity between sessions | PROGRESS, DECISIONS, session protocol | `.harness/4-state/`, `harness tracks` |
+| 06 · initialization as its own phase | a scaffolded start | `harness init` |
+| 07 · overreach and under-finishing | WIP = 1, scope belongs to the human | `harness queue activate` |
+| 08 · feature lists as primitives | behaviour + verification + state | `harness queue` |
+| 09 · declaring victory too early | the passing-state gate, evidence | `harness queue verify`, `--reverify` |
+| 10 · end-to-end as ground truth | the real run is the proof | `harness cold-start` |
+| 12 · clean state at session end | no debris, progress written down | `harness clean-exit` |
 
-The rule that makes this layer worth having is the labelling: every constraint states
-whether a command fails on it or whether it is caught in review. In a real repository, four
-of nine constraints are review-only, and they say so.
+Two things here are **not** from the course: proof markers and handoff-driven development.
+Both came out of production repositories and are described in their own sections below.
+
+## Layer 1 — Instructions *(«подсистема инструкций» — the recipe shelf)*
+
+Deliberately short. A long instruction file eats the working memory it is trying to direct,
+and what lands in the middle is what gets ignored — the argument of
+[lecture 04](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-04-why-one-giant-instruction-file-fails/).
+The entry file is a router: what the project is, how to run it, how to check it, and links
+to topical documents.
+
+The only way a router stays a router is if something fails when it stops being one, so the
+line limit is a check rather than a note. <!-- proof: src/cleanexit.mjs:instructionProblems -->
+
+The rule that makes this layer worth having is **labelling**: every constraint states
+whether a command fails on it, or whether it is caught in review. In this repository four of
+nine are review-only, and they say so.
 
 **Why labelling matters more than the rules:** claiming enforcement that does not exist is
-worse than claiming none. A team that believes a check exists stops looking for the missing
-one. Two of the repositories this came from had a constraints file asserting "enforced by
-CI" at a time when CI had never run once — in one case because the workflow triggered on
-`main` while the branch was called `master`.
+worse than claiming none, because a team that believes a check exists stops looking for the
+missing one. Two of the repositories this came from had a constraints file asserting
+"enforced by CI" at a time when CI had never run once — in one case because the workflow
+triggered on `main` while the branch was still called `master`.
 
 The Definition of Ready and the Definition of Done live here, referenced and never copied.
 The decidable parts are enforced at the two moments they matter: when an item is started,
 and when it is closed. <!-- proof: src/readiness.mjs:readiness -->
 
-## Layer 2 — Tools: what the project can run
+## Layer 2 — Tools *(«подсистема инструментов» — the knife rack)*
 
 One command surface, and the queue is a *command*, not a file you edit.
 
-That distinction is the layer's whole content. An item is finished when its check passes,
-not when someone believes it is. Models are consistently over-confident about their own
-work, so the judgement is taken away from them: only the tool writes `state` and `evidence`,
-and it only writes them after running the item's own verification.
+[Lecture 08](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-08-why-feature-lists-are-harness-primitives/)
+calls the feature list *«позвоночник harness'а»* — the backbone — and prescribes the triple:
+a behaviour, a command that verifies it, and a state. Its central rule is that
+*«агент не может напрямую перевести фичу в `passing`»*: only the harness may, and only after
+the verification command succeeds.
 
-Two details that came out of running this in anger:
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> not_started
+    not_started --> active: harness queue activate<br/>(Definition of Ready holds, WIP = 1)
+    active --> passing: verification passed<br/><b>only the harness writes this</b>
+    active --> blocked: verification failed<br/>(reason recorded)
+    blocked --> active: cause fixed
+    passing --> blocked: CI re-verification fails<br/>(the claim was never true)
+
+    note right of passing
+        Evidence is the command's own output.
+        A claim with no output cannot be re-checked,
+        so it is not allowed to exist.
+    end note
+```
+
+Two details that only appear once this runs in anger:
 
 - **Verification runs with stdin closed and a hard timeout.** A command that stops to ask a
   question would otherwise block forever, and a loop that can hang silently has no stop
@@ -54,27 +105,32 @@ Two details that came out of running this in anger:
   until killed, so a nested run checks invariants only.
   <!-- proof: bin/harness.mjs:HARNESS_REVERIFY -->
 
-## Layer 3 — Environment: what it runs in, and what is out of reach
+## Layer 3 — Environment *(«подсистема среды» — the stove)*
 
 Reproducibility, so that "works here" and "works anywhere" are the same statement: a pinned
 runtime, a lockfile, and an honest list of services.
 
-Then the part people leave out: **locked surfaces.** A system that improves itself will,
-given the opportunity, improve its own score instead of its own work. Every documented
-reward hack broke this invariant — the agent edited or removed the instrumentation its
-checker depended on. So the files that define the acceptance signal are placed out of the
-loop's reach, and the reach is enforced by a command rather than an instruction, because
-instructions get optimised away. <!-- proof: src/locked.mjs:lockedViolations -->
+Then the part the course leaves implicit and production makes urgent: **locked surfaces.** A
+system that improves itself will, given the opportunity, improve its own score instead of
+its own work. Every documented reward hack broke this invariant — the agent edited or
+removed the instrumentation its checker depended on. So the files defining the acceptance
+signal are placed out of the loop's reach, and the reach is enforced by a command rather
+than an instruction, because instructions get optimised away.
+<!-- proof: src/locked.mjs:lockedViolations -->
 
-The baseline exists because the commit that creates a protected file necessarily touches
-it. Moving it forward widens what the system may change, which is a human decision.
+The baseline exists because the commit that creates a protected file necessarily touches it.
+Moving it forward widens what the system may change, which is a human decision.
 
 **The limit is part of the design, not an omission:** this assumes commits pass through CI.
-It is drift detection. A loop with push access that strips its own trailer defeats it.
+It is drift detection. An agent with push access that strips its own trailer defeats it.
 
-## Layer 4 — State: what survives a session ending
+## Layer 4 — State *(«подсистема состояния» — the prep table)*
 
-A session ends and its memory is gone. What is written down is all that survives.
+A session ends and its memory is gone.
+[Lecture 05](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-05-why-long-running-tasks-lose-continuity/)
+puts it as treating the agent as *«гениальный инженер с амнезией»* — a brilliant engineer
+with amnesia — who writes down the critical facts before leaving the shift, with a target of
+a three-minute recovery for the next session.
 
 Three artifacts, each answering a different question:
 
@@ -82,53 +138,92 @@ Three artifacts, each answering a different question:
 - **DECISIONS.md** — what was decided, why, and what was rejected. Append-only, so a later
   session does not quietly undo a deliberate choice, and a rejected option stays rejected
   instead of being rediscovered every few weeks.
-- **The queue** — one item at a time, each carrying the behaviour it must produce, the
-  command that proves it, its state, and the output that proved it.
+- **The queue** — one item at a time, each carrying its behaviour, its verifying command,
+  its state, and the output that proved it.
 
-Work in progress is capped at one. Splitting attention produces work that is started
-everywhere and finished nowhere, and a wide half-finished diff is worse than a narrow done
-one.
+Work in progress is capped at one — the concern of
+[lecture 07](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-07-why-agents-overreach-and-under-finish/).
+A wide half-finished diff is worse than a narrow done one.
 
-## Layer 5 — Feedback: how it knows it worked
+## Layer 5 — Feedback *(«подсистема обратной связи» — the quality-control window)*
 
 Checks live next to the code they check; one document maps them. A rule kept far from what
 it governs goes stale without anyone noticing.
 
-Three levels, and skipping any of them means not finished: types and schemas, then tests —
-especially negative ones — then an end-to-end run. The third is the one most projects skip
-and the one that catches the class of problem the first two are blind to: something that
-works only because of state on this machine. `harness cold-start` clones the project into
-an empty directory and runs the documented commands there.
-<!-- proof: src/coldstart.mjs:coldStartProblems -->
+Lecture 09 prescribes three levels, and skipping any of them means not finished:
 
-Cold start is also the honest test of the documentation. What is not written down does not
-exist for someone arriving fresh — and every session after the first arrives fresh.
+```mermaid
+flowchart TD
+    W["Work an agent calls finished"] --> L1
+
+    L1["<b>1 · Синтаксис и статический анализ</b><br/>types, schemas, lint<br/><i>fast, and blind to behaviour</i>"]
+    L1 -- passes --> L2["<b>2 · Верификация runtime-поведения</b><br/>tests, especially negative ones<br/><i>a rule with no failing test is an assumption</i>"]
+    L2 -- passes --> L3["<b>3 · Системное подтверждение</b><br/>the real end-to-end run<br/><i>harness cold-start, in an empty directory</i>"]
+    L3 -- passes --> DONE(["Finished"])
+
+    L1 -- fails --> BACK["Not finished.<br/>No level may be skipped."]
+    L2 -- fails --> BACK
+    L3 -- fails --> BACK
+```
+
+The third level is the one most projects skip and the one that catches what the first two
+are blind to: something that works only because of state on this machine
+([lecture 10](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-10-why-end-to-end-testing-changes-results/)).
+`harness cold-start` clones the project into an empty directory and runs the documented
+commands there. <!-- proof: src/coldstart.mjs:coldStartProblems -->
+
+It is also the honest test of the documentation, which is
+[lecture 03](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-03-why-the-repository-must-become-the-system-of-record/)'s
+point: what is not written down does not exist for someone arriving fresh — and every
+session after the first arrives fresh.
+
+## Leaving a clean state
+
+[Lecture 12](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-12-why-every-session-must-leave-a-clean-state/)
+adds the condition that closes the loop: a session ends with the build green, the tests
+green, progress documented, no stale artifacts, and the standard startup path intact. Its
+word for what happens otherwise is *«энтропия»* — each session leaves a little debris, no
+single piece is worth stopping for, and after twenty sessions nobody can start the project
+in three minutes any more.
+
+The build and the tests are the project's own gate. What `harness clean-exit` adds is the
+part a build is blind to: debug leftovers that compile perfectly, and a progress file that
+was not touched while the code around it changed.
+<!-- proof: src/cleanexit.mjs:debrisProblems -->
+
+Two deliberate choices:
+
+- **Scoped to what the session changed**, not the whole repository. A project adopting the
+  rule should not be blocked by debris that predates it, and the rule is about what a
+  session leaves behind, not about history.
+- **The markers are configuration.** `.only(` is fatal in a test suite and meaningless in a
+  stylesheet; `console.log` is debris in an application and the product in a command-line
+  tool. This repository excludes it for exactly that reason, and says so in its config.
 
 ## The sixth thing — handoff-driven development
 
-The five layers describe how a project is governed. They say nothing about what happens
-when a session ends **mid-lane**, which is the normal case. Specs describe what a lane must
-deliver; they do not describe where the work stopped, what was already tried and rejected,
-or — most valuably — what the next session must *not* read.
+Not from the course. The five subsystems describe how a project is governed; they say
+nothing about what happens when a session ends **mid-lane**, which is the normal case.
+Specs describe what a lane must deliver; they do not describe where the work stopped, what
+was already tried and rejected, or — most valuably — what the next session must *not* read.
 
-So:
-
-- **`specs/TRACKS.md`** indexes live tracks. One line each: essence, link to its handoff,
-  status, next step. Switching task becomes choosing a handoff rather than an excavation.
-- **A handoff per track**, next to its spec, written for a reader with none of your context:
-  context, what to load *and what not to*, state, decisions taken, and one concrete first
-  step. Edited in place, never appended to.
-- **Closing a track is a distillation:** the outcome in one or two sentences into
-  `TRACKS-LOG.md`, lasting decisions into `DECISIONS.md`, then the handoff is deleted. Git
-  carries the rest.
+```mermaid
+flowchart LR
+    W["Work starts"] --> T["A line in <b>TRACKS.md</b><br/>essence · handoff link<br/>status · next step"]
+    T --> H["<b>handoff.md</b> beside the spec<br/>context · what to load<br/><b>what NOT to load</b><br/>state · decisions · first step"]
+    H -- "session ends" --> U["Updated in place,<br/>never appended to"]
+    U --> H
+    H -- "track closes" --> D["<b>Distillation</b><br/>outcome → TRACKS-LOG.md<br/>decisions → DECISIONS.md<br/>handoff deleted"]
+    D --> G(["Git carries the rest"])
+```
 
 All three rules are machine-checked, because **a handoff that lies is worse than no
 handoff** — the next session trusts it. A track line with no status, a link to a deleted
 handoff, or any document elsewhere still pointing at one, fails the gate.
 <!-- proof: src/tracks.mjs:checkHandoffRefs -->
 
-The "what not to load" section is the part that is easy to skip and pays for the practice
-on its own: a fresh session's budget goes on whatever you failed to rule out.
+The "what not to load" section is the part that is easy to skip and pays for the practice on
+its own: a fresh session's budget goes on whatever you failed to rule out.
 
 ## How the pieces meet
 
@@ -141,8 +236,8 @@ checker:
 | A ticked box in a task list | the same marker, on the task |
 | An item in the queue | its `verification` command, re-run in CI |
 
-That is deliberate. A second, divergent notion of "verified" is how a project ends up with
-a gate that agrees with itself and disagrees with reality.
+That is deliberate. A second, divergent notion of "verified" is how a project ends up with a
+gate that agrees with itself and disagrees with reality.
 <!-- proof: src/tasks.mjs:checkTaskGate -->
 
 ## What is deliberately not here
@@ -155,16 +250,23 @@ a gate that agrees with itself and disagrees with reality.
   changing the gates, widening the editable surface, licence and legal decisions, and
   deciding to abandon a direction. Models trained on successful outcomes are badly
   calibrated about when to stop.
+- **Observability and loop/graph engineering** (lectures 11, 13, 14). They are the layer
+  above this one: this tool bounds a single agent's work, and says nothing yet about running
+  many of them. Naming the gap is better than implying it is covered.
 - **Any judgement of whether a check is good.** A test that asserts nothing satisfies every
   rule here. This makes claims falsifiable; it does not make them true.
 
 ## Provenance
 
-The five-layer model and the queue come from the *Learn Harness Engineering* material and
-from a working implementation in
-[`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base). Handoff-driven
-development comes from
-[yetanothervan/handoff-driven-development](https://github.com/yetanothervan/handoff-driven-development)
-and from its implementation in
-[`ledger-lens`](https://github.com/atamaniuc/ledger-lens), which also contributed proof
-markers and the task gate.
+The model, the five subsystems, the kitchen metaphor, the feature-list triple, the
+passing-state gate, the three levels of validation and the clean-state condition come from
+[Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/).
+
+Handoff-driven development comes from
+[yetanothervan/handoff-driven-development](https://github.com/yetanothervan/handoff-driven-development).
+
+The implementation was extracted from
+[`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) (the five
+subsystems, the queue, locked surfaces, cold start) and
+[`ledger-lens`](https://github.com/atamaniuc/ledger-lens) (proof markers, HDD, the task
+gate).

@@ -2,23 +2,60 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/atamaniuc/harness/main/schema/harness.config.schema.json",
   "title": "harness.config.json",
-  "description": "Which checks this repository has asked the harness to enforce. A section left out is a check that does not run — `harness doctor` reports it as not set rather than implying otherwise.",
+  "description": "Which checks this repository has asked the harness to enforce. A section left out is a check that does not run \u2014 `harness doctor` reports it as not set rather than implying otherwise.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
-    "$comment": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
+    "$comment": {
+      "type": "string"
+    },
     "docs": {
       "type": "object",
       "description": "Proof markers: every claim in prose names the evidence that makes it true.",
       "additionalProperties": false,
       "properties": {
-        "roots": { "type": "array", "items": { "type": "string" }, "description": "Directories to scan for Markdown. \".\" means the repository root, non-recursively." },
-        "skip": { "type": "array", "items": { "type": "string" }, "description": "Directory names never descended into." },
-        "maxDepth": { "type": "integer", "minimum": 1 },
-        "mustCarryProof": { "type": "array", "items": { "type": "string" }, "description": "Documents that must carry at least one marker in strict mode. Put the ones that make promises here." },
-        "commands": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Marker prefix to the file that declares those commands, e.g. { \"make\": \"Makefile\", \"task\": \"Taskfile.yml\", \"pnpm run\": \"package.json\" }." },
-        "migrations": { "type": ["string", "null"], "description": "Directory backing `migration:<prefix>` markers." }
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Directories to scan for Markdown. \".\" means the repository root, non-recursively."
+        },
+        "skip": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Directory names never descended into."
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mustCarryProof": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Documents that must carry at least one marker in strict mode. Put the ones that make promises here."
+        },
+        "commands": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Marker prefix to the file that declares those commands, e.g. { \"make\": \"Makefile\", \"task\": \"Taskfile.yml\", \"pnpm run\": \"package.json\" }."
+        },
+        "migrations": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Directory backing `migration:<prefix>` markers."
+        }
       }
     },
     "tracks": {
@@ -26,11 +63,23 @@
       "description": "Handoff-driven development: the index of live work tracks and the handoffs it points at.",
       "additionalProperties": false,
       "properties": {
-        "file": { "type": "string" },
-        "log": { "type": "string", "description": "Where a closed track's outcome is distilled." },
-        "specsDir": { "type": "string" },
-        "taskFile": { "type": "string" },
-        "gateTasks": { "type": "boolean", "description": "Require a checked box in a live lane's task list to carry a proof marker." }
+        "file": {
+          "type": "string"
+        },
+        "log": {
+          "type": "string",
+          "description": "Where a closed track's outcome is distilled."
+        },
+        "specsDir": {
+          "type": "string"
+        },
+        "taskFile": {
+          "type": "string"
+        },
+        "gateTasks": {
+          "type": "boolean",
+          "description": "Require a checked box in a live lane's task list to carry a proof marker."
+        }
       }
     },
     "queue": {
@@ -38,9 +87,21 @@
       "description": "The work queue. State moves only through a passing verification, and CI re-runs every claim.",
       "additionalProperties": false,
       "properties": {
-        "file": { "type": "string" },
-        "timeoutMinutes": { "type": "number", "exclusiveMinimum": 0, "description": "A verification that runs longer than this is a failure with a stated cause, not a hang." },
-        "terminalByKind": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Where an item lands when its verification passes, per kind." }
+        "file": {
+          "type": "string"
+        },
+        "timeoutMinutes": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "A verification that runs longer than this is a failure with a stated cause, not a hang."
+        },
+        "terminalByKind": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Where an item lands when its verification passes, per kind."
+        }
       }
     },
     "locked": {
@@ -48,9 +109,21 @@
       "description": "The files that define or enforce the acceptance signal, which an agent commit may not touch.",
       "additionalProperties": false,
       "properties": {
-        "paths": { "type": "array", "items": { "type": "string" }, "description": "Path prefixes. Empty means the check is off." },
-        "baseline": { "type": "string", "description": "File naming the commit from which enforcement applies." },
-        "agentTrailer": { "type": "string", "description": "The commit-message trailer that marks agent authorship." }
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Path prefixes. Empty means the check is off."
+        },
+        "baseline": {
+          "type": "string",
+          "description": "File naming the commit from which enforcement applies."
+        },
+        "agentTrailer": {
+          "type": "string",
+          "description": "The commit-message trailer that marks agent authorship."
+        }
       }
     },
     "coldStart": {
@@ -58,9 +131,87 @@
       "description": "Can a fresh clone install and verify itself using nothing but the repository?",
       "additionalProperties": false,
       "properties": {
-        "requiredFiles": { "type": "array", "items": { "type": "string" } },
-        "entryDocs": { "type": "array", "items": { "type": "string" }, "description": "Documents checked for paths that only resolve on one machine." },
-        "commands": { "type": "array", "items": { "type": "string" }, "description": "The documented commands, run inside the fresh clone." }
+        "requiredFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entryDocs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Documents checked for paths that only resolve on one machine."
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The documented commands, run inside the fresh clone."
+        }
+      }
+    },
+    "cleanExit": {
+      "type": "object",
+      "description": "Clean state at session exit (lecture 12): no debris left behind, and progress written down.",
+      "additionalProperties": false,
+      "properties": {
+        "scan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Path prefixes whose changed files are read. Empty means the check is off."
+        },
+        "markers": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Strings that pass a build and mean the work is unfinished. Null uses the defaults."
+        },
+        "allow": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Path fragments exempted \u2014 typically the files that name the markers themselves."
+        },
+        "progressFile": {
+          "type": "string",
+          "description": "The file a session must update when it changed code."
+        },
+        "codePrefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "What counts as code for the progress rule. Empty means anything that is not Markdown."
+        },
+        "requireCleanTree": {
+          "type": "boolean",
+          "description": "Also fail when the working tree has uncommitted changes."
+        }
+      }
+    },
+    "instructions": {
+      "type": "object",
+      "description": "The instruction file kept a router rather than a manual (lecture 04).",
+      "additionalProperties": false,
+      "properties": {
+        "limits": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Path to maximum line count."
+        }
       }
     }
   }
