@@ -1,0 +1,18 @@
+site_name: Harnessimo Docs
+repo_url: https://github.com/atamaniuc/Harnessimo
+
+nav:
+  - Home: index.md
+  - Standard: STANDARD.md
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - mermaid2
+
+markdown_extensions:
+  - admonition
+  - def_list
+  - pymdownx.superfences
