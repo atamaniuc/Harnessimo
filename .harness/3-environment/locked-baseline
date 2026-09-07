@@ -1,5 +1,7 @@
-# The commit from which the locked-surface rule applies. Bootstrap commits
-# necessarily created .github/workflows/ and CONSTRAINTS.md, so enforcement
-# starts after them. Moving this forward widens what an agent may change,
-# which is a human decision.
-258152d9e011abbae232d2ac490d0224c7ffce1f
+# The commit from which the locked-surface rule applies.
+#
+# Moved forward twice, both deliberately and both recorded: once to adopt the
+# shared CLI in CI, and once to switch GitHub Pages on from the workflow, build
+# the docs strictly, and add the release job. Widening what an agent may change
+# is a human decision, and this line is where that decision is recorded.
+bdcbfffb309cec873a712126b8799d381886bc22
