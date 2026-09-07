@@ -1,7 +1,9 @@
 # The commit from which the locked-surface rule applies.
 #
-# Moved forward twice, both deliberately and both recorded: once to adopt the
-# shared CLI in CI, and once to switch GitHub Pages on from the workflow, build
-# the docs strictly, and add the release job. Widening what an agent may change
-# is a human decision, and this line is where that decision is recorded.
-44bdbe78c8db03b856d9f77f72e4a9a1abb9808e
+# Moved forward three times, each deliberately and each recorded: to adopt the
+# shared CLI in CI; to switch GitHub Pages on from the workflow, build the docs
+# strictly and add the release job; and now to add the typecheck job, on an
+# explicit instruction to wire it up rather than leave the patch for a human.
+# Widening what an agent may change is a decision, and this line is where the
+# decision is recorded.
+5754b29e937eeeabe1cc0359ac72ad53260e7cc5
