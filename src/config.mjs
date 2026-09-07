@@ -36,6 +36,7 @@ const SECTION_DEFAULTS = {
     requireCleanTree: false,
   },
   instructions: { limits: {} },
+  hooks: { before: [] }, // project commands the pre-commit hook runs before the gates
 };
 
 export class ConfigError extends Error {}

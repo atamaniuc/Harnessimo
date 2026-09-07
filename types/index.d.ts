@@ -147,6 +147,16 @@ export function instructionProblems(
   limits: Record<string, number>,
 ): Problem[];
 
+// ---- the pre-commit hook
+
+export const HOOK_PATH: string;
+export const HOOKS_DIR: string;
+export function hookScript(extraCommands?: string[]): string;
+export function hookStatus(state: { hookExists: boolean; hooksPath: string | null }): {
+  ok: boolean;
+  message: string;
+};
+
 // ---- configuration and the filesystem edge
 
 export class ConfigError extends Error {}

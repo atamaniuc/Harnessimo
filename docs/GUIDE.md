@@ -143,7 +143,30 @@ deleted, fails the gate. <!-- proof: src/tracks.mjs:checkHandoffRefs -->
 The "what NOT to load" section is the half everyone skips and the one that pays for the
 practice: a fresh session's budget goes on whatever you failed to rule out.
 
-## 7. In CI
+## 7. On every commit
+
+```bash
+pnpm exec harnessimo hooks install
+```
+
+Writes `.githooks/pre-commit` and points git at it, so the fast checks run
+before a commit lands rather than after CI has spent four minutes on it.
+
+It runs **only** the second-scale gates. Re-verification, the cold start and your
+test suite stay in CI, where waiting costs nobody anything — a hook that makes
+every commit slow gets bypassed with `--no-verify`, and a bypassed hook enforces
+nothing. If your project has its own fast command, name it in the config and the
+hook runs it first:
+
+```jsonc
+{ "hooks": { "before": ["pnpm run validate >/dev/null"] } }
+```
+
+`harnessimo hooks status` answers the question nobody thinks to ask: the file
+exists, but is git actually using it? A hook that was never wired up looks
+exactly like one that passes.
+
+## 7b. In CI
 
 One job. It runs the same command you run locally, so there is no "works on my machine"
 gap to argue about:

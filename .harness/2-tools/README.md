@@ -8,7 +8,12 @@ npm test                     the rules, against in-memory trees and real fixture
 npm run check                the tests, then this repository's own gates
 node bin/harnessimo.mjs doctor  what is actually enforced here
 node bin/harnessimo.mjs queue status
+node bin/harnessimo.mjs hooks status   # is the pre-commit hook wired up at all
 ```
+
+The hook here runs the same fast gates before a commit lands. It is checked in
+at `.githooks/pre-commit`, so it is a reviewed file rather than a local artifact
+somebody has to be told about.
 
 There is no build step and no install step. `node --test test/*.test.mjs` runs on a clean
 checkout, because the package has no dependencies — which is what makes the cold-start

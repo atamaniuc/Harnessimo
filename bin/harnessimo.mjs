@@ -9,7 +9,7 @@
 // and "invalid" leaves them guessing.
 
 import { execFileSync, execSync } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,6 +32,7 @@ import { formatLockedViolations, lockedViolations } from "../src/locked.mjs";
 import { coldStartProblems } from "../src/coldstart.mjs";
 import { debrisProblems, instructionProblems, progressProblems } from "../src/cleanexit.mjs";
 import { detectConfig } from "../src/detect.mjs";
+import { HOOKS_DIR, HOOK_PATH, hookScript, hookStatus } from "../src/hooks.mjs";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ROOT = process.cwd();
@@ -530,6 +531,57 @@ function cmdInit() {
   );
 }
 
+/**
+ * The local half of the gate. Installing writes a hook into the repository and
+ * points git at it, so the hook is a reviewed file everyone gets rather than a
+ * local artifact each person has to be told about.
+ */
+function cmdHooks() {
+  const sub = positional[0] ?? "status";
+  const cfg = config();
+  const hookFile = join(ROOT, HOOK_PATH);
+  const currentPath = () => {
+    try {
+      return git("config", "--get", "core.hooksPath") || null;
+    } catch {
+      return null;
+    }
+  };
+
+  if (sub === "status") {
+    const status = hookStatus({ hookExists: existsSync(hookFile), hooksPath: currentPath() });
+    if (!status.ok) die(`harnessimo: ${status.message}`);
+    return ok(`harnessimo: ${status.message}`);
+  }
+
+  if (sub === "install") {
+    if (existsSync(hookFile) && !flags.has("--force")) {
+      ok(`harnessimo: ${HOOK_PATH} already exists, leaving it alone (--force overwrites)`);
+    } else {
+      // A project's own fast command runs first when one is declared: content
+      // validation, a schema check — whatever is cheap and catches a lot.
+      const extra = cfg.hooks?.before ?? [];
+      mkdirSync(join(ROOT, HOOKS_DIR), { recursive: true });
+      writeFileSync(hookFile, hookScript(extra), { mode: 0o755 });
+      ok(`harnessimo: wrote ${HOOK_PATH}`);
+    }
+    execFileSync("git", ["config", "core.hooksPath", HOOKS_DIR], { cwd: ROOT });
+    ok(`harnessimo: git will run hooks from ${HOOKS_DIR}/`);
+    return ok("\nCommit to try it. It runs the fast gates only — the rest belongs in CI,\nbecause a hook that makes every commit slow gets bypassed.");
+  }
+
+  if (sub === "uninstall") {
+    try {
+      execFileSync("git", ["config", "--unset", "core.hooksPath"], { cwd: ROOT });
+    } catch {
+      /* not set: nothing to unset */
+    }
+    return ok(`harnessimo: git no longer uses ${HOOKS_DIR}/ (the file is left in place)`);
+  }
+
+  die(`harnessimo: unknown hooks subcommand "${sub}" (status | install | uninstall)`);
+}
+
 function cmdHelp() {
   ok(`Harnessimo — a checkable harness for agent-driven work
 
@@ -545,6 +597,7 @@ usage: harnessimo <command> [options]
   cold-start             a fresh clone installs and verifies from the repo alone
   clean-exit [base] [head]  the session left no debris and wrote down where it got to
   instructions           the instruction file is still a router, not a manual
+  hooks <sub>            status | install | uninstall — the fast gate, on commit
   init [--force]         scaffold .harness/, specs/ and harnessimo.config.json
 
 Configuration lives in harnessimo.config.json — run \`harnessimo init\` and it is written
@@ -597,6 +650,9 @@ switch (command) {
     break;
   case "init":
     cmdInit();
+    break;
+  case "hooks":
+    cmdHooks();
     break;
   case "help":
   case "--help":

@@ -90,6 +90,17 @@
       "evidence": "# pass 12 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 617.979927",
       "notes": "The failure this removes: a template configuration whose first run fails on settings nobody chose, which is how adoption stalls.",
       "last_failure": null
+    },
+    {
+      "id": "pre-commit-hook",
+      "phase": "1",
+      "kind": "code",
+      "behavior": "A repository gets the fast gates on every commit with one command, through a hook checked into the repository, and can ask whether git is actually using it rather than assuming a file that exists is a file that runs.",
+      "verification": "node --test test/hooks.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 8 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 80.222249",
+      "notes": "Prompted by the question 'are hooks wired up at all' — which found a hook in the sibling repository still calling a script this migration had deleted.",
+      "last_failure": null
     }
   ]
 }

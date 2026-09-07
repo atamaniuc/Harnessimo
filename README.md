@@ -35,6 +35,7 @@ pnpm add -D github:atamaniuc/Harnessimo#v0.1.0
 pnpm exec harnessimo init      # reads your repo and writes a config that already passes
 pnpm exec harnessimo doctor    # what is actually enforced here
 pnpm exec harnessimo check     # the one command CI runs
+pnpm exec harnessimo hooks install   # the same gate, on every commit
 ```
 
 `init` is not a template drop. It looks at what the repository has — your command runner,
@@ -225,7 +226,7 @@ missing one:
 ## Development
 
 ```bash
-npm test        # 82 tests, no install needed — the package has no dependencies
+npm test        # 93 tests, no install needed — the package has no dependencies
 npm run check   # the tests, then this repository's own gates
 ```
 

@@ -8,7 +8,7 @@ State carried between sessions. Read this first; update it before you stop.
 task gate, the queue, locked surfaces, cold start, clean exit and the instruction-file
 limit — all implemented, tested, and enforced against this repository by `npm run check`.
 
-- 82 tests, zero dependencies, no build step.
+- 93 tests, zero dependencies, no build step.
 - Documentation is now anchored to
   [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/):
   every check names the lecture it comes from, and `docs/GUIDE.md` (plus a Russian version)
