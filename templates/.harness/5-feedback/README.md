@@ -6,7 +6,7 @@ governs goes stale without anyone noticing.
 ## One command
 
 ```
-harness check
+harnessimo check
 ```
 
 Everything the harness gates runs from it, and it is what CI runs. Add the project's own
@@ -22,14 +22,14 @@ Skipping any of them means not finished.
 **2. Tests, especially negative ones.** Every rule has a test proving it actually fails on
 bad input. A rule with no failing test is an assumption wearing a rule's clothes.
 
-**3. End to end.** `harness cold-start` clones the project into an empty folder and runs
+**3. End to end.** `harnessimo cold-start` clones the project into an empty folder and runs
 it using only what is in the repository. It catches the class of problem the first two are
 blind to: something that works only because of state on this machine.
 
 ## Re-checking claims
 
 ```
-harness check --reverify
+harnessimo check --reverify
 ```
 
 Re-runs every finished item's own check. An item marked finished by hand, without the

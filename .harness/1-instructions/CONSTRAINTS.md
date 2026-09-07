@@ -12,7 +12,7 @@ literal: **enforced** means a command fails.
 
 2. **Never put filesystem access in a rule.** _(review only)_
    Rules live in `src/*.mjs` as pure functions and are tested against in-memory trees;
-   `src/resolver.mjs` and `bin/harness.mjs` are the only places that read the world. A
+   `src/resolver.mjs` and `bin/harnessimo.mjs` are the only places that read the world. A
    rule that reads the disk needs a fixture tree to test, and a rule that is annoying to
    test stops being tested.
 
@@ -40,11 +40,11 @@ literal: **enforced** means a command fails.
 ## Work discipline
 
 7. **Never mark an item done without running its verification.** _(enforced: only
-   `harness queue verify` writes evidence, and CI re-runs every passing claim)_
+   `harnessimo queue verify` writes evidence, and CI re-runs every passing claim)_
 
-8. **Never hold more than one item active.** _(enforced: `harness queue activate`)_
+8. **Never hold more than one item active.** _(enforced: `harnessimo queue activate`)_
 
-9. **Never modify a locked surface in an agent commit.** _(enforced: `harness locked` in
+9. **Never modify a locked surface in an agent commit.** _(enforced: `harnessimo locked` in
    CI)_ `.github/workflows/` and this file. A loop that can edit its own scoring will.
    **Limit, stated rather than hidden:** this assumes commits pass through CI. It is drift
    detection, not a sandbox.

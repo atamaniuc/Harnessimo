@@ -35,7 +35,7 @@ vocabulary, so that what I learn in one transfers to the other.
 **AC-01** — GIVEN the shared package WHEN a rule fires THEN it names the document, the
 line and the reason <!-- proof: test/cli.test.mjs#naming the document and line -->
 
-**AC-02** — GIVEN a fresh repository WHEN `harness init` runs THEN the scaffolded harness
+**AC-02** — GIVEN a fresh repository WHEN `harnessimo init` runs THEN the scaffolded harness
 passes its own check with no editing
 <!-- proof: test/cli.test.mjs#init scaffolds a working harness that immediately passes its own check -->
 

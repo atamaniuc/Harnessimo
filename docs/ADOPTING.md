@@ -9,13 +9,13 @@ in fifteen minutes and this document assumes it.
 ## A new repository
 
 ```bash
-pnpm add -D github:atamaniuc/harness      # or npm i -D
-pnpm exec harness init
-pnpm exec harness check
+pnpm add -D github:atamaniuc/harnessimo      # or npm i -D
+pnpm exec harnessimo init
+pnpm exec harnessimo check
 ```
 
 `init` writes `.harness/` (five layers, with starter documents), `specs/` (the track index,
-its log, and templates for a spec and a handoff), and `harness.config.json`. The scaffolded
+its log, and templates for a spec and a handoff), and `harnessimo.config.json`. The scaffolded
 harness passes its own check immediately, so the first green run costs nothing and every
 later red one means something.
 <!-- proof: test/cli.test.mjs#init scaffolds a working harness that immediately passes its own check -->
@@ -30,7 +30,7 @@ Then, in order:
    `<!-- proof: make <target> -->` marker cannot be resolved and says so rather than passing.
 3. **Add your central document to `docs.mustCarryProof`.** Usually `README.md`. This is
    what makes strict mode mean anything.
-4. **Wire `harness check` into CI** next to your existing gate.
+4. **Wire `harnessimo check` into CI** next to your existing gate.
 
 ## An existing repository
 
@@ -44,7 +44,7 @@ exists to prevent.
 List what you enforce today and what enforces it. Then run:
 
 ```bash
-pnpm exec harness doctor
+pnpm exec harnessimo doctor
 ```
 
 and compare, line by line. `doctor` reports what is configured, never what is aspirational,
@@ -53,7 +53,7 @@ so the diff between those two lists is the real work.
 
 ### 2. Translate, one section at a time
 
-Each section of `harness.config.json` maps onto something you probably already have:
+Each section of `harnessimo.config.json` maps onto something you probably already have:
 
 | You have | Becomes |
 |---|---|
@@ -65,7 +65,7 @@ Each section of `harness.config.json` maps onto something you probably already h
 | A grep for `TODO` / `console.log` in review | `cleanExit.markers` + `cleanExit.scan` |
 | A note asking people to keep `AGENTS.md` short | `instructions.limits` |
 
-Turn one on, run `harness check`, fix what it finds, commit. Then the next. A migration that
+Turn one on, run `harnessimo check`, fix what it finds, commit. Then the next. A migration that
 turns on six checks at once produces one enormous red run that nobody can read.
 
 ### 3. Keep your wrapper if you have one
@@ -76,7 +76,7 @@ rule has one implementation and your project keeps its own entry point and its
 project-specific parts:
 
 ```ts
-import { verifyProofs, createResolver } from "@atamaniuc/harness";
+import { verifyProofs, createResolver } from "harnessimo";
 ```
 <!-- proof: src/index.mjs -->
 
@@ -109,8 +109,8 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ## After adoption
 
-- Cut a tag and pin it: `pnpm add -D github:atamaniuc/harness#v0.1.0`. Tracking `main`
+- Cut a tag and pin it: `pnpm add -D github:atamaniuc/harnessimoimo#v0.1.0`. Tracking `main`
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
-- Run `harness doctor` in CI on a schedule, or read it before each release. It is the one
+- Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one
   answer to "what does this repository actually guarantee".

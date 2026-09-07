@@ -30,4 +30,4 @@ dependency on another lane's undelivered work here rather than discovering it la
 
 ## Tasks
 
-See `tasks.md`. A checked box carries the marker that proves it (`harness tasks`).
+See `tasks.md`. A checked box carries the marker that proves it (`harnessimo tasks`).

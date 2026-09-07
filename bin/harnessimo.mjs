@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { loadConfig, enabledChecks, ConfigError } from "../src/config.mjs";
+import { loadConfig, enabledChecks, ConfigError, CONFIG_FILE } from "../src/config.mjs";
 import { collectDocs, collectFiles, createResolver, readAll } from "../src/resolver.mjs";
 import { findMarkers, verifyProofs } from "../src/proof.mjs";
 import { checkHandoffRefs, checkTracks, trackLines } from "../src/tracks.mjs";
@@ -31,6 +31,7 @@ import {
 import { formatLockedViolations, lockedViolations } from "../src/locked.mjs";
 import { coldStartProblems } from "../src/coldstart.mjs";
 import { debrisProblems, instructionProblems, progressProblems } from "../src/cleanexit.mjs";
+import { detectConfig } from "../src/detect.mjs";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ROOT = process.cwd();
@@ -50,7 +51,7 @@ function config() {
   try {
     return loadConfig(ROOT);
   } catch (error) {
-    if (error instanceof ConfigError) die(`harness: ${error.message}`);
+    if (error instanceof ConfigError) die(`harnessimo: ${error.message}`);
     throw error;
   }
 }
@@ -58,7 +59,7 @@ function config() {
 function requireSection(cfg, section, hint) {
   if (!cfg[section]) {
     die(
-      `harness: this repository has no "${section}" section in harness.config.json, so there is nothing to check\n` +
+      `harnessimo: this repository has no "${section}" section in harnessimo.config.json, so there is nothing to check\n` +
         `  fix:  ${hint}`,
     );
   }
@@ -86,7 +87,7 @@ function makeRunner(timeoutMinutes) {
         stdio: ["ignore", "pipe", "pipe"],
         timeout: timeoutMinutes * 60 * 1000,
         // A nested harness call degrades to a plain invariant check: without
-        // this, an item whose verification runs `harness queue check
+        // this, an item whose verification runs `harnessimo queue check
         // --reverify` recurses until it is killed.
         env: { ...process.env, HARNESS_REVERIFY: "1" },
       });
@@ -141,7 +142,7 @@ function runTracks() {
           file: tracks.file,
           line: 1,
           target: "(missing)",
-          reason: `the track index does not exist — run \`harness init\` or point tracks.file somewhere real`,
+          reason: `the track index does not exist — run \`harnessimo init\` or point tracks.file somewhere real`,
         },
       ],
       summary: "",
@@ -181,7 +182,7 @@ function runTasks() {
 
 function readQueue(cfg) {
   const path = join(ROOT, cfg.queue.file);
-  if (!existsSync(path)) die(`harness: no queue at ${cfg.queue.file}\n  fix:  run \`harness init\` or point queue.file at the real file`);
+  if (!existsSync(path)) die(`harnessimo: no queue at ${cfg.queue.file}\n  fix:  run \`harnessimo init\` or point queue.file at the real file`);
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
@@ -263,8 +264,8 @@ function cmdCheck() {
   const cfg = config();
   if (!cfg.path) {
     die(
-      "harness: no harness.config.json in this repository\n" +
-        "  fix:  run `harness init` to scaffold the harness, or add the config by hand",
+      "harnessimo: no harnessimo.config.json in this repository\n" +
+        "  fix:  run `harnessimo init` to scaffold the harness, or add the config by hand",
     );
   }
   const enabled = enabledChecks(cfg);
@@ -285,15 +286,15 @@ function cmdCheck() {
       console.error(formatProblems(result.problems).replace(/^/gm, "    "));
     }
   }
-  if (failed > 0) die(`\nharness: ${failed} problem(s).`);
-  ok("\nharness: every configured check passes.");
+  if (failed > 0) die(`\nharnessimo: ${failed} problem(s).`);
+  ok("\nharnessimo: every configured check passes.");
 }
 
 function cmdDoctor() {
   const cfg = config();
-  if (!cfg.path) die("harness: no harness.config.json here.\n  fix:  run `harness init`");
+  if (!cfg.path) die("harnessimo: no harnessimo.config.json here.\n  fix:  run `harnessimo init`");
   const enabled = enabledChecks(cfg);
-  ok(`harness ${readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8").match(/"version":\s*"([^"]+)"/)[1]} — ${cfg.path}\n`);
+  ok(`harnessimo ${readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8").match(/"version":\s*"([^"]+)"/)[1]} — ${cfg.path}\n`);
   ok("what this repository has asked to be enforced:\n");
   const rows = [
     ["proof markers", enabled.proof, "docs claims resolve to real files, tests and commands"],
@@ -326,13 +327,13 @@ function cmdQueue() {
   try {
     if (sub === "status") return ok(formatStatus(list));
     if (sub === "activate") {
-      if (!id) die("harness: `harness queue activate <id>` needs an id");
+      if (!id) die("harnessimo: `harnessimo queue activate <id>` needs an id");
       const item = activate(list, id);
       writeQueue(cfg, list);
-      return ok(`active: ${id}\n  ${item.behavior}\n  verify with: harness queue verify ${id}`);
+      return ok(`active: ${id}\n  ${item.behavior}\n  verify with: harnessimo queue verify ${id}`);
     }
     if (sub === "verify") {
-      if (!id) die("harness: `harness queue verify <id>` needs an id");
+      if (!id) die("harnessimo: `harnessimo queue verify <id>` needs an id");
       const runner = makeRunner(cfg.queue.timeoutMinutes);
       const before = list.items.find((i) => i.id === id);
       ok(`running: ${before?.verification}\n`);
@@ -342,7 +343,7 @@ function cmdQueue() {
       writeQueue(cfg, list);
       if (!passed) {
         console.error(output);
-        die(`harness: "${id}" failed verification and is now blocked\n  fix:  fix the cause, then verify again; do not edit state by hand`);
+        die(`harnessimo: "${id}" failed verification and is now blocked\n  fix:  fix the cause, then verify again; do not edit state by hand`);
       }
       ok(output);
       return ok(`${id} -> ${item.state}`);
@@ -350,11 +351,11 @@ function cmdQueue() {
     if (sub === "check") {
       const result = runQueueCheck({ reverify: flags.has("--reverify") });
       if (result.problems.length > 0) die(formatProblems(result.problems));
-      return ok(`harness: ${result.summary}`);
+      return ok(`harnessimo: ${result.summary}`);
     }
-    die(`harness: unknown queue subcommand "${sub}" (status | activate | verify | check)`);
+    die(`harnessimo: unknown queue subcommand "${sub}" (status | activate | verify | check)`);
   } catch (error) {
-    if (error instanceof HarnessError) die(`harness: ${error.message}`);
+    if (error instanceof HarnessError) die(`harnessimo: ${error.message}`);
     throw error;
   }
 }
@@ -362,14 +363,14 @@ function cmdQueue() {
 function cmdLocked() {
   const cfg = config();
   const locked = requireSection(cfg, "locked", 'add a "locked" section listing the paths that define success');
-  if (!locked.paths.length) return ok("harness: no locked paths configured, nothing to protect");
+  if (!locked.paths.length) return ok("harnessimo: no locked paths configured, nothing to protect");
   const base = positional[0] || "HEAD~1";
   const head = positional[1] || "HEAD";
   let shas = [];
   try {
     shas = git("rev-list", `${base}..${head}`).split("\n").filter(Boolean);
   } catch {
-    return ok(`harness: cannot list commits ${base}..${head} (shallow clone?), skipping the locked-surface check`);
+    return ok(`harnessimo: cannot list commits ${base}..${head} (shallow clone?), skipping the locked-surface check`);
   }
   const exempt = new Set();
   const baselinePath = join(ROOT, locked.baseline);
@@ -400,13 +401,13 @@ function cmdLocked() {
     exempt,
   });
   if (violations.length > 0) die(formatLockedViolations(violations));
-  ok(`harness: locked surfaces intact across ${commits.length} commit(s)`);
+  ok(`harnessimo: locked surfaces intact across ${commits.length} commit(s)`);
 }
 
 function cmdColdStart() {
   const cfg = config();
   const cold = requireSection(cfg, "coldStart", 'add a "coldStart" section listing the commands a newcomer runs');
-  if (!cold.commands.length) return ok("harness: no cold-start commands configured");
+  if (!cold.commands.length) return ok("harnessimo: no cold-start commands configured");
   const work = mkdtempSync(join(tmpdir(), "harness-cold-"));
   const clone = join(work, "clone");
   try {
@@ -446,12 +447,17 @@ function cmdInit() {
   const templates = join(PACKAGE_ROOT, "templates");
   const written = [];
   const skipped = [];
+
+  // Everything except the configuration comes from the templates: the five
+  // subsystems, the track index, the spec and handoff shapes.
   cpSync(templates, ROOT, {
     recursive: true,
     force,
     filter: (src, dest) => {
       if (statSync(src).isDirectory()) return true;
       const rel = dest.slice(ROOT.length + 1);
+      // The configuration is written from this repository, not copied.
+      if (rel === CONFIG_FILE) return false;
       // An existing file is never overwritten without --force: adopting the
       // harness must not silently rewrite rules a project already wrote.
       if (!force && existsSync(dest)) {
@@ -462,24 +468,53 @@ function cmdInit() {
       return true;
     },
   });
-  ok(`harness init: wrote ${written.length} file(s)`);
+
+  // The configuration is detected rather than templated. A template full of
+  // paths the reader has to correct is how adoption stalls: the first run fails
+  // on five settings nobody chose, and the honest response is to turn the tool
+  // off.
+  const configPath = join(ROOT, CONFIG_FILE);
+  let detected = null;
+  if (existsSync(configPath) && !force) {
+    skipped.push(CONFIG_FILE);
+  } else {
+    detected = detectConfig({
+      exists: (p) => existsSync(join(ROOT, p)),
+      isDir: (p) => existsSync(join(ROOT, p)) && statSync(join(ROOT, p)).isDirectory(),
+      read: (p) => readFileSync(join(ROOT, p), "utf8"),
+    });
+    writeFileSync(configPath, JSON.stringify(detected.config, null, 2) + "\n");
+    written.push(CONFIG_FILE);
+  }
+
+  ok(`harnessimo init: wrote ${written.length} file(s)`);
   for (const f of written) ok(`  + ${f}`);
   if (skipped.length > 0) {
     ok(`\nkept ${skipped.length} existing file(s) (pass --force to overwrite):`);
     for (const f of skipped) ok(`  = ${f}`);
   }
+
+  if (detected) {
+    ok(`\nconfigured from what this repository has:`);
+    for (const line of detected.found) ok(`  on   ${line}`);
+    if (detected.missing.length > 0) {
+      ok(`\nleft off, and why — these are gaps, not failures:`);
+      for (const line of detected.missing) ok(`  off  ${line}`);
+    }
+  }
+
   ok(
     "\nnext:\n" +
-      "  1. edit harness.config.json — turn on only the checks you can satisfy today\n" +
-      "  2. run `harness doctor` to see what is actually enforced\n" +
-      "  3. run `harness check` and wire it into CI",
+      "  1. rewrite .harness/1-instructions/CONSTRAINTS.md with your real rules\n" +
+      "  2. run `harnessimo doctor` to see what is enforced\n" +
+      "  3. run `harnessimo check` and wire it into CI",
   );
 }
 
 function cmdHelp() {
-  ok(`harness — a checkable harness for agent-driven work
+  ok(`Harnessimo — a checkable harness for agent-driven work
 
-usage: harness <command> [options]
+usage: harnessimo <command> [options]
 
   check [--reverify]     run every configured check; the one command for CI
   doctor                 what this repository actually enforces, honestly
@@ -491,10 +526,13 @@ usage: harness <command> [options]
   cold-start             a fresh clone installs and verifies from the repo alone
   clean-exit [base] [head]  the session left no debris and wrote down where it got to
   instructions           the instruction file is still a router, not a manual
-  init [--force]         scaffold .harness/, specs/ and harness.config.json
+  init [--force]         scaffold .harness/, specs/ and harnessimo.config.json
 
-Configuration lives in harness.config.json. A section you leave out is a check
-that does not run, and \`harness doctor\` says so rather than implying otherwise.`);
+Configuration lives in harnessimo.config.json — run \`harnessimo init\` and it is written
+for you from what this repository already has. A section you leave out is a check that does
+not run, and \`harnessimo doctor\` says so rather than implying otherwise.
+
+Docs: https://github.com/atamaniuc/harnessimo`);
 }
 
 // ---------------------------------------------------------------- dispatch
@@ -502,9 +540,9 @@ that does not run, and \`harness doctor\` says so rather than implying otherwise
 function single(name, result) {
   if (result.problems.length > 0) {
     console.error(formatProblems(result.problems));
-    die(`\nharness: ${result.problems.length} problem(s) in ${name}.`);
+    die(`\nharnessimo: ${result.problems.length} problem(s) in ${name}.`);
   }
-  ok(`harness: ${result.summary}`);
+  ok(`harnessimo: ${result.summary}`);
 }
 
 switch (command) {
@@ -547,5 +585,5 @@ switch (command) {
     cmdHelp();
     break;
   default:
-    die(`harness: unknown command "${command}"\n\nRun \`harness help\` for the list.`);
+    die(`harnessimo: unknown command "${command}"\n\nRun \`harnessimo help\` for the list.`);
 }

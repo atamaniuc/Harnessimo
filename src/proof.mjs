@@ -46,7 +46,7 @@ export function checkTarget(target, resolver) {
     const [, kind, name] = command;
     const names = resolver.commandNames(kind);
     if (names === null) {
-      return `this repository declares no "${kind}" command file, so "${target}" cannot be checked (add it to harness.config.json → docs.commands)`;
+      return `this repository declares no "${kind}" command file, so "${target}" cannot be checked (add it to harnessimo.config.json → docs.commands)`;
     }
     return names.includes(name.trim()) ? null : `no "${kind}" command named "${name.trim()}"`;
   }
@@ -55,7 +55,7 @@ export function checkTarget(target, resolver) {
     const prefix = target.slice("migration:".length).trim();
     const migrations = resolver.migrationNames();
     if (migrations === null) {
-      return `this repository declares no migrations directory, so "${target}" cannot be checked (add it to harness.config.json → docs.migrations)`;
+      return `this repository declares no migrations directory, so "${target}" cannot be checked (add it to harnessimo.config.json → docs.migrations)`;
     }
     return migrations.some((m) => m.startsWith(prefix)) ? null : `no migration starts with "${prefix}"`;
   }

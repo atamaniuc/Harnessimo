@@ -29,10 +29,10 @@ application; reading it will consume a session's budget and change nothing about
 
 **Both repositories now carry the half they were missing, on a branch each:**
 
-- `code-knowledge-base` → `feat/shared-harness-hdd`: `harness.config.json` translating
+- `code-knowledge-base` → `feat/shared-harness-hdd`: `harnessimo.config.json` translating
   every check it already enforces, `specs/TRACKS.md` + `TRACKS-LOG.md`, a handoff of its
   own, and proof markers in `AGENTS.md`.
-- `ledger-lens` → `claude/harness-repo-consolidation-phemlr`: `harness.config.json`,
+- `ledger-lens` → `claude/harness-repo-consolidation-phemlr`: `harnessimo.config.json`,
   `.harness/locked-baseline`, and track 0018 with its handoff.
 
 **Verified, and the number to keep:** run against `ledger-lens`, this package reproduces
@@ -46,7 +46,7 @@ public and carries a tag.
 
 The consuming side is designed and not yet exercised:
 
-- Install is `pnpm add -D github:atamaniuc/harness#<tag>` in both, since both are pnpm
+- Install is `pnpm add -D github:atamaniuc/harnessimoimo#<tag>` in both, since both are pnpm
   workspaces on Node >= 22. No tag exists yet (the second track in `TRACKS.md`), so the
   first migration will have to track a branch and be re-pinned afterwards.
 - `code-knowledge-base` is the easier of the two and should go first: its checks map onto
@@ -71,7 +71,7 @@ The consuming side is designed and not yet exercised:
 ## First step
 
 Cut `v0.1.0` here, then in `code-knowledge-base`'s branch:
-`pnpm add -D github:atamaniuc/harness#v0.1.0`, run `pnpm exec harness doctor`, and compare
+`pnpm add -D github:atamaniuc/harnessimoimo#v0.1.0`, run `pnpm exec harnessimo doctor`, and compare
 its output line by line against what `make check` and CI run today. Write the comparison
 into that repository's handoff before deleting `.harness/2-tools/harness.ts`,
 `locked-surfaces.sh`, `cold-start.sh` or `packages/harness/` — the config claims to cover

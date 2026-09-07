@@ -38,11 +38,11 @@ Unfinished work crosses sessions through `specs/TRACKS.md` and the handoffs it i
 State is what the harness cannot infer; a handoff is what the next session cannot
 reconstruct from git in one pass.
 
-Run `harness doctor` for the honest list of what is enforced here and what is not.
+Run `harnessimo doctor` for the honest list of what is enforced here and what is not.
 
 ---
 
 The model comes from
 [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/);
-the tooling is [`@atamaniuc/harness`](https://github.com/atamaniuc/harness), whose
-[guide](https://github.com/atamaniuc/harness/blob/main/docs/GUIDE.md) is the fastest way in.
+the tooling is [`harnessimo`](https://github.com/atamaniuc/harnessimo), whose
+[guide](https://github.com/atamaniuc/harnessimo/blob/main/docs/GUIDE.md) is the fastest way in.

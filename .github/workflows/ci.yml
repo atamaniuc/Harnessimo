@@ -49,8 +49,8 @@ jobs:
       # --reverify re-runs every item claiming to pass, so a hand-edited state
       # is caught rather than trusted. This is the check that makes the queue's
       # evidence evidence.
-      - run: node bin/harness.mjs check --reverify
-      - run: node bin/harness.mjs doctor
+      - run: node bin/harnessimo.mjs check --reverify
+      - run: node bin/harnessimo.mjs doctor
 
   session-hygiene:
     name: locked surfaces and clean exit
@@ -70,13 +70,13 @@ jobs:
       - name: An agent commit may not touch the files that define success
         run: |
           BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
-          node bin/harness.mjs locked "$BASE" HEAD
+          node bin/harnessimo.mjs locked "$BASE" HEAD
       # Lecture 12: the debris a build compiles happily, and a progress file
       # that went stale while the code around it changed.
       - name: The session left a clean state
         run: |
           BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
-          node bin/harness.mjs clean-exit "$BASE" HEAD
+          node bin/harnessimo.mjs clean-exit "$BASE" HEAD
 
   cold-start:
     name: a fresh clone verifies itself
@@ -88,4 +88,4 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: node bin/harness.mjs cold-start
+      - run: node bin/harnessimo.mjs cold-start

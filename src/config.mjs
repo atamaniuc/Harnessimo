@@ -1,7 +1,7 @@
 // Configuration: what this repository asked the harness to enforce.
 //
 // Every section is optional, and an absent section means that check does not
-// run. That is deliberate and it is why `harness doctor` exists: a project
+// run. That is deliberate and it is why `harnessimo doctor` exists: a project
 // adopts the checks it can actually satisfy today, and the tool reports which
 // ones are live rather than implying all of them are. Claiming enforcement
 // that does not exist is worse than claiming none — it stops anyone from
@@ -10,7 +10,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-export const CONFIG_FILE = "harness.config.json";
+export const CONFIG_FILE = "harnessimo.config.json";
 
 /** Defaults applied to a section the project declared but left partly blank. */
 const SECTION_DEFAULTS = {
@@ -89,7 +89,7 @@ export function loadConfig(root = process.cwd()) {
   return config;
 }
 
-/** Which checks this configuration turns on, for `harness doctor`. */
+/** Which checks this configuration turns on, for `harnessimo doctor`. */
 export function enabledChecks(config) {
   return {
     proof: Boolean(config.docs),

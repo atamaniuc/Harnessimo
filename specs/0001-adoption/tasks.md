@@ -10,7 +10,7 @@ P0 gates the lane. A checked box carries the marker that proves it.
       <!-- proof: src/index.mjs:verifyProofs -->
 - [x] **T2** Every rule has a test proving it fires on bad input, and the wiring has
       end-to-end tests against real repositories on disk <!-- proof: npm run test -->
-- [x] **T3** `harness init` scaffolds a harness that passes immediately, so adoption is a
+- [x] **T3** `harnessimo init` scaffolds a harness that passes immediately, so adoption is a
       command rather than a copying exercise
       <!-- proof: test/cli.test.mjs#init scaffolds a working harness that immediately passes its own check -->
 - [ ] **T4** `code-knowledge-base` depends on the package; its vendored scripts are

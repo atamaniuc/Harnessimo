@@ -43,12 +43,13 @@ checker:
 ## 3. Three minutes to a green check
 
 ```bash
-pnpm add -D github:atamaniuc/harness     # or: npm i -D github:atamaniuc/harness
-pnpm exec harness init
-pnpm exec harness check
+pnpm add -D github:atamaniuc/harnessimo     # or: npm i -D github:atamaniuc/harnessimo
+pnpm exec harnessimo init
+pnpm exec harnessimo check
 ```
 
-`init` writes three things and nothing else:
+`init` reads your repository first — command runner, source directories, migrations, CI —
+and writes a configuration that already passes. Then three things and nothing else:
 
 ```
 .harness/            the five subsystems, with starter documents
@@ -58,7 +59,7 @@ pnpm exec harness check
   4-state/           PROGRESS.md, DECISIONS.md, the work queue
   5-feedback/        the map of your checks
 specs/               TRACKS.md (live work), templates for a spec and a handoff
-harness.config.json  which checks you asked for
+harnessimo.config.json  which checks you asked for
 ```
 
 The scaffold passes its own check immediately, so your first green run costs nothing —
@@ -68,7 +69,7 @@ and every red one after that means something.
 Then run:
 
 ```bash
-pnpm exec harness doctor
+pnpm exec harnessimo doctor
 ```
 
 It prints what is enforced and what is not. **A section you leave out of the config is a
@@ -104,17 +105,17 @@ flowchart TD
     Q -- no --> PICK["Pick an item from the queue"]
     HO --> PICK
     PICK --> WORK["Do the work"]
-    WORK --> V["<b>harness queue verify &lt;id&gt;</b><br/>the harness runs the item's own check"]
+    WORK --> V["<b>harnessimo queue verify &lt;id&gt;</b><br/>the harness runs the item's own check"]
     V -- fails --> WORK
     V -- passes --> WRITE["Update PROGRESS.md<br/>update the handoff if unfinished"]
-    WRITE --> C["<b>harness check</b>"]
+    WRITE --> C["<b>harnessimo check</b>"]
     C -- red --> WORK
     C -- green --> COMMIT(["Commit"])
 ```
 
 Two rules make this work, and both are enforced rather than agreed:
 
-- **You never write `passing` yourself.** Only `harness queue verify` does, and only after
+- **You never write `passing` yourself.** Only `harnessimo queue verify` does, and only after
   running the item's own command. CI re-runs every such claim, so a hand-edited state is
   detected rather than trusted.
 - **One item at a time.** Split attention produces work that is started everywhere and
@@ -148,7 +149,7 @@ One job. It runs the same command you run locally, so there is no "works on my m
 gap to argue about:
 
 ```yaml
-- run: pnpm exec harness check --reverify
+- run: pnpm exec harnessimo check --reverify
 ```
 
 `--reverify` re-runs every item claiming to pass. That is the line that makes the queue's
@@ -157,8 +158,8 @@ evidence *evidence* rather than a string someone typed.
 Two checks need a commit range and get their own step:
 
 ```yaml
-- run: pnpm exec harness locked     "${{ github.event.pull_request.base.sha }}" HEAD
-- run: pnpm exec harness clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
+- run: pnpm exec harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
+- run: pnpm exec harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
 ```
 
 ## 8. Questions people actually ask
@@ -186,4 +187,4 @@ once here and once forked into your repository, is the problem this was built to
 - [`STANDARD.md`](STANDARD.md) — the reasoning behind each rule, and which lecture of
   [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/)
   it comes from.
-- `harness help` — every command, with its arguments.
+- `harnessimo help` — every command, with its arguments.

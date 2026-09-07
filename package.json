@@ -1,14 +1,27 @@
 {
-  "name": "@atamaniuc/harness",
+  "name": "harnessimo",
   "version": "0.1.0",
-  "description": "A harness for agent-driven engineering: five layers that govern how work gets done, plus handoff-driven development for continuity across sessions. Zero dependencies.",
-  "keywords": ["harness", "agents", "spec-driven-development", "handoff-driven-development", "ci"],
+  "description": "Harnessimo \u2014 a harness for agent-driven engineering: eight checks that turn \"I believe this is done\" into \"a command says so\". Five subsystems, handoffs between sessions, zero dependencies.",
+  "keywords": [
+    "harness",
+    "agents",
+    "spec-driven-development",
+    "handoff-driven-development",
+    "ci"
+  ],
   "license": "MIT",
   "author": "atamaniuc",
-  "repository": { "type": "git", "url": "git+https://github.com/atamaniuc/harness.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atamaniuc/harnessimo.git"
+  },
   "type": "module",
-  "engines": { "node": ">=22" },
-  "bin": { "harness": "bin/harness.mjs" },
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "harnessimo": "bin/harnessimo.mjs"
+  },
   "exports": {
     ".": "./src/index.mjs",
     "./proof": "./src/proof.mjs",
@@ -17,9 +30,20 @@
     "./queue": "./src/queue.mjs",
     "./readiness": "./src/readiness.mjs"
   },
-  "files": ["bin", "src", "templates", "schema", "README.md", "LICENSE"],
+  "files": [
+    "bin",
+    "src",
+    "templates",
+    "schema",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "check": "node --test test/*.test.mjs && node bin/harness.mjs check"
+    "check": "node --test test/*.test.mjs && node bin/harnessimo.mjs check"
+  },
+  "homepage": "https://github.com/atamaniuc/harnessimo#readme",
+  "bugs": {
+    "url": "https://github.com/atamaniuc/harnessimo/issues"
   }
 }

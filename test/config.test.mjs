@@ -8,7 +8,7 @@ import { ConfigError, enabledChecks, loadConfig } from "../src/config.mjs";
 const withConfig = (contents, fn) => {
   const dir = mkdtempSync(join(tmpdir(), "harness-config-"));
   try {
-    if (contents !== null) writeFileSync(join(dir, "harness.config.json"), contents);
+    if (contents !== null) writeFileSync(join(dir, "harnessimo.config.json"), contents);
     return fn(dir);
   } finally {
     rmSync(dir, { recursive: true, force: true });

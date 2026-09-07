@@ -46,12 +46,13 @@ flowchart LR
 ## 3. Три минуты до зелёной проверки
 
 ```bash
-pnpm add -D github:atamaniuc/harness     # или: npm i -D github:atamaniuc/harness
-pnpm exec harness init
-pnpm exec harness check
+pnpm add -D github:atamaniuc/harnessimo     # или: npm i -D github:atamaniuc/harnessimo
+pnpm exec harnessimo init
+pnpm exec harnessimo check
 ```
 
-`init` создаёт ровно три вещи:
+`init` сначала читает ваш репозиторий — чем запускаются команды, где исходники, есть ли
+миграции и CI — и пишет конфиг, который уже проходит. Затем создаёт ровно три вещи:
 
 ```
 .harness/            пять подсистем со стартовыми документами
@@ -61,7 +62,7 @@ pnpm exec harness check
   4-state/           PROGRESS.md, DECISIONS.md, очередь работ
   5-feedback/        карта ваших проверок
 specs/               TRACKS.md (живая работа), шаблоны спеки и handoff
-harness.config.json  какие проверки вы включили
+harnessimo.config.json  какие проверки вы включили
 ```
 
 Скаффолд сразу проходит собственную проверку, поэтому первый зелёный прогон ничего не
@@ -70,7 +71,7 @@ harness.config.json  какие проверки вы включили
 Дальше:
 
 ```bash
-pnpm exec harness doctor
+pnpm exec harnessimo doctor
 ```
 
 Печатает, что реально включено, а что нет. **Секция, которую вы не указали в конфиге, —
@@ -106,17 +107,17 @@ flowchart TD
     Q -- нет --> PICK["Берём пункт из очереди"]
     HO --> PICK
     PICK --> WORK["Делаем работу"]
-    WORK --> V["<b>harness queue verify &lt;id&gt;</b><br/>харнесс сам запускает проверку пункта"]
+    WORK --> V["<b>harnessimo queue verify &lt;id&gt;</b><br/>харнесс сам запускает проверку пункта"]
     V -- упало --> WORK
     V -- прошло --> WRITE["Обновляем PROGRESS.md<br/>и handoff, если не закончили"]
-    WRITE --> C["<b>harness check</b>"]
+    WRITE --> C["<b>harnessimo check</b>"]
     C -- красный --> WORK
     C -- зелёный --> COMMIT(["Коммит"])
 ```
 
 Две вещи делают это рабочим, и обе принудительны, а не по договорённости:
 
-- **Вы никогда не пишете `passing` сами.** Это делает только `harness queue verify` и
+- **Вы никогда не пишете `passing` сами.** Это делает только `harnessimo queue verify` и
   только после запуска команды самого пункта. Курс называет это «гейт по состоянию
   passing». CI перезапускает каждое такое утверждение, поэтому вручную выставленный статус
   обнаруживается, а не принимается на веру.
@@ -150,7 +151,7 @@ flowchart LR
 работает» не о чем:
 
 ```yaml
-- run: pnpm exec harness check --reverify
+- run: pnpm exec harnessimo check --reverify
 ```
 
 `--reverify` перезапускает каждый пункт, который claims passing. Именно эта строка
@@ -159,8 +160,8 @@ flowchart LR
 Двум проверкам нужен диапазон коммитов, поэтому у них свой шаг:
 
 ```yaml
-- run: pnpm exec harness locked     "${{ github.event.pull_request.base.sha }}" HEAD
-- run: pnpm exec harness clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
+- run: pnpm exec harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
+- run: pnpm exec harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
 ```
 
 ## 8. Вопросы, которые задают на самом деле
@@ -187,4 +188,4 @@ flowchart LR
 - [`ADOPTING.md`](ADOPTING.md) — миграция репозитория, у которого уже есть свои проверки.
 - [`STANDARD.md`](STANDARD.md) — обоснование каждого правила и лекция курса, из которой оно
   выросло.
-- `harness help` — все команды с аргументами.
+- `harnessimo help` — все команды с аргументами.

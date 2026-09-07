@@ -1,13 +1,13 @@
-# harness
+# Harnessimo
 
-[![CI](https://github.com/atamaniuc/harness/actions/workflows/ci.yml/badge.svg)](https://github.com/atamaniuc/harness/actions/workflows/ci.yml)
+[![CI](https://github.com/atamaniuc/harnessimo/actions/workflows/ci.yml/badge.svg)](https://github.com/atamaniuc/harnessimo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](package.json)
 [![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 
 **A capable model with a bad harness produces work that looks finished and is not.**
 
-This is the harness: eight checks that turn *"I believe this is done"* into *"a command
+Harnessimo is the harness: eight checks that turn *"I believe this is done"* into *"a command
 says so"*, and a structure for the parts of a project that decide whether that command can
 exist at all.
 
@@ -17,10 +17,25 @@ Zero dependencies, no build step, one config file. <!-- proof: package.json:"fil
 > It is the shortest path from "what is this" to a green check in your own repository.
 
 ```bash
-pnpm add -D github:atamaniuc/harness
-pnpm exec harness init      # scaffold .harness/, specs/, harness.config.json
-pnpm exec harness doctor    # what is actually enforced here
-pnpm exec harness check     # the one command CI runs
+pnpm add -D github:atamaniuc/harnessimo
+pnpm exec harnessimo init      # reads your repo and writes a config that already passes
+pnpm exec harnessimo doctor    # what is actually enforced here
+pnpm exec harnessimo check     # the one command CI runs
+```
+
+`init` is not a template drop. It looks at what the repository has — your command runner,
+your source directories, your migrations, whether your CI directory exists — turns on the
+checks it can satisfy, and prints what it left off and why. **The first run after `init` is
+green**, so every red run after it means something.
+<!-- proof: test/detect.test.mjs#strict mode is off until a document actually carries a marker -->
+
+```
+configured from what this repository has:
+  on   make commands in Makefile
+  on   cold start: pnpm install --frozen-lockfile && make check
+  on   clean exit over src, scripts
+left off, and why — these are gaps, not failures:
+  off  strict mode off: README.md carries no proof marker yet. Add one, then list it in docs.mustCarryProof
 ```
 
 ## What a harness is
@@ -59,14 +74,14 @@ This repository is one executable implementation of it —
 
 | Check | Fails when | Lecture |
 |---|---|---|
-| `harness proof` | a documented claim's test, file or command no longer exists <!-- proof: src/proof.mjs:checkTarget --> | 03 · repository as source of truth |
-| `harness tracks` | a track links a deleted handoff, or carries no status <!-- proof: src/tracks.mjs:checkTracks --> | 05 · continuity between sessions |
-| `harness tasks` | a checked box names no executable check <!-- proof: src/tasks.mjs:checkTaskGate --> | 08 · feature lists as primitives |
-| `harness queue` | an item claiming `passing` fails when re-run <!-- proof: src/queue.mjs:checkQueue --> | 08, 09 · the passing-state gate |
-| `harness cold-start` | a fresh clone cannot install and verify itself <!-- proof: src/coldstart.mjs:coldStartProblems --> | 03, 10 · end-to-end as ground truth |
-| `harness clean-exit` | a session left debris, or never wrote down where it got to <!-- proof: src/cleanexit.mjs:debrisProblems --> | 12 · clean state |
-| `harness instructions` | the instruction file grew from a router into a manual <!-- proof: src/cleanexit.mjs:instructionProblems --> | 04 · one giant file fails |
-| `harness locked` | an agent commit touched the files that define success <!-- proof: src/locked.mjs:lockedViolations --> | — |
+| `harnessimo proof` | a documented claim's test, file or command no longer exists <!-- proof: src/proof.mjs:checkTarget --> | 03 · repository as source of truth |
+| `harnessimo tracks` | a track links a deleted handoff, or carries no status <!-- proof: src/tracks.mjs:checkTracks --> | 05 · continuity between sessions |
+| `harnessimo tasks` | a checked box names no executable check <!-- proof: src/tasks.mjs:checkTaskGate --> | 08 · feature lists as primitives |
+| `harnessimo queue` | an item claiming `passing` fails when re-run <!-- proof: src/queue.mjs:checkQueue --> | 08, 09 · the passing-state gate |
+| `harnessimo cold-start` | a fresh clone cannot install and verify itself <!-- proof: src/coldstart.mjs:coldStartProblems --> | 03, 10 · end-to-end as ground truth |
+| `harnessimo clean-exit` | a session left debris, or never wrote down where it got to <!-- proof: src/cleanexit.mjs:debrisProblems --> | 12 · clean state |
+| `harnessimo instructions` | the instruction file grew from a router into a manual <!-- proof: src/cleanexit.mjs:instructionProblems --> | 04 · one giant file fails |
+| `harnessimo locked` | an agent commit touched the files that define success <!-- proof: src/locked.mjs:lockedViolations --> | — |
 
 Failures are written to be acted on, not just read:
 
@@ -93,8 +108,8 @@ or a copy of a script that drifted. Each has a check here.
 
 ## Configuration
 
-`harness.config.json`. Every section is optional, and **a section you leave out is a check
-that does not run** — `harness doctor` reports it as not set rather than implying otherwise.
+`harnessimo.config.json`. Every section is optional, and **a section you leave out is a check
+that does not run** — `harnessimo doctor` reports it as not set rather than implying otherwise.
 <!-- proof: test/cli.test.mjs#doctor reports what is enforced and what is not, without overstating -->
 
 ```jsonc
@@ -118,7 +133,7 @@ Adopting an existing repository, step by step: [`docs/ADOPTING.md`](docs/ADOPTIN
 Stated plainly, because a check that overstates its guarantee stops anyone looking for the
 missing one:
 
-- **`harness locked` is drift detection, not a sandbox.** It assumes commits pass through
+- **`harnessimo locked` is drift detection, not a sandbox.** It assumes commits pass through
   CI. An agent with push access that strips its own authorship trailer defeats it.
 - **It cannot tell whether a check is any good.** A test that asserts nothing satisfies
   every rule here. The harness makes claims falsifiable; it does not make them true.
@@ -129,12 +144,12 @@ missing one:
 ## Development
 
 ```bash
-npm test        # 73 tests, no install needed — the package has no dependencies
+npm test        # 79 tests, no install needed — the package has no dependencies
 npm run check   # the tests, then this repository's own gates
 ```
 
 The rules in `src/` are pure functions over strings and in-memory trees;
-`src/resolver.mjs` and `bin/harness.mjs` are the only code that touches the filesystem.
+`src/resolver.mjs` and `bin/harnessimo.mjs` are the only code that touches the filesystem.
 That split is why the rule layer is exhaustively tested and the wiring gets end-to-end
 tests against real directories. <!-- proof: test/cli.test.mjs -->
 

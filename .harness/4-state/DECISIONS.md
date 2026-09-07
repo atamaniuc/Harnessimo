@@ -7,7 +7,7 @@ What was decided, why, and what was rejected. Append; do not rewrite history.
 ## 2026-09-07 — One dependency, not two vendored copies
 
 The harness is a package a repository depends on, configured through
-`harness.config.json`, rather than scripts copied into each project.
+`harnessimo.config.json`, rather than scripts copied into each project.
 
 **Why:** the two repositories this came out of had complementary halves of the same idea
 and no shared implementation. A copied script is a fork the day after it is copied, and
@@ -33,7 +33,7 @@ first transitive advisory.
 ## 2026-09-07 — The rules are pure; one file touches the world
 
 `src/*.mjs` are functions over strings and in-memory trees. `src/resolver.mjs` and
-`bin/harness.mjs` are the filesystem and process edge.
+`bin/harnessimo.mjs` are the filesystem and process edge.
 
 **Why:** a rule that needs a fixture tree to test is a rule that stops being tested. The
 whole rule layer runs in under a second against in-memory objects, and the wiring gets its
@@ -43,7 +43,7 @@ own end-to-end tests against real directories.
 
 ## 2026-09-07 — A check the project did not configure is reported as absent, never as passing
 
-Every section of `harness.config.json` is optional, and `harness doctor` prints what is
+Every section of `harnessimo.config.json` is optional, and `harnessimo doctor` prints what is
 enforced and what is not.
 
 **Why:** claiming enforcement that does not exist is worse than claiming none — it stops
@@ -86,5 +86,5 @@ The gate itself was already fence-aware; the counter was not, which is the more 
 shape of this bug: the rule is right and something next to it quietly disagrees. Both now
 go through one `trackLines` helper.
 
-**Found by:** the end-to-end test that runs `harness init` and then `harness check`, which
+**Found by:** the end-to-end test that runs `harnessimo init` and then `harnessimo check`, which
 is the test most worth having.

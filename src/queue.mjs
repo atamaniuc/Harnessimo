@@ -39,7 +39,7 @@ function terminalState(item, terminalByKind) {
 /** @param {any} list @param {string} id */
 export function findItem(list, id) {
   const item = list.items.find((i) => i.id === id);
-  if (!item) throw new HarnessError(`no item "${id}"`, "run `harness queue status` to see the queue");
+  if (!item) throw new HarnessError(`no item "${id}"`, "run `harnessimo queue status` to see the queue");
   return item;
 }
 
@@ -171,7 +171,7 @@ export function checkQueue(list, options = {}) {
       problems.push(
         `"${item.id}" is ${item.state} with no evidence\n` +
           `  why:  done means a command passed, not that the work looked right\n` +
-          `  fix:  run \`harness queue verify ${item.id}\` instead of editing state`,
+          `  fix:  run \`harnessimo queue verify ${item.id}\` instead of editing state`,
       );
     }
   }

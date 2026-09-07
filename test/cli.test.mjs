@@ -1,5 +1,5 @@
 // End-to-end: the CLI against a real repository on disk. The unit tests prove
-// the rules; this proves the wiring — that `harness check` reads the config,
+// the rules; this proves the wiring — that `harnessimo check` reads the config,
 // finds the documents, and exits non-zero on a broken claim.
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const CLI = resolve(dirname(fileURLToPath(import.meta.url)), "../bin/harness.mjs");
+const CLI = resolve(dirname(fileURLToPath(import.meta.url)), "../bin/harnessimo.mjs");
 
 function fixture(files) {
   const dir = mkdtempSync(join(tmpdir(), "harness-cli-"));
@@ -34,7 +34,7 @@ const CONFIG = JSON.stringify({
 });
 
 const BASE = {
-  "harness.config.json": CONFIG,
+  "harnessimo.config.json": CONFIG,
   Makefile: "check:\n\techo ok\n",
   "README.md": "# Project\n\nThe gate runs in CI. <!-- proof: make check -->\n",
   "specs/TRACKS.md": "# Work tracks\n\n- **Search** — [handoff](specs/0001-search/handoff.md) — active, next: T1\n",
@@ -81,7 +81,7 @@ test("a repository with no configuration is told how to get one", () => {
   const dir = fixture({ "README.md": "# Project\n" });
   const { status, out } = run(dir, "check");
   assert.equal(status, 1);
-  assert.match(out, /harness init/);
+  assert.match(out, /harnessimo init/);
   rmSync(dir, { recursive: true, force: true });
 });
 

@@ -9,7 +9,7 @@ option stays rejected instead of being rediscovered every few weeks.
 
 ## YYYY-MM-DD — Adopted the harness as a dependency rather than a folder of scripts
 
-`@atamaniuc/harness` provides the gates; `harness.config.json` says which of them apply
+`harnessimo` provides the gates; `harnessimo.config.json` says which of them apply
 here.
 
 **Why:** a copied script is a fork the day after it is copied. Two projects had drifting

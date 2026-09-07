@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/atamaniuc/harness/main/schema/harness.config.schema.json",
-  "$comment": "Turn on only what you can satisfy today. A section left out is a check that does not run, and `harness doctor` reports it as not set rather than implying it is enforced. Adding a check later is a commit; claiming one you do not have is a lie your team will act on.",
+  "$schema": "https://raw.githubusercontent.com/atamaniuc/harnessimo/main/schema/harnessimo.config.schema.json",
+  "$comment": "Turn on only what you can satisfy today. A section left out is a check that does not run, and `harnessimo doctor` reports it as not set rather than implying it is enforced. Adding a check later is a commit; claiming one you do not have is a lie your team will act on.",
   "docs": {
     "roots": [
       ".",

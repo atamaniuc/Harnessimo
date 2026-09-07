@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/atamaniuc/harness/main/schema/harness.config.schema.json",
-  "title": "harness.config.json",
-  "description": "Which checks this repository has asked the harness to enforce. A section left out is a check that does not run \u2014 `harness doctor` reports it as not set rather than implying otherwise.",
+  "$id": "https://raw.githubusercontent.com/atamaniuc/harnessimo/main/schema/harnessimo.config.schema.json",
+  "title": "harnessimo.config.json",
+  "description": "Which checks this repository has asked the harness to enforce. A section left out is a check that does not run \u2014 `harnessimo doctor` reports it as not set rather than implying otherwise.",
   "type": "object",
   "additionalProperties": false,
   "properties": {

@@ -16,12 +16,12 @@ is an assumption, not a rule.
 
 **Documentation follows a changed contract.** If the item changed a schema, a command, or
 a promise the product makes, the document that states it changed in the same commit — and
-its proof marker resolves. _Enforced by `harness proof`._
+its proof marker resolves. _Enforced by `harnessimo proof`._
 
 **Checked boxes name their check.** A ticked task in a live lane carries a proof marker.
-_Enforced by `harness tasks`._
+_Enforced by `harnessimo tasks`._
 
-**Locked surfaces untouched.** _Enforced by `harness locked` in CI._
+**Locked surfaces untouched.** _Enforced by `harnessimo locked` in CI._
 
 ## What is deliberately not here
 

@@ -1,5 +1,5 @@
 {
-  "$schema": "./schema/harness.config.schema.json",
+  "$schema": "./schema/harnessimo.config.schema.json",
   "$comment": "This repository runs the harness on itself. Every check it offers is enforced here, because a standard whose own repository does not meet it is a suggestion.",
   "docs": {
     "roots": [
@@ -45,7 +45,7 @@
     "requiredFiles": [
       "AGENTS.md",
       "README.md",
-      "harness.config.json",
+      "harnessimo.config.json",
       ".harness/README.md",
       "specs/TRACKS.md"
     ],
@@ -55,7 +55,7 @@
     ],
     "commands": [
       "npm test",
-      "node bin/harness.mjs check"
+      "node bin/harnessimo.mjs check"
     ]
   },
   "cleanExit": {

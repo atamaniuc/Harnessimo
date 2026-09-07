@@ -31,15 +31,15 @@ something that exits non-zero.** Lecture 09 calls this *«экстернализ
 | Lecture | Idea | Implemented as |
 |---|---|---|
 | 02 · what a harness is | five subsystems, kitchen metaphor | the `.harness/` layout |
-| 03 · repository as source of truth | nothing outside the repo exists | `harness proof`, `harness cold-start` |
-| 04 · one giant instruction file fails | instructions are a router | `harness instructions` |
-| 05 · continuity between sessions | PROGRESS, DECISIONS, session protocol | `.harness/4-state/`, `harness tracks` |
-| 06 · initialization as its own phase | a scaffolded start | `harness init` |
-| 07 · overreach and under-finishing | WIP = 1, scope belongs to the human | `harness queue activate` |
-| 08 · feature lists as primitives | behaviour + verification + state | `harness queue` |
-| 09 · declaring victory too early | the passing-state gate, evidence | `harness queue verify`, `--reverify` |
-| 10 · end-to-end as ground truth | the real run is the proof | `harness cold-start` |
-| 12 · clean state at session end | no debris, progress written down | `harness clean-exit` |
+| 03 · repository as source of truth | nothing outside the repo exists | `harnessimo proof`, `harnessimo cold-start` |
+| 04 · one giant instruction file fails | instructions are a router | `harnessimo instructions` |
+| 05 · continuity between sessions | PROGRESS, DECISIONS, session protocol | `.harness/4-state/`, `harnessimo tracks` |
+| 06 · initialization as its own phase | a scaffolded start | `harnessimo init` |
+| 07 · overreach and under-finishing | WIP = 1, scope belongs to the human | `harnessimo queue activate` |
+| 08 · feature lists as primitives | behaviour + verification + state | `harnessimo queue` |
+| 09 · declaring victory too early | the passing-state gate, evidence | `harnessimo queue verify`, `--reverify` |
+| 10 · end-to-end as ground truth | the real run is the proof | `harnessimo cold-start` |
+| 12 · clean state at session end | no debris, progress written down | `harnessimo clean-exit` |
 
 Two things here are **not** from the course: proof markers and handoff-driven development.
 Both came out of production repositories and are described in their own sections below.
@@ -83,7 +83,7 @@ the verification command succeeds.
 stateDiagram-v2
     direction LR
     [*] --> not_started
-    not_started --> active: harness queue activate<br/>(Definition of Ready holds, WIP = 1)
+    not_started --> active: harnessimo queue activate<br/>(Definition of Ready holds, WIP = 1)
     active --> passing: verification passed<br/><b>only the harness writes this</b>
     active --> blocked: verification failed<br/>(reason recorded)
     blocked --> active: cause fixed
@@ -103,7 +103,7 @@ Two details that only appear once this runs in anger:
   condition. A harness without a stop condition is not a harness.
 - **Nested calls degrade.** An item whose verification invokes the harness would recurse
   until killed, so a nested run checks invariants only.
-  <!-- proof: bin/harness.mjs:HARNESS_REVERIFY -->
+  <!-- proof: bin/harnessimo.mjs:HARNESS_REVERIFY -->
 
 ## Layer 3 — Environment *(«подсистема среды» — the stove)*
 
@@ -158,7 +158,7 @@ flowchart TD
 
     L1["<b>1 · Синтаксис и статический анализ</b><br/>types, schemas, lint<br/><i>fast, and blind to behaviour</i>"]
     L1 -- passes --> L2["<b>2 · Верификация runtime-поведения</b><br/>tests, especially negative ones<br/><i>a rule with no failing test is an assumption</i>"]
-    L2 -- passes --> L3["<b>3 · Системное подтверждение</b><br/>the real end-to-end run<br/><i>harness cold-start, in an empty directory</i>"]
+    L2 -- passes --> L3["<b>3 · Системное подтверждение</b><br/>the real end-to-end run<br/><i>harnessimo cold-start, in an empty directory</i>"]
     L3 -- passes --> DONE(["Finished"])
 
     L1 -- fails --> BACK["Not finished.<br/>No level may be skipped."]
@@ -169,7 +169,7 @@ flowchart TD
 The third level is the one most projects skip and the one that catches what the first two
 are blind to: something that works only because of state on this machine
 ([lecture 10](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-10-why-end-to-end-testing-changes-results/)).
-`harness cold-start` clones the project into an empty directory and runs the documented
+`harnessimo cold-start` clones the project into an empty directory and runs the documented
 commands there. <!-- proof: src/coldstart.mjs:coldStartProblems -->
 
 It is also the honest test of the documentation, which is
@@ -186,7 +186,7 @@ word for what happens otherwise is *«энтропия»* — each session leave
 single piece is worth stopping for, and after twenty sessions nobody can start the project
 in three minutes any more.
 
-The build and the tests are the project's own gate. What `harness clean-exit` adds is the
+The build and the tests are the project's own gate. What `harnessimo clean-exit` adds is the
 part a build is blind to: debug leftovers that compile perfectly, and a progress file that
 was not touched while the code around it changed.
 <!-- proof: src/cleanexit.mjs:debrisProblems -->

@@ -13,8 +13,8 @@ assume. It is a dependency other repositories install, and it is governed by its
 ```
 npm test        # the rules and the wiring; no install step, the package has no dependencies
 npm run check   # the tests, then this repository's own gates
-node bin/harness.mjs doctor    # what is enforced here
-node bin/harness.mjs help      # every command
+node bin/harnessimo.mjs doctor    # what is enforced here
+node bin/harnessimo.mjs help      # every command
 ```
 
 Eight checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clean-exit`,
@@ -27,11 +27,11 @@ Node >= 22. There is nothing to provision and no key to configure.
 ## Layout
 
 ```
-bin/harness.mjs   the command line: the only place that runs processes
+bin/harnessimo.mjs   the command line: the only place that runs processes
 src/              the rules, as pure functions — no filesystem except resolver.mjs
 test/             one test file per rule, plus cli.test.mjs against real directories
-templates/        what `harness init` writes into a consuming repository
-schema/           JSON Schema for harness.config.json
+templates/        what `harnessimo init` writes into a consuming repository
+schema/           JSON Schema for harnessimo.config.json
 docs/             STANDARD.md (the model), ADOPTING.md (the migration)
 .harness/         how this repository is governed — start at .harness/README.md
 specs/            live work tracks and their handoffs
@@ -50,13 +50,13 @@ starts in minutes.
 ## Working rules
 
 - **WIP = 1.** One queue item active at a time. Enforced.
-- **Never edit `state` or `evidence` by hand.** Run `node bin/harness.mjs queue verify <id>`;
+- **Never edit `state` or `evidence` by hand.** Run `node bin/harnessimo.mjs queue verify <id>`;
   CI re-runs every passing claim, so a hand-written state is detected rather than trusted.
 - **Never add a runtime dependency.** See `.harness/1-instructions/CONSTRAINTS.md` #1.
 - **A rule ships with a test proving it fires on bad input.** A rule with no failing test is
   an assumption wearing a rule's clothes.
 - **Enforcement is labelled honestly.** If a rule is caught only in review, it says so.
 - **Leave a clean state.** No debris, `PROGRESS.md` updated, work committed. Enforced by
-  `harness clean-exit`, which reads what this session changed rather than the whole tree.
+  `harnessimo clean-exit`, which reads what this session changed rather than the whole tree.
 
 Hard constraints: `.harness/1-instructions/CONSTRAINTS.md`. Read it before changing a rule.

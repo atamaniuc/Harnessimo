@@ -4,7 +4,7 @@ Checked when an item is started, not when it is finished. The expensive failure 
 starting work whose success cannot be decided, because it is discovered only at the end,
 when the work is already done and unfalsifiable.
 
-The machine-decidable parts are enforced by `harness queue activate`. The rest is
+The machine-decidable parts are enforced by `harnessimo queue activate`. The rest is
 judgement, written down here because judgement that is written down is at least
 reviewable.
 
