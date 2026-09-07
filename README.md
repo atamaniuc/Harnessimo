@@ -5,6 +5,7 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](package.json)
 [![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 [![release](https://img.shields.io/github/v/release/atamaniuc/Harnessimo?label=release)](https://github.com/atamaniuc/Harnessimo/releases/latest)
+[![docs](https://img.shields.io/badge/docs-atamaniuc.github.io%2FHarnessimo-blue)](https://atamaniuc.github.io/Harnessimo/)
 
 <p align="center">
   <img src="docs/assets/harnessimo.jpg"
@@ -24,8 +25,10 @@ queue, protected scoring, and state that survives a session ending.
 
 Zero dependencies, no build step, one config file. <!-- proof: package.json:"files" -->
 
-> **New here? Read the [15-minute guide](docs/GUIDE.md)** ([по-русски](docs/GUIDE.ru.md)).
-> It is the shortest path from "what is this" to a green check in your own repository.
+> **New here? Read the [15-minute guide](https://atamaniuc.github.io/Harnessimo/GUIDE/)**
+> ([по-русски](https://atamaniuc.github.io/Harnessimo/GUIDE.ru/)) — the shortest path from
+> "what is this" to a green check in your own repository. Full documentation, with the
+> diagrams rendered: **<https://atamaniuc.github.io/Harnessimo/>**
 
 ```bash
 pnpm add -D github:atamaniuc/Harnessimo#v0.1.0

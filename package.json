@@ -61,7 +61,7 @@
     "test": "node --test test/*.test.mjs",
     "check": "node --test test/*.test.mjs && node bin/harnessimo.mjs check"
   },
-  "homepage": "https://github.com/atamaniuc/Harnessimo#readme",
+  "homepage": "https://atamaniuc.github.io/Harnessimo/",
   "bugs": {
     "url": "https://github.com/atamaniuc/Harnessimo/issues"
   },

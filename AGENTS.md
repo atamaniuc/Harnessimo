@@ -21,6 +21,7 @@ Eight checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clea
 `instructions`. What each is for, and which lecture of
 [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/) it
 comes from: `docs/STANDARD.md`. The fastest way in for a newcomer: `docs/GUIDE.md`.
+Published, with the diagrams rendered: <https://atamaniuc.github.io/Harnessimo/>.
 
 Node >= 22. There is nothing to provision and no key to configure.
 
