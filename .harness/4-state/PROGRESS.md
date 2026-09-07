@@ -48,6 +48,20 @@ limit — all implemented, tested, and enforced against this repository by `npm 
 - **The pitch leads with autonomy**: an agent runs unattended exactly as far as something
   other than the agent decides when the work is done.
 
+## Waiting on a human
+
+- **The docs site is built and published to `gh-pages`, and serves 404.** The workflow is
+  green and the branch is updated, but Pages itself is off: Settings → Pages → Build and
+  deployment → Source: *Deploy from a branch* → `gh-pages` / `/ (root)`. One switch. Until
+  it is flipped, nothing links to the site — a link to a 404 is exactly the kind of claim
+  this repository refuses to make.
+- **`v0.1.0` is not tagged.** This session's git proxy rejects tag pushes (`send-pack:
+  unexpected disconnect`) while branch pushes succeed, and the available API creates
+  branches but not tags. Consumers pin the commit SHA meanwhile.
+- **`mkdocs build` in the deploy workflow does not pass `--strict`**, so a broken docs link
+  ships silently. The build is clean under `--strict` today. That file is a locked surface,
+  so the change is a human's.
+
 ## Open questions for the human
 
 - None blocking. The one judgement call worth revisiting: `locked.paths` here covers CI
