@@ -44,5 +44,5 @@ Run `harnessimo doctor` for the honest list of what is enforced here and what is
 
 The model comes from
 [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/);
-the tooling is [`harnessimo`](https://github.com/atamaniuc/harnessimo), whose
-[guide](https://github.com/atamaniuc/harnessimo/blob/main/docs/GUIDE.md) is the fastest way in.
+the tooling is [`harnessimo`](https://github.com/atamaniuc/Harnessimo), whose
+[guide](https://github.com/atamaniuc/Harnessimo/blob/main/docs/GUIDE.md) is the fastest way in.

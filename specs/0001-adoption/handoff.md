@@ -46,7 +46,7 @@ public and carries a tag.
 
 The consuming side is designed and not yet exercised:
 
-- Install is `pnpm add -D github:atamaniuc/harnessimoimo#<tag>` in both, since both are pnpm
+- Install is `pnpm add -D github:atamaniuc/Harnessimoimo#<tag>` in both, since both are pnpm
   workspaces on Node >= 22. No tag exists yet (the second track in `TRACKS.md`), so the
   first migration will have to track a branch and be re-pinned afterwards.
 - `code-knowledge-base` is the easier of the two and should go first: its checks map onto
@@ -71,7 +71,7 @@ The consuming side is designed and not yet exercised:
 ## First step
 
 Cut `v0.1.0` here, then in `code-knowledge-base`'s branch:
-`pnpm add -D github:atamaniuc/harnessimoimo#v0.1.0`, run `pnpm exec harnessimo doctor`, and compare
+`pnpm add -D github:atamaniuc/Harnessimoimo#v0.1.0`, run `pnpm exec harnessimo doctor`, and compare
 its output line by line against what `make check` and CI run today. Write the comparison
 into that repository's handoff before deleting `.harness/2-tools/harness.ts`,
 `locked-surfaces.sh`, `cold-start.sh` or `packages/harness/` — the config claims to cover

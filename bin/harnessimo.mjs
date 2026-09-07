@@ -532,7 +532,7 @@ Configuration lives in harnessimo.config.json — run \`harnessimo init\` and it
 for you from what this repository already has. A section you leave out is a check that does
 not run, and \`harnessimo doctor\` says so rather than implying otherwise.
 
-Docs: https://github.com/atamaniuc/harnessimo`);
+Docs: https://github.com/atamaniuc/Harnessimo`);
 }
 
 // ---------------------------------------------------------------- dispatch

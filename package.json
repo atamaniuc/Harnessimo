@@ -13,7 +13,7 @@
   "author": "atamaniuc",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/atamaniuc/harnessimo.git"
+    "url": "git+https://github.com/atamaniuc/Harnessimo.git"
   },
   "type": "module",
   "engines": {
@@ -42,8 +42,8 @@
     "test": "node --test test/*.test.mjs",
     "check": "node --test test/*.test.mjs && node bin/harnessimo.mjs check"
   },
-  "homepage": "https://github.com/atamaniuc/harnessimo#readme",
+  "homepage": "https://github.com/atamaniuc/Harnessimo#readme",
   "bugs": {
-    "url": "https://github.com/atamaniuc/harnessimo/issues"
+    "url": "https://github.com/atamaniuc/Harnessimo/issues"
   }
 }

@@ -43,7 +43,7 @@ const ENTRY_DOCS = ["AGENTS.md", "CLAUDE.md", "README.md", "CONTRIBUTING.md"];
 export function detectConfig(repo) {
   const found = [];
   const missing = [];
-  const config = { $schema: "https://raw.githubusercontent.com/atamaniuc/harnessimo/main/schema/harnessimo.config.schema.json" };
+  const config = { $schema: "https://raw.githubusercontent.com/atamaniuc/Harnessimo/main/schema/harnessimo.config.schema.json" };
 
   // --- how this project runs commands, so `proof: make check` can be resolved
   const commands = {};
