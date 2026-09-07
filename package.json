@@ -1,6 +1,6 @@
 {
   "name": "harnessimo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Harnessimo \u2014 the arbiter that lets an agent run unattended: eight checks that decide when work is finished, from proof markers to a re-verified work queue, locked scoring and a cold-start test. Five subsystems, handoffs between sessions, zero dependencies.",
   "keywords": [
     "harness",

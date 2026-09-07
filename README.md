@@ -36,6 +36,7 @@ pnpm exec harnessimo init      # reads your repo and writes a config that alread
 pnpm exec harnessimo doctor    # what is actually enforced here
 pnpm exec harnessimo check     # the one command CI runs
 pnpm exec harnessimo hooks install   # the same gate, on every commit
+pnpm exec harnessimo hooks install --agent   # hand the state to every new session
 ```
 
 `init` is not a template drop. It looks at what the repository has — your command runner,
@@ -139,7 +140,9 @@ What makes each turn of that loop safe to leave alone:
   fails the build — because a loop that can edit its own scorer will.
   <!-- proof: src/locked.mjs:lockedViolations -->
 - **The next session starts from written state, not memory.** Track index, handoffs,
-  decisions log — and a check that fails when any of them has gone stale.
+  decisions log — and a check that fails when any of them has gone stale. `hooks install
+  --agent` goes further and *hands* that state to a session at startup, so reading it is
+  not something the agent has to remember to do. <!-- proof: src/brief.mjs:briefText -->
 - **Nothing is left behind.** No debris, no unwritten progress, and a fresh clone still
   runs. <!-- proof: src/coldstart.mjs:coldStartProblems -->
 
@@ -226,7 +229,7 @@ missing one:
 ## Development
 
 ```bash
-npm test        # 93 tests, no install needed — the package has no dependencies
+npm test        # 105 tests, no install needed — the package has no dependencies
 npm run check   # the tests, then this repository's own gates
 ```
 

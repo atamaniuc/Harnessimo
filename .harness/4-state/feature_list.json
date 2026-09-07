@@ -101,6 +101,17 @@
       "evidence": "# pass 8 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 80.222249",
       "notes": "Prompted by the question 'are hooks wired up at all' — which found a hook in the sibling repository still calling a script this migration had deleted.",
       "last_failure": null
+    },
+    {
+      "id": "session-brief",
+      "phase": "1",
+      "kind": "code",
+      "behavior": "A session receives the harness state at startup — live tracks, the head of each handoff, what is in flight, what is and is not enforced — instead of being trusted to go and read it.",
+      "verification": "node --test test/brief.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 12 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 84.545629",
+      "notes": "Asked whether the agent-side hooks were wired up: they were not, except one hand-written script in one repository that needed jq.",
+      "last_failure": null
     }
   ]
 }

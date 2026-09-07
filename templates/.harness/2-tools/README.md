@@ -8,6 +8,9 @@ is one implementation with one set of tests, and this project configures it in
 ```
 harnessimo check [--reverify]   every configured gate; the one command CI runs
 harnessimo doctor               what is actually enforced here, honestly
+harnessimo brief                what a session should read first
+harnessimo hooks install        the fast gates, on every commit
+harnessimo hooks install --agent  the state, handed to a session at startup
 harnessimo queue status         what is in flight
 harnessimo queue verify <id>    run that item's own check and record the outcome
 harnessimo locked               an agent commit did not touch the files defining success

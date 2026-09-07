@@ -157,6 +157,26 @@ export function hookStatus(state: { hookExists: boolean; hooksPath: string | nul
   message: string;
 };
 
+// ---- the session brief
+
+export function briefText(input: {
+  tracksText: string | null;
+  handoffs?: { path: string; text: string }[];
+  queue?: FeatureList | null;
+  progressText?: string | null;
+  enabled?: Record<string, boolean>;
+  tracksPath?: string;
+}): string;
+export function briefJson(text: string): {
+  hookSpecificOutput: { hookEventName: string; additionalContext: string };
+};
+export function handoffPaths(tracksText: string): string[];
+export function sectionOf(markdown: string, name: string): string | null;
+export function mergeSessionStartHook(
+  settings: Record<string, any>,
+  command: string,
+): { settings: Record<string, any>; added: boolean };
+
 // ---- configuration and the filesystem edge
 
 export class ConfigError extends Error {}

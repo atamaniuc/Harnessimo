@@ -9,5 +9,6 @@ export { lockedViolations, formatLockedViolations } from "./locked.mjs";
 export { coldStartProblems } from "./coldstart.mjs";
 export { debrisProblems, progressProblems, instructionProblems, DEFAULT_MARKERS } from "./cleanexit.mjs";
 export { hookScript, hookStatus, HOOK_PATH, HOOKS_DIR } from "./hooks.mjs";
+export { briefText, briefJson, handoffPaths, mergeSessionStartHook, sectionOf } from "./brief.mjs";
 export { loadConfig, enabledChecks, ConfigError } from "./config.mjs";
 export { createResolver, collectDocs, collectFiles, readAll } from "./resolver.mjs";

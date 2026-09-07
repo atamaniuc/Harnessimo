@@ -7,7 +7,7 @@ npm run check
 Runs the tests, then this repository's own gates. It is what CI runs, and passing it is
 what "finished" means here.
 
-**1. The rules.** 93 tests over `src/`, each rule with at least one test proving it fires
+**1. The rules.** 105 tests over `src/`, each rule with at least one test proving it fires
 on bad input. The rules are pure functions, so this level needs no fixture tree and takes
 under a second.
 

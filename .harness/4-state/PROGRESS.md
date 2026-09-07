@@ -8,7 +8,7 @@ State carried between sessions. Read this first; update it before you stop.
 task gate, the queue, locked surfaces, cold start, clean exit and the instruction-file
 limit — all implemented, tested, and enforced against this repository by `npm run check`.
 
-- 93 tests, zero dependencies, no build step.
+- 105 tests, zero dependencies, no build step.
 - Documentation is now anchored to
   [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/):
   every check names the lecture it comes from, and `docs/GUIDE.md` (plus a Russian version)
@@ -37,6 +37,9 @@ limit — all implemented, tested, and enforced against this repository by `npm 
 - Templates, so adoption is one command instead of a copying exercise.
 
 ## Next
+
+0. Nothing blocking. The two source repositories run on the package, both hooks (git and
+   agent-side) are installed in all three, and the docs site is live.
 
 1. Adoption in the two repositories the tool came out of (see `specs/TRACKS.md`).
 2. A published tag, so consumers pin a version instead of tracking a branch.

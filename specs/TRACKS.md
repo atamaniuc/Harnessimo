@@ -8,5 +8,4 @@ Closed tracks are distilled into [TRACKS-LOG.md](TRACKS-LOG.md) and their handof
 status. A line pointing at a handoff that no longer exists is a dead marker the next
 session would trust.
 
-- **Adoption in the two source repositories (spec 0001)** — [handoff](specs/0001-adoption/handoff.md) — active, next: T3 — replace `code-knowledge-base`'s vendored `locked-surfaces.sh` and `cold-start.sh` with the shared CLI
-- **Published version tag** — none — blocked (on the repository being public and a first tag being cut), next: tag `v0.1.0` so consumers pin a version instead of tracking `main`
+_No live tracks: the adoption lane closed when both consumers shipped on the package._

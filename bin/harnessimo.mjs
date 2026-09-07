@@ -33,6 +33,7 @@ import { coldStartProblems } from "../src/coldstart.mjs";
 import { debrisProblems, instructionProblems, progressProblems } from "../src/cleanexit.mjs";
 import { detectConfig } from "../src/detect.mjs";
 import { HOOKS_DIR, HOOK_PATH, hookScript, hookStatus } from "../src/hooks.mjs";
+import { briefJson, briefText, handoffPaths, mergeSessionStartHook } from "../src/brief.mjs";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ROOT = process.cwd();
@@ -536,6 +537,52 @@ function cmdInit() {
  * points git at it, so the hook is a reviewed file everyone gets rather than a
  * local artifact each person has to be told about.
  */
+/**
+ * What a session should read before it does anything: the live tracks, the head
+ * of each handoff, what is in flight, and what this repository actually
+ * enforces. A rule saying "load the handoff first" depends on the reader
+ * remembering it; this hands it over whether they do or not.
+ */
+function cmdBrief() {
+  const cfg = config();
+  const read = (p) => (existsSync(join(ROOT, p)) ? readFileSync(join(ROOT, p), "utf8") : null);
+
+  const tracksPath = cfg.tracks?.file ?? "specs/TRACKS.md";
+  const tracksText = read(tracksPath);
+  const handoffs = tracksText
+    ? handoffPaths(tracksText)
+        .filter((p) => existsSync(join(ROOT, p)))
+        .map((p) => ({ path: p, text: readFileSync(join(ROOT, p), "utf8") }))
+    : [];
+
+  let queue = null;
+  if (cfg.queue?.file) {
+    const raw = read(cfg.queue.file);
+    if (raw) {
+      try {
+        queue = JSON.parse(raw);
+      } catch {
+        /* a broken queue file is the check's problem, not the brief's */
+      }
+    }
+  }
+
+  const text = briefText({
+    tracksText,
+    handoffs,
+    queue,
+    progressText: cfg.cleanExit?.progressFile ? read(cfg.cleanExit.progressFile) : null,
+    enabled: cfg.path ? enabledChecks(cfg) : {},
+    tracksPath,
+  });
+
+  if (flags.has("--json")) {
+    // Claude Code reads a SessionStart hook's stdout as JSON.
+    return ok(JSON.stringify(briefJson(text)));
+  }
+  return ok(text || "harnessimo: nothing to brief — no track index, queue or progress file configured");
+}
+
 function cmdHooks() {
   const sub = positional[0] ?? "status";
   const cfg = config();
@@ -552,6 +599,59 @@ function cmdHooks() {
     const status = hookStatus({ hookExists: existsSync(hookFile), hooksPath: currentPath() });
     if (!status.ok) die(`harnessimo: ${status.message}`);
     return ok(`harnessimo: ${status.message}`);
+  }
+
+  if (sub === "install" && flags.has("--agent")) {
+    // The agent-side hook: a session receives the harness state at startup
+    // instead of being trusted to go and read it.
+    const dir = join(ROOT, ".claude", "hooks");
+    const script = join(dir, "harnessimo-brief.sh");
+    const command = "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-brief.sh";
+    mkdirSync(dir, { recursive: true });
+    if (!existsSync(script) || flags.has("--force")) {
+      writeFileSync(
+        script,
+        [
+          "#!/usr/bin/env sh",
+          "# Prints the harness state as SessionStart additionalContext.",
+          "# Written by `harnessimo hooks install --agent`. Read-only: no writes,",
+          "# no network, safe on startup, resume, clear and compact.",
+          "set -e",
+          'cd "${CLAUDE_PROJECT_DIR:-.}"',
+          "if [ -x node_modules/.bin/harnessimo ]; then",
+          '  exec node_modules/.bin/harnessimo brief --json',
+          "elif [ -f bin/harnessimo.mjs ]; then",
+          '  exec node bin/harnessimo.mjs brief --json',
+          "elif command -v harnessimo >/dev/null 2>&1; then",
+          '  exec harnessimo brief --json',
+          "fi",
+          "# No CLI, no context — and no noise on startup either.",
+          "exit 0",
+        ].join("\n") + "\n",
+        { mode: 0o755 },
+      );
+      ok("harnessimo: wrote .claude/hooks/harnessimo-brief.sh");
+    } else {
+      ok("harnessimo: .claude/hooks/harnessimo-brief.sh already exists (--force overwrites)");
+    }
+
+    const settingsPath = join(ROOT, ".claude", "settings.json");
+    let settings = {};
+    if (existsSync(settingsPath)) {
+      try {
+        settings = JSON.parse(readFileSync(settingsPath, "utf8"));
+      } catch (error) {
+        die(`harnessimo: .claude/settings.json is not valid JSON (${error.message})\n  fix:  repair it before installing, so nothing here overwrites what it holds`);
+      }
+    }
+    const { settings: merged, added } = mergeSessionStartHook(settings, command);
+    if (added) {
+      writeFileSync(settingsPath, JSON.stringify(merged, null, 2) + "\n");
+      ok("harnessimo: added the SessionStart hook to .claude/settings.json");
+    } else {
+      ok("harnessimo: .claude/settings.json already runs it");
+    }
+    return ok("\nA new session now starts with the live tracks, the head of each handoff,\nwhat is in flight, and what this repository enforces.");
   }
 
   if (sub === "install") {
@@ -597,7 +697,8 @@ usage: harnessimo <command> [options]
   cold-start             a fresh clone installs and verifies from the repo alone
   clean-exit [base] [head]  the session left no debris and wrote down where it got to
   instructions           the instruction file is still a router, not a manual
-  hooks <sub>            status | install | uninstall — the fast gate, on commit
+  brief [--json]         what a session should read first: tracks, handoffs, queue
+  hooks <sub>            status | install [--agent] | uninstall — the gates, on commit
   init [--force]         scaffold .harness/, specs/ and harnessimo.config.json
 
 Configuration lives in harnessimo.config.json — run \`harnessimo init\` and it is written
@@ -653,6 +754,9 @@ switch (command) {
     break;
   case "hooks":
     cmdHooks();
+    break;
+  case "brief":
+    cmdBrief();
     break;
   case "help":
   case "--help":
