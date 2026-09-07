@@ -4,6 +4,9 @@ name: CI
 # script, so there is no "works locally, fails in CI".
 #
 #   check       the rules and the wiring, on every supported Node version
+#   typecheck   tsc --checkJs over the JSDoc: an annotation that drifted from
+#               its signature is wrong in the types consumers import, and no
+#               test here would catch it
 #   self-host   this repository's own gates, including re-verification of
 #               every queue claim — a state edited by hand fails here
 #   session-hygiene  an agent commit did not touch the files defining success,
@@ -37,6 +40,20 @@ jobs:
       # No install step: the package has no dependencies, by rule. If this
       # line ever needs `npm ci`, CONSTRAINTS #1 was broken.
       - run: npm test
+
+  typecheck:
+    name: the JSDoc typechecks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      # The one job that installs anything, and only devDependencies:
+      # typescript and @types/node. Nothing ships with the package — CONSTRAINTS
+      # #1 is about runtime dependencies, and `dependencies` is still absent.
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
 
   self-host:
     name: the harness on itself
