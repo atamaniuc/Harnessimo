@@ -35,6 +35,7 @@ something that exits non-zero.** Lecture 09 calls this *«экстернализ
 | 04 · one giant instruction file fails | instructions are a router | `harnessimo instructions` |
 | 05 · continuity between sessions | PROGRESS, DECISIONS, session protocol | `.harness/4-state/`, `harnessimo tracks` |
 | 06 · initialization as its own phase | a scaffolded start | `harnessimo init` |
+| 05 · continuity between sessions | state handed over, not looked up | `harnessimo brief`, the SessionStart hook |
 | 07 · overreach and under-finishing | WIP = 1, scope belongs to the human | `harnessimo queue activate` |
 | 08 · feature lists as primitives | behaviour + verification + state | `harnessimo queue` |
 | 09 · declaring victory too early | the passing-state gate, evidence | `harnessimo queue verify`, `--reverify` |
@@ -144,6 +145,18 @@ Three artifacts, each answering a different question:
 Work in progress is capped at one — the concern of
 [lecture 07](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-07-why-agents-overreach-and-under-finish/).
 A wide half-finished diff is worse than a narrow done one.
+
+**Written state only pays off if it is read**, and "load the handoff first" in an instruction
+file is a rule that depends on the reader remembering it — which is the weakest place to put
+anything. `harnessimo brief` prints what a session should read first, and
+`harnessimo hooks install --agent` wires it to the agent's SessionStart hook, so the state
+arrives whether or not anyone remembers to fetch it. Same argument as every gate here,
+applied to reading rather than to finishing: take the judgement away from the party with an
+incentive to skip it. <!-- proof: src/brief.mjs:briefText -->
+
+It earns its keep immediately by making stale state loud: run against this repository the
+first time, it showed a track index still calling finished work active. A file nobody opens
+goes stale in silence.
 
 ## Layer 5 — Feedback *(«подсистема обратной связи» — the quality-control window)*
 

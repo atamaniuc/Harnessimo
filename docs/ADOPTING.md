@@ -31,6 +31,10 @@ Then, in order:
 3. **Add your central document to `docs.mustCarryProof`.** Usually `README.md`. This is
    what makes strict mode mean anything.
 4. **Wire `harnessimo check` into CI** next to your existing gate.
+5. **Install both hooks.** `harnessimo hooks install` runs the fast gates before a commit
+   lands; `harnessimo hooks install --agent` hands the harness state to every new agent
+   session at startup. The second one is what stops "read the handoff first" from being a
+   rule that depends on memory.
 
 ## An existing repository
 
@@ -62,6 +66,8 @@ Each section of `harnessimo.config.json` maps onto something you probably alread
 | A feature list or item queue with states | `queue.file` |
 | A hand-maintained index of in-flight work | `tracks.file`, plus a handoff per track |
 | A docs audit script | `docs.roots`, `docs.mustCarryProof`, `docs.commands` |
+| A hand-written SessionStart hook | `harnessimo hooks install --agent` |
+| A hand-written pre-commit hook | `harnessimo hooks install` + `hooks.before` |
 | A grep for `TODO` / `console.log` in review | `cleanExit.markers` + `cleanExit.scan` |
 | A note asking people to keep `AGENTS.md` short | `instructions.limits` |
 
