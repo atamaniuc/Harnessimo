@@ -88,7 +88,7 @@ Failures are written to be acted on, not just read:
 ```
   FAIL  proof markers
     README.md:14  make deploy
-        no "make" command named "deploy"
+        no make command named "deploy"
 ```
 
 ## The problem, concretely

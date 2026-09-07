@@ -48,7 +48,7 @@ export function checkTarget(target, resolver) {
     if (names === null) {
       return `this repository declares no "${kind}" command file, so "${target}" cannot be checked (add it to harnessimo.config.json → docs.commands)`;
     }
-    return names.includes(name.trim()) ? null : `no "${kind}" command named "${name.trim()}"`;
+    return names.includes(name.trim()) ? null : `no ${kind} command named "${name.trim()}"`;
   }
 
   if (target.startsWith("migration:")) {

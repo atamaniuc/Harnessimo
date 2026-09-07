@@ -31,7 +31,7 @@ test("a path#test-name target checks the named test still exists", () => {
 test("a command target resolves against the runner that declares it", () => {
   assert.equal(checkTarget("task check", resolver), null);
   assert.equal(checkTarget("make check", resolver), null);
-  assert.match(checkTarget("task deploy", resolver), /no "task" command named "deploy"/);
+  assert.match(checkTarget("task deploy", resolver), /no task command named "deploy"/);
 });
 
 test("a command kind the project does not declare says so instead of passing", () => {

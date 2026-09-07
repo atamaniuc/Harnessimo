@@ -55,7 +55,7 @@ test("a claim whose evidence disappeared fails, naming the document and line", (
   const { status, out } = run(dir, "check");
   assert.equal(status, 1);
   assert.match(out, /README\.md:3/);
-  assert.match(out, /no "make" command named "deploy"/);
+  assert.match(out, /no make command named "deploy"/);
   rmSync(dir, { recursive: true, force: true });
 });
 
