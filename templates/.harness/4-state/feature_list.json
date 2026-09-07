@@ -1,0 +1,6 @@
+{
+  "$comment": "The work queue. `verification` is the only path out of `active`, and the harness runs it — never the agent. CI re-runs every passing claim, so editing `state` by hand is detected rather than trusted.",
+  "states": ["not_started", "active", "blocked", "passing", "done"],
+  "wip_limit": 1,
+  "items": []
+}

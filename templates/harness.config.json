@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/atamaniuc/harness/main/schema/harness.config.schema.json",
+  "$comment": "Turn on only what you can satisfy today. A section left out is a check that does not run, and `harness doctor` reports it as not set rather than implying it is enforced. Adding a check later is a commit; claiming one you do not have is a lie your team will act on.",
+
+  "docs": {
+    "roots": [".", "docs", "specs"],
+    "mustCarryProof": [],
+    "commands": {},
+    "migrations": null
+  },
+
+  "tracks": {
+    "file": "specs/TRACKS.md",
+    "log": "specs/TRACKS-LOG.md",
+    "specsDir": "specs",
+    "taskFile": "tasks.md",
+    "gateTasks": true
+  },
+
+  "queue": {
+    "file": ".harness/4-state/feature_list.json",
+    "timeoutMinutes": 10
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "./schema/harness.config.schema.json",
+  "$comment": "This repository runs the harness on itself. Every check it offers is enforced here, because a standard whose own repository does not meet it is a suggestion.",
+  "docs": {
+    "roots": [
+      ".",
+      "docs",
+      "specs",
+      ".harness"
+    ],
+    "skip": [
+      "node_modules",
+      ".git",
+      "templates"
+    ],
+    "mustCarryProof": [
+      "README.md",
+      "docs/STANDARD.md",
+      "docs/ADOPTING.md"
+    ],
+    "commands": {
+      "npm run": "package.json"
+    }
+  },
+  "tracks": {
+    "file": "specs/TRACKS.md",
+    "log": "specs/TRACKS-LOG.md",
+    "specsDir": "specs",
+    "taskFile": "tasks.md",
+    "gateTasks": true
+  },
+  "queue": {
+    "file": ".harness/4-state/feature_list.json",
+    "timeoutMinutes": 10
+  },
+  "locked": {
+    "paths": [
+      ".github/workflows/",
+      ".harness/1-instructions/CONSTRAINTS.md"
+    ],
+    "baseline": ".harness/3-environment/locked-baseline",
+    "agentTrailer": "Co-Authored-By: Claude"
+  },
+  "coldStart": {
+    "requiredFiles": [
+      "AGENTS.md",
+      "README.md",
+      "harness.config.json",
+      ".harness/README.md",
+      "specs/TRACKS.md"
+    ],
+    "entryDocs": [
+      "AGENTS.md",
+      "README.md"
+    ],
+    "commands": [
+      "npm test",
+      "node bin/harness.mjs check"
+    ]
+  }
+}

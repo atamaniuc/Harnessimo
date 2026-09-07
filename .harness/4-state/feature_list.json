@@ -1,0 +1,72 @@
+{
+  "$comment": "The work queue for this repository. `verification` is the only path out of `active`, and the harness runs it — never the agent. CI re-runs every passing claim, so editing `state` by hand is detected rather than trusted.",
+  "states": [
+    "not_started",
+    "active",
+    "blocked",
+    "passing",
+    "done"
+  ],
+  "wip_limit": 1,
+  "items": [
+    {
+      "id": "proof-gate",
+      "phase": "0",
+      "kind": "code",
+      "behavior": "A documentation claim whose evidence disappeared fails the gate, naming the document, the line and the reason, while an example that documents the marker syntax is left alone.",
+      "verification": "node --test test/proof.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 10 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 121.900818",
+      "last_failure": null
+    },
+    {
+      "id": "hdd-tracks-and-tasks",
+      "phase": "0",
+      "kind": "code",
+      "behavior": "The track index cannot point at a handoff that no longer exists, a track without a status fails, and a checked box in a live lane names a check that resolves.",
+      "verification": "node --test test/tracks.test.mjs test/tasks.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 13 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 120.035956",
+      "last_failure": null
+    },
+    {
+      "id": "queue-reverification",
+      "phase": "0",
+      "kind": "code",
+      "behavior": "An item whose state was edited by hand is caught, because every passing claim is re-run rather than believed, and an item whose success cannot be decided may not be started at all.",
+      "verification": "node --test test/queue.test.mjs test/readiness.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 16 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 122.173915",
+      "last_failure": null
+    },
+    {
+      "id": "locked-surfaces-and-cold-start",
+      "phase": "0",
+      "kind": "code",
+      "behavior": "An agent commit touching the files that define success fails while the same change by a human passes, and a document routing a reader outside the repository fails the cold-start check.",
+      "verification": "node --test test/locked.test.mjs test/coldstart.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 9 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 115.167635",
+      "last_failure": null
+    },
+    {
+      "id": "cli-end-to-end",
+      "phase": "0",
+      "kind": "code",
+      "behavior": "The command line reads configuration, finds the documents, scaffolds a working harness with init, and exits non-zero on a broken claim — proven against real repositories on disk rather than mocks.",
+      "verification": "node --test test/cli.test.mjs",
+      "state": "passing",
+      "evidence": "# pass 6 | # fail 0 | # cancelled 0 | # skipped 0 | # todo 0 | # duration_ms 676.733452",
+      "last_failure": null
+    },
+    {
+      "id": "self-hosting",
+      "phase": "0",
+      "kind": "code",
+      "behavior": "This repository passes every check it defines, so the standard is demonstrated by its own repository rather than only described in it.",
+      "verification": "node bin/harness.mjs check",
+      "state": "not_started",
+      "evidence": null
+    }
+  ]
+}

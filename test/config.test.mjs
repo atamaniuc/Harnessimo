@@ -1,0 +1,53 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { ConfigError, enabledChecks, loadConfig } from "../src/config.mjs";
+
+const withConfig = (contents, fn) => {
+  const dir = mkdtempSync(join(tmpdir(), "harness-config-"));
+  try {
+    if (contents !== null) writeFileSync(join(dir, "harness.config.json"), contents);
+    return fn(dir);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+};
+
+test("a repository with no config has no configured checks", () => {
+  withConfig(null, (dir) => {
+    const cfg = loadConfig(dir);
+    assert.equal(cfg.path, null);
+    assert.deepEqual(Object.values(enabledChecks(cfg)).filter(Boolean), []);
+  });
+});
+
+test("a declared section is merged onto its defaults", () => {
+  withConfig('{"docs":{"mustCarryProof":["README.md"]}}', (dir) => {
+    const cfg = loadConfig(dir);
+    assert.deepEqual(cfg.docs.mustCarryProof, ["README.md"]);
+    assert.deepEqual(cfg.docs.roots, [".", "docs", "specs"]);
+    assert.equal(enabledChecks(cfg).proof, true);
+    assert.equal(enabledChecks(cfg).queue, false);
+  });
+});
+
+test("a misspelled section is rejected rather than silently ignored", () => {
+  // A typo that disables a check without telling anyone is the exact failure
+  // this configuration format refuses to have.
+  withConfig('{"trakcs":{}}', (dir) => {
+    assert.throws(() => loadConfig(dir), (e) => e instanceof ConfigError && /unknown section/.test(e.message));
+  });
+});
+
+test("unreadable configuration fails loudly instead of skipping every check", () => {
+  withConfig("{not json", (dir) => {
+    assert.throws(() => loadConfig(dir), (e) => e instanceof ConfigError && /not valid JSON/.test(e.message));
+  });
+});
+
+test("locked surfaces count as enforced only when paths are actually listed", () => {
+  withConfig('{"locked":{"paths":[]}}', (dir) => assert.equal(enabledChecks(loadConfig(dir)).locked, false));
+  withConfig('{"locked":{"paths":["src/evaluator/"]}}', (dir) => assert.equal(enabledChecks(loadConfig(dir)).locked, true));
+});

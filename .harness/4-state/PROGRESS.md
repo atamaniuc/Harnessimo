@@ -1,0 +1,38 @@
+# PROGRESS
+
+State carried between sessions. Read this first; update it before you stop.
+
+## Now
+
+**The tool is complete and self-hosting.** Six checks — proof markers, work tracks, the
+task gate, the queue, locked surfaces, cold start — all implemented, tested, and enforced
+against this repository by `npm run check`.
+
+- 59 tests, zero dependencies, no build step.
+- The rules are pure functions in `src/`; `bin/harness.mjs` and `src/resolver.mjs` are the
+  only code that touches the world.
+- `harness init` scaffolds a working harness that passes its own check immediately —
+  proven end to end in `test/cli.test.mjs`, not asserted here.
+
+## Done
+
+- The proof-marker gate, generalised so a project declares its own command runner
+  (`make`, `task`, `npm run`) rather than the rule assuming one.
+- Handoff-driven development: the track index, dead-handoff references, and the task gate.
+- The queue, with Definition of Ready enforced at activation and re-verification of every
+  passing claim.
+- Locked surfaces and the cold-start test, both with their limits stated in the code
+  rather than in a flattering summary.
+- Templates, so adoption is one command instead of a copying exercise.
+
+## Next
+
+1. Adoption in the two repositories the tool came out of (see `specs/TRACKS.md`).
+2. A published tag, so consumers pin a version instead of tracking a branch.
+
+## Open questions for the human
+
+- None blocking. The one judgement call worth revisiting: `locked.paths` here covers CI
+  and the constraints file only. Widening it is a human decision by design.
+
+_Last updated: 2026-09-07_

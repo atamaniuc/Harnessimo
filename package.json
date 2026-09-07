@@ -1,0 +1,25 @@
+{
+  "name": "@atamaniuc/harness",
+  "version": "0.1.0",
+  "description": "A harness for agent-driven engineering: five layers that govern how work gets done, plus handoff-driven development for continuity across sessions. Zero dependencies.",
+  "keywords": ["harness", "agents", "spec-driven-development", "handoff-driven-development", "ci"],
+  "license": "MIT",
+  "author": "atamaniuc",
+  "repository": { "type": "git", "url": "git+https://github.com/atamaniuc/harness.git" },
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "bin": { "harness": "bin/harness.mjs" },
+  "exports": {
+    ".": "./src/index.mjs",
+    "./proof": "./src/proof.mjs",
+    "./tracks": "./src/tracks.mjs",
+    "./tasks": "./src/tasks.mjs",
+    "./queue": "./src/queue.mjs",
+    "./readiness": "./src/readiness.mjs"
+  },
+  "files": ["bin", "src", "templates", "schema", "README.md", "LICENSE"],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node --test test/*.test.mjs && node bin/harness.mjs check"
+  }
+}

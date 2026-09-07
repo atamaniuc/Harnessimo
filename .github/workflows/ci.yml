@@ -1,0 +1,82 @@
+name: CI
+
+# Every job runs the same commands a developer runs. There is no CI-only
+# script, so there is no "works locally, fails in CI".
+#
+#   check       the rules and the wiring, on every supported Node version
+#   self-host   this repository's own gates, including re-verification of
+#               every queue claim — a state edited by hand fails here
+#   locked      an agent commit did not touch the files defining success
+#   cold-start  a fresh clone runs from the repository alone
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: tests on node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor declared in package.json, and current. A rule that only
+        # works on the version the author happens to run is not portable, and
+        # consumers install this into their own toolchain.
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+      # No install step: the package has no dependencies, by rule. If this
+      # line ever needs `npm ci`, CONSTRAINTS #1 was broken.
+      - run: npm test
+
+  self-host:
+    name: the harness on itself
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      # --reverify re-runs every item claiming to pass, so a hand-edited state
+      # is caught rather than trusted. This is the check that makes the queue's
+      # evidence evidence.
+      - run: node bin/harness.mjs check --reverify
+      - run: node bin/harness.mjs doctor
+
+  locked:
+    name: locked surfaces
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history: the check walks commits, and a two-commit clone makes
+          # the range unresolvable. The tool skips with a stated reason rather
+          # than passing silently, but skipping is not the point of the job.
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: An agent commit may not touch the files that define success
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          node bin/harness.mjs locked "$BASE" HEAD
+
+  cold-start:
+    name: a fresh clone verifies itself
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node bin/harness.mjs cold-start
