@@ -43,7 +43,7 @@ checker:
 ## 3. Three minutes to a green check
 
 ```bash
-pnpm add -D github:atamaniuc/Harnessimo     # or: npm i -D github:atamaniuc/Harnessimo
+pnpm add -D github:atamaniuc/Harnessimo#v0.1.0   # or: npm i -D github:atamaniuc/Harnessimo
 pnpm exec harnessimo init
 pnpm exec harnessimo check
 ```

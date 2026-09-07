@@ -19,7 +19,7 @@ queue, protected scoring, and state that survives a session ending.
 Zero dependencies, no build step, one config file.
 
 ```bash
-pnpm add -D github:atamaniuc/Harnessimo
+pnpm add -D github:atamaniuc/Harnessimo#v0.1.0
 pnpm exec harnessimo init      # reads your repo and writes a config that already passes
 pnpm exec harnessimo doctor    # what is actually enforced here
 pnpm exec harnessimo check     # the one command CI runs

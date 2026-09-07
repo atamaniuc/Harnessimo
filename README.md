@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](package.json)
 [![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
+[![release](https://img.shields.io/github/v/release/atamaniuc/Harnessimo?label=release)](https://github.com/atamaniuc/Harnessimo/releases/latest)
 
 <p align="center">
   <img src="docs/assets/harnessimo.jpg"
@@ -27,7 +28,7 @@ Zero dependencies, no build step, one config file. <!-- proof: package.json:"fil
 > It is the shortest path from "what is this" to a green check in your own repository.
 
 ```bash
-pnpm add -D github:atamaniuc/Harnessimo
+pnpm add -D github:atamaniuc/Harnessimo#v0.1.0
 pnpm exec harnessimo init      # reads your repo and writes a config that already passes
 pnpm exec harnessimo doctor    # what is actually enforced here
 pnpm exec harnessimo check     # the one command CI runs

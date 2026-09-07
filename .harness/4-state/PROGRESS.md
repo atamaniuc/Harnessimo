@@ -50,17 +50,14 @@ limit — all implemented, tested, and enforced against this repository by `npm 
 
 ## Waiting on a human
 
-- **The docs site is built and published to `gh-pages`, and serves 404.** The workflow is
-  green and the branch is updated, but Pages itself is off: Settings → Pages → Build and
-  deployment → Source: *Deploy from a branch* → `gh-pages` / `/ (root)`. One switch. Until
-  it is flipped, nothing links to the site — a link to a 404 is exactly the kind of claim
-  this repository refuses to make.
-- **`v0.1.0` is not tagged.** This session's git proxy rejects tag pushes (`send-pack:
-  unexpected disconnect`) while branch pushes succeed, and the available API creates
-  branches but not tags. Consumers pin the commit SHA meanwhile.
-- **`mkdocs build` in the deploy workflow does not pass `--strict`**, so a broken docs link
-  ships silently. The build is clean under `--strict` today. That file is a locked surface,
-  so the change is a human's.
+- **The docs site is built, strict, published to `gh-pages` — and serves 404.** Pages is
+  off, and enabling it from the workflow was tried and refused: the Actions token cannot
+  create a Pages site here (`Resource not accessible by integration`). One switch, and it
+  has to be a human's: Settings → Pages → Build and deployment → Source: *Deploy from a
+  branch* → `gh-pages` / `/ (root)`. Every deploy run now fetches the URL and writes the
+  answer into its job summary, so this cannot go unnoticed again. Nothing links to the site
+  until it answers.
+Both consumers now pin `#v0.1.0`.
 
 ## Open questions for the human
 

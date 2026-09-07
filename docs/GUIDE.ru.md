@@ -46,7 +46,7 @@ flowchart LR
 ## 3. Три минуты до зелёной проверки
 
 ```bash
-pnpm add -D github:atamaniuc/Harnessimo     # или: npm i -D github:atamaniuc/Harnessimo
+pnpm add -D github:atamaniuc/Harnessimo#v0.1.0   # или: npm i -D github:atamaniuc/Harnessimo
 pnpm exec harnessimo init
 pnpm exec harnessimo check
 ```
