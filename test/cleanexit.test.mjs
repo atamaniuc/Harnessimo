@@ -81,3 +81,30 @@ test("a file with no declared limit is not measured", () => {
   const text = Array.from({ length: 500 }, () => "x").join("\n");
   assert.deepEqual(instructionProblems([{ path: "docs/plan.md", text }], { "AGENTS.md": 20 }), []);
 });
+
+test("a typo-sized change is not asked to update the progress file", () => {
+  // Found by running the rule on its own repository: a one-line wording fix in
+  // a failure message was told to write a progress note. A rule that fires on
+  // every typo is a rule that gets turned off, and a rule that is off enforces
+  // nothing.
+  const problems = progressProblems({
+    changed: ["src/a.ts", "test/a.test.ts"],
+    progressFile: "P.md",
+    changedLines: { "src/a.ts": 2, "test/a.test.ts": 2 },
+  });
+  assert.deepEqual(problems, []);
+});
+
+test("a session's worth of work still owes a progress note", () => {
+  const problems = progressProblems({
+    changed: ["src/a.ts"],
+    progressFile: "P.md",
+    changedLines: { "src/a.ts": 140 },
+  });
+  assert.equal(problems.length, 1);
+});
+
+test("without line counts the rule falls back to firing on any code change", () => {
+  const problems = progressProblems({ changed: ["src/a.ts"], progressFile: "P.md" });
+  assert.equal(problems.length, 1);
+});

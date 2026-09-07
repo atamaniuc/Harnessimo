@@ -233,7 +233,26 @@ function runCleanExit(base, head) {
   const inScope = new Set(collectFiles(ROOT, { scan: clean.scan, skip: cfg.docs?.skip ?? [] }));
   const touched = changed.filter((p) => inScope.has(p) && existsSync(join(ROOT, p)));
   const problems = debrisProblems(readAll(ROOT, touched), { markers: clean.markers ?? undefined, allow: clean.allow });
-  problems.push(...progressProblems({ changed, progressFile: clean.progressFile, codePrefixes: clean.codePrefixes }));
+  // Line counts, so the progress rule can stay quiet for a typo fix and speak
+  // for a session's worth of work.
+  const changedLines = {};
+  try {
+    for (const row of git("diff", "--numstat", `${base}..${head}`).split("\n").filter(Boolean)) {
+      const [added, removed, path] = row.split("\t");
+      if (path) changedLines[path] = (Number(added) || 0) + (Number(removed) || 0);
+    }
+  } catch {
+    /* leave it empty: the rule then falls back to firing on any code change */
+  }
+  problems.push(
+    ...progressProblems({
+      changed,
+      progressFile: clean.progressFile,
+      codePrefixes: clean.codePrefixes,
+      changedLines: Object.keys(changedLines).length > 0 ? changedLines : null,
+      threshold: clean.progressThreshold,
+    }),
+  );
   if (clean.requireCleanTree) {
     const dirty = git("status", "--porcelain").split("\n").filter(Boolean);
     if (dirty.length > 0) {

@@ -32,6 +32,7 @@ const SECTION_DEFAULTS = {
     scan: [],
     progressFile: ".harness/4-state/PROGRESS.md", // null turns the progress rule off
     codePrefixes: [],
+    progressThreshold: 50, // changed lines below which the progress rule stays quiet
     requireCleanTree: false,
   },
   instructions: { limits: {} },

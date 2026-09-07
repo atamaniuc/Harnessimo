@@ -8,7 +8,7 @@ State carried between sessions. Read this first; update it before you stop.
 task gate, the queue, locked surfaces, cold start, clean exit and the instruction-file
 limit — all implemented, tested, and enforced against this repository by `npm run check`.
 
-- 79 tests, zero dependencies, no build step.
+- 82 tests, zero dependencies, no build step.
 - Documentation is now anchored to
   [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/):
   every check names the lecture it comes from, and `docs/GUIDE.md` (plus a Russian version)
@@ -17,6 +17,10 @@ limit — all implemented, tested, and enforced against this repository by `npm 
   only code that touches the world.
 - `harnessimo init` scaffolds a working harness that passes its own check immediately —
   proven end to end in `test/cli.test.mjs`, not asserted here.
+- **Both source repositories now depend on this package and have deleted their copies.**
+  `code-knowledge-base` removed `harness.ts`, `locked-surfaces.sh`, `cold-start.sh` and
+  `packages/harness`; `ledger-lens` kept its TypeScript entry points and delegated the rules,
+  with all 38 of its existing unit tests passing untouched. Both CIs run the shared CLI.
 - Run against `ledger-lens`, this package reproduces that repository's own gate exactly:
   183 proof markers across 71 documents, same scoping of the task gate. The rules moved
   without changing behaviour, which is the only evidence that matters for adoption.

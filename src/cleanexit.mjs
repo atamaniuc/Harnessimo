@@ -87,7 +87,7 @@ export function debrisProblems(files, options = {}) {
  * @param {{ changed: string[], progressFile: string, codePrefixes?: string[] }} input
  * @returns {import("./proof.mjs").Problem[]}
  */
-export function progressProblems({ changed, progressFile, codePrefixes = [] }) {
+export function progressProblems({ changed, progressFile, codePrefixes = [], changedLines = null, threshold = 50 }) {
   // A project may have no single progress file: in a handoff-driven repository
   // "where I stopped" lives in the handoff of whichever track was worked, and
   // which one that should have been is not machine-decidable. Turning the rule
@@ -96,11 +96,23 @@ export function progressProblems({ changed, progressFile, codePrefixes = [] }) {
   if (!progressFile) return [];
   if (changed.length === 0) return [];
   if (changed.includes(progressFile)) return [];
-  const touchedCode =
+  const touched =
     codePrefixes.length === 0
-      ? changed.some((p) => !p.endsWith(".md"))
-      : changed.some((p) => codePrefixes.some((prefix) => p.startsWith(prefix)));
-  if (!touchedCode) return [];
+      ? changed.filter((p) => !p.endsWith(".md"))
+      : changed.filter((p) => codePrefixes.some((prefix) => p.startsWith(prefix)));
+  if (touched.length === 0) return [];
+
+  // Below the threshold the rule stays quiet. Found by running it: a one-line
+  // wording fix in a failure message was told to update the progress file, and
+  // a rule that fires on every typo is a rule that gets turned off — which
+  // enforces nothing at all. The threshold is in changed lines rather than
+  // changed files, because three files touched by one rename is not a session's
+  // work and one file rewritten is.
+  if (changedLines !== null) {
+    const lines = touched.reduce((n, p) => n + (changedLines[p] ?? 0), 0);
+    if (lines < threshold) return [];
+  }
+
   return [
     {
       file: progressFile,
