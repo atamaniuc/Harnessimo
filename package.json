@@ -1,12 +1,14 @@
 {
   "name": "harnessimo",
   "version": "0.3.0",
-  "description": "Harnessimo \u2014 the arbiter that lets an agent run unattended: eight checks that decide when work is finished, from proof markers to a re-verified work queue, locked scoring and a cold-start test. Five subsystems, handoffs between sessions, zero dependencies.",
+  "description": "Eight checks that stop an AI coding agent from calling unfinished work done: proof markers over documentation, a re-verified work queue, work tracks and handoffs, locked scoring surfaces and a cold-start test. Zero dependencies, no build step, any language.",
   "keywords": [
     "harness",
-    "agents",
+    "ai-agents",
+    "agentic-coding",
     "spec-driven-development",
     "handoff-driven-development",
+    "claude-code",
     "ci"
   ],
   "license": "MIT",

@@ -84,7 +84,11 @@ export function debrisProblems(files, options = {}) {
  * code around it is worse than none, because the next session reads it and
  * believes it. A documentation-only change does not need one.
  *
- * @param {{ changed: string[], progressFile: string, codePrefixes?: string[] }} input
+ * @param {{ changed: string[], progressFile: string, codePrefixes?: string[],
+ *           changedLines?: number | null, threshold?: number }} input
+ *   changedLines and threshold are how a one-line fix escapes the rule: below
+ *   the threshold the session is too small to owe a progress note. Null means
+ *   the line counts were unreadable, and the rule falls back to strict.
  * @returns {import("./proof.mjs").Problem[]}
  */
 export function progressProblems({ changed, progressFile, codePrefixes = [], changedLines = null, threshold = 50 }) {
