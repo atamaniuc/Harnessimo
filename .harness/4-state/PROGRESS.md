@@ -41,6 +41,13 @@ limit — all implemented, tested, and enforced against this repository by `npm 
 1. Adoption in the two repositories the tool came out of (see `specs/TRACKS.md`).
 2. A published tag, so consumers pin a version instead of tracking a branch.
 
+## Settled recently
+
+- **Code-graph / codebase-memory tools are not bundled** (see `DECISIONS.md`). They answer
+  "what do I need to read"; this answers "is it finished". Both, separately.
+- **The pitch leads with autonomy**: an agent runs unattended exactly as far as something
+  other than the agent decides when the work is done.
+
 ## Open questions for the human
 
 - None blocking. The one judgement call worth revisiting: `locked.paths` here covers CI
