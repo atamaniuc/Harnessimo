@@ -57,14 +57,29 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-      - name: Report whether the site actually serves
+      # Checking the root URL is not enough, and this step learned that the
+      # hard way: with Pages set to serve a branch, GitHub's own Jekyll renders
+      # README.md at the root and answers 200 while none of this site is
+      # published. So the check asks for a page only MkDocs produces, and for
+      # the diagram markup only the mermaid fence produces.
+      - name: Report whether THIS site is the one being served
         run: |
           URL="${{ steps.deployment.outputs.page_url }}"
           sleep 15
-          CODE="$(curl -s -o /dev/null -w '%{http_code}' -L "$URL" || echo 000)"
-          if [ "$CODE" = "200" ]; then
-            echo "### Docs are live: $URL" >> "$GITHUB_STEP_SUMMARY"
+          PAGE="${URL%/}/STANDARD/"
+          CODE="$(curl -s -o /dev/null -w '%{http_code}' -L "$PAGE" || echo 000)"
+          DIAGRAMS="$(curl -s -L "$PAGE" | grep -c 'class="mermaid"' || echo 0)"
+          if [ "$CODE" = "200" ] && [ "$DIAGRAMS" -ge 1 ]; then
+            echo "### Docs are live with $DIAGRAMS rendered diagram(s): $URL" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "### Deployed, and the URL answers $CODE — $URL" >> "$GITHUB_STEP_SUMMARY"
-            echo "Publishing and serving are different facts; this one is the second." >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "### Deployed, but the served site is not this one"
+              echo
+              echo "\`${PAGE}\` answered **$CODE** with **$DIAGRAMS** mermaid block(s)."
+              echo "A MkDocs page would answer 200 and carry the diagrams."
+              echo
+              echo "The usual cause: **Settings → Pages → Source** is set to a branch, so"
+              echo "GitHub's Jekyll renders the repository's Markdown instead of this build."
+              echo "Set the source to **GitHub Actions** and the next run publishes this site."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
