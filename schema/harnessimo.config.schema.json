@@ -33,7 +33,8 @@
         },
         "maxDepth": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "How deep to descend below each root. Keeps a scan from wandering into a vendored tree."
         },
         "mustCarryProof": {
           "type": "array",
@@ -64,17 +65,20 @@
       "additionalProperties": false,
       "properties": {
         "file": {
-          "type": "string"
+          "type": "string",
+          "description": "The index of live work tracks \u2014 one line per track, with a status and a next step."
         },
         "log": {
           "type": "string",
           "description": "Where a closed track's outcome is distilled."
         },
         "specsDir": {
-          "type": "string"
+          "type": "string",
+          "description": "Where a lane's spec, tasks and handoff live, one directory per lane."
         },
         "taskFile": {
-          "type": "string"
+          "type": "string",
+          "description": "The file inside a lane holding its task list, whose checked boxes the task gate reads."
         },
         "gateTasks": {
           "type": "boolean",
@@ -88,7 +92,8 @@
       "additionalProperties": false,
       "properties": {
         "file": {
-          "type": "string"
+          "type": "string",
+          "description": "The queue itself: every item, its state, and the command that verifies it."
         },
         "timeoutMinutes": {
           "type": "number",
@@ -135,7 +140,8 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Files a fresh clone must contain before anything is run \u2014 the ones the first command assumes."
         },
         "entryDocs": {
           "type": "array",

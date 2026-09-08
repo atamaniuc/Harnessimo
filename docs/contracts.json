@@ -162,6 +162,24 @@
           "belongs": "GUIDE.md"
         }
       ]
+    },
+    "CONFIGURATION.md": {
+      "answers": "What can I put in the config, and what does each key do?",
+      "profile": "user",
+      "owns": [
+        "every section and key of harnessimo.config.json, generated from the schema"
+      ],
+      "excludes": [
+        {
+          "heading": "Turn on what hurts",
+          "belongs": "GUIDE.md"
+        },
+        {
+          "heading": "Deciding",
+          "belongs": "FAQ.md"
+        }
+      ],
+      "generated_from": "schema/harnessimo.config.schema.json"
     }
   }
 }

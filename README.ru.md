@@ -300,12 +300,16 @@ harnessimo hooks install           # быстрые проверки перед 
 | увидеть, что оно реально поймает в моём репозитории | [Сценарии](https://atamaniuc.github.io/Harnessimo/ru/USE-CASES/) |
 | дойти до первой зелёной проверки | [Гайд](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/) |
 | включить ещё одну проверку или выключить лишнюю | [Гайд → включайте то, что болит](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#turn-on) |
+| посмотреть ключ конфига | [Конфигурация](https://atamaniuc.github.io/Harnessimo/ru/CONFIGURATION/) |
 | внедрить в репозиторий, где уже есть свои скрипты | [Гайд → внедрение](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#adopting) |
 | понять, почему правило вообще существует | [Стандарт](https://atamaniuc.github.io/Harnessimo/ru/STANDARD/) |
 | задать короткий вопрос, который не баг | [FAQ](https://atamaniuc.github.io/Harnessimo/ru/FAQ/) |
 | починить прогон, который только что стал красным | [Что делать](https://atamaniuc.github.io/Harnessimo/ru/TROUBLESHOOTING/) |
 | узнать, что взято из OpenSpec, Spec Kit, BMAD и остальных | [SDD](https://atamaniuc.github.io/Harnessimo/ru/SDD/) |
 | внести изменение | [Как участвовать](CONTRIBUTING.md) |
+
+**Для агента:** все страницы выше одним файлом —
+[llms.txt](https://atamaniuc.github.io/Harnessimo/llms.txt).
 
 ## Разработка
 

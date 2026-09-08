@@ -295,12 +295,16 @@ Every page answers one question. Find yours:
 | see what it would actually catch in my repo | [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/) |
 | get to a first green check | [Guide](https://atamaniuc.github.io/Harnessimo/GUIDE/) |
 | turn on one more check, or turn one off | [Guide → turn on what hurts](https://atamaniuc.github.io/Harnessimo/GUIDE/#turn-on) |
+| look up a config key | [Configuration](https://atamaniuc.github.io/Harnessimo/CONFIGURATION/) |
 | put this into a repo that already has its own scripts | [Guide → adopting](https://atamaniuc.github.io/Harnessimo/GUIDE/#adopting) |
 | understand why a rule exists at all | [The standard](https://atamaniuc.github.io/Harnessimo/STANDARD/) |
 | ask something short that is not a bug | [FAQ](https://atamaniuc.github.io/Harnessimo/FAQ/) |
 | fix a run that just went red | [Troubleshooting](https://atamaniuc.github.io/Harnessimo/TROUBLESHOOTING/) |
 | know what was taken from OpenSpec, Spec Kit, BMAD and the rest | [SDD](https://atamaniuc.github.io/Harnessimo/SDD/) |
 | contribute a change | [Contributing](CONTRIBUTING.md) |
+
+**For an agent:** every page above, as one file —
+[llms.txt](https://atamaniuc.github.io/Harnessimo/llms.txt).
 
 ## Development
 

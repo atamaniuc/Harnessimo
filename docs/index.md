@@ -311,12 +311,16 @@ Every page answers one question. Find yours:
 | see what it would actually catch in my repo | [Use cases](USE-CASES.md) |
 | get to a first green check | [Guide](GUIDE.md) |
 | turn on one more check, or turn one off | [Guide → turn on what hurts](GUIDE.md#turn-on) |
+| look up a config key | [Configuration](CONFIGURATION.md) |
 | put this into a repo that already has its own scripts | [Guide → adopting](GUIDE.md#adopting) |
 | understand why a rule exists at all | [The standard](STANDARD.md) |
 | ask something short that is not a bug | [FAQ](FAQ.md) |
 | fix a run that just went red | [Troubleshooting](TROUBLESHOOTING.md) |
 | know what was taken from OpenSpec, Spec Kit, BMAD and the rest | [SDD](SDD.md) |
 | contribute a change | [Contributing](https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md) |
+
+**For an agent:** every page above, as one file —
+[llms.txt](https://atamaniuc.github.io/Harnessimo/llms.txt).
 
 ## Development
 

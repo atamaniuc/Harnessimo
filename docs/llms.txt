@@ -1,0 +1,2212 @@
+# Harnessimo — full documentation for machine readers
+
+Version 0.5.4. Generated from docs/ by scripts/llms-txt.ts; do not edit.
+Published at https://atamaniuc.github.io/Harnessimo/llms.txt — the same pages, in the order a person would meet them.
+
+Every section below is one page of the site. The heading names the page and the
+question it answers, so a reader looking for one answer can stop at one section.
+
+## Contents
+
+- index.md — What is this, and where do I go next?
+- WHY.md — Why this, rather than what I already have?
+- GUIDE.md — How do I work with this day to day?
+- CONFIGURATION.md — What can I put in the config, and what does each key do?
+- USE-CASES.md — What will this actually catch for me?
+- STANDARD.md — Why does each rule exist, and where does it come from?
+- FAQ.md — A short question that is not a bug and not a setup problem
+- TROUBLESHOOTING.md — It is broken — what now?
+- SDD.md — Where did these ideas come from, and what was left behind?
+
+
+==============================================================================
+FILE: docs/index.md
+ANSWERS: What is this, and where do I go next?
+URL: https://atamaniuc.github.io/Harnessimo/
+==============================================================================
+
+# Harnessimo
+
+[![CI](https://github.com/atamaniuc/Harnessimo/actions/workflows/ci.yml/badge.svg)](https://github.com/atamaniuc/Harnessimo/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/atamaniuc/Harnessimo/blob/main/LICENSE)
+[![release](https://img.shields.io/github/v/release/atamaniuc/Harnessimo?label=release)](https://github.com/atamaniuc/Harnessimo/releases/latest)
+[![docs](https://img.shields.io/badge/docs-atamaniuc.github.io%2FHarnessimo-blue)](index.md)
+[![npm](https://img.shields.io/npm/v/harnessimo?label=npm)](https://www.npmjs.com/package/harnessimo)
+[![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](https://github.com/atamaniuc/Harnessimo/blob/main/package.json)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/atamaniuc/Harnessimo/main/docs/assets/harnessimo.jpg"
+       alt="Robots in a server room wrestling a firehose of data while one of them holds a loop of it steady, under a sign reading HARNESSIMO"
+       width="720">
+</p>
+
+**Checks that stop an AI agent from calling unfinished work done.**
+
+Nine of them. You turn on the ones you need. They run in CI and before every commit, and
+they fail with a file, a line and a fix.
+
+Zero dependencies, one config file, any language — it reads your files, runs your commands,
+walks your git history. <!-- proof: package.json:"files" -->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.css">
+<div id="demo" class="demo-player"></div>
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.js"></script>
+<script>
+  AsciinemaPlayer.create("/Harnessimo/assets/demo.cast", document.getElementById("demo"), {
+    autoPlay: true, loop: true, idleTimeLimit: 1.2, terminalFontSize: "14px", theme: "nord",
+  });
+</script>
+Nobody scripted that: `npm run demo` runs those commands in a throwaway repository and
+records what they print.
+
+=== "pnpm"
+
+    ```bash
+    pnpm add -D harnessimo
+    pnpm exec harnessimo init    # scans your repo, writes a config that already passes
+    pnpm exec harnessimo check   # run this in CI
+    ```
+
+=== "npm"
+
+    ```bash
+    npm i -D harnessimo
+    npx harnessimo init    # scans your repo, writes a config that already passes
+    npx harnessimo check   # run this in CI
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn add -D harnessimo
+    yarn harnessimo init    # scans your repo, writes a config that already passes
+    yarn harnessimo check   # run this in CI
+    ```
+
+=== "bun"
+
+    ```bash
+    bun add -d harnessimo
+    bunx harnessimo init    # scans your repo, writes a config that already passes
+    bunx harnessimo check   # run this in CI
+    ```
+
+## Who this is for
+
+**You, if an agent writes a meaningful share of your code and you are the only one checking
+its work.** One person with three agents has the review load of a team lead and none of the
+team. These checks are the part of a reviewer's job that a command can do.
+
+Concretely:
+
+| | What changes |
+|---|---|
+| **Solo developer, agent-assisted** | You stop re-reading diffs to find out whether the thing it said it finished is finished |
+| **Vibe coding a real project** | The README stays true as the project moves, so the next session — yours or the agent's — is not working from fiction |
+| **A team running an agentic SDLC** | "Done" becomes a command's exit code instead of a status somebody typed, and it means the same thing for every person and every agent |
+| **A long-running codebase with agents in it** | Work survives session boundaries: tracks and handoffs are checked, not hoped for |
+
+**Not for you** if the project is a weekend script, if you write everything yourself and
+review it yourself, or if nobody will write the one-line proof markers — they are the only
+manual part, and a repository where nobody writes them ends up with a gate that enforces
+nothing.
+
+## Why this, when Kiro and Spec Kit exist
+
+Because they solve a different half. Kiro, Spec Kit, BMAD, Copilot's coding agent and the
+agent CLIs are about **producing** work: context, specs, planning, tools, sandboxes. Their
+answer to "is it actually done" is the one everybody already has — run the tests, ask a
+human.
+
+This is the other half, and it is the half nobody ships: **the arbiter**. Documentation that
+fails the build when it stops being true. A work queue whose state only a passing command
+can write. Scoring files an agent's own commit may not touch.
+
+It is also deliberately not a platform. No runtime, no daemon, no dependencies, no lock-in:
+one npm package and a JSON file that work the same under Claude Code, Cursor, Codex, Kiro or
+a person with a keyboard — and keep working when you switch.
+
+The full comparison, layer by layer, is
+[Why this exists](WHY.md).
+
+## What it catches
+
+Three real failures from the repos this came out of.
+
+**A README that lies.** It said infrastructure was "stood up through a single Pulumi program
+in `infra/`". There was no `infra/`. Ten claims like that turned up in one audit.
+
+```
+FAIL  proof markers
+  README.md:14  make deploy
+      no make command named "deploy"
+```
+
+Every claim in your docs names the file, test or command behind it. Delete that, and the
+build breaks. <!-- proof: src/proof.ts:checkTarget -->
+
+**A task marked done that nobody re-ran.** It sat at `passing` with made-up evidence.
+
+```
+FAIL  queue
+  "checkout-totals" claims passing but its verification fails now
+    command: npm test -- checkout
+    fix:  fix the regression, or the claim was never true
+```
+
+Only the tool writes `passing`, and only after the task's own command exits 0. CI re-runs
+every one of them. <!-- proof: src/queue.ts:checkQueue -->
+
+**A session that starts blind.** The agent reopens half the repo to work out where the last
+one stopped. Now it gets handed the answer at startup:
+
+```
+$ harnessimo brief
+== specs/TRACKS.md (live work tracks — load a track's handoff first) ==
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
+
+== work queue ==
+active: checkout-totals — an order total matches the sum of its lines, in every currency
+  verify with: harnessimo queue verify checkout-totals
+
+== enforced here ==
+proof, tracks, tasks, queue, coldStart, cleanExit
+not enforced: locked, instructions
+```
+
+One command wires that into your agent: `harnessimo hooks install --agent`.
+<!-- proof: src/brief.ts:briefText -->
+
+## All nine checks
+
+| Command | Fails when |
+|---|---|
+| `harnessimo proof` | a documented claim's file, test or command is gone |
+| `harnessimo queue` | a task claiming `passing` fails when re-run |
+| `harnessimo tracks` | a work track links a handoff that was deleted |
+| `harnessimo tasks` | a ticked checkbox names no check |
+| `harnessimo locked` | an agent commit touched the files that grade it |
+| `harnessimo cold-start` | a fresh clone can't install and verify itself |
+| `harnessimo clean-exit` | a session left `TODO`, `debugger`, `.only(` behind |
+| `harnessimo instructions` | your AGENTS.md grew past the line limit you set |
+| `harnessimo release` | the version in the manifest, the changelog and the tags disagree |
+
+`harnessimo doctor` prints which of these are on — and which are off. Nothing is switched on
+that you didn't ask for.
+<!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
+
+## Starting a new project
+
+```bash
+pnpm exec harnessimo init && pnpm exec harnessimo check
+```
+
+`init` looks at what you already have — Makefile or Taskfile, source layout, migrations, CI
+— and writes a config from it. **The first run is green**, so the first red one means
+something. <!-- proof: test/detect.test.ts#strict mode is off until a document actually carries a marker -->
+
+You also get `.harness/` (rules, tools, environment, state, feedback) and `specs/` (work
+tracks and handoffs) scaffolded.
+
+## Adding it to an existing project
+
+Turn on one check, make it green, commit. Then the next one.
+
+| What's going wrong | Turn on |
+|---|---|
+| The README describes things that no longer exist | `docs` |
+| Every session starts over from nothing | `tracks` |
+| Ticked boxes nobody can trace to anything | `tracks.gateTasks` |
+| "Done" that turns out not to be | `queue` |
+| It only works on the machine that built it | `coldStart` |
+| Debug leftovers, stale notes | `cleanExit` |
+| The agent file is a 600-line manual | `instructions` |
+| An agent editing what grades it | `locked` |
+
+Details: [Adopting an existing repo](GUIDE.md#adopting).
+
+## Any agent, any model
+
+Nothing here knows which model wrote the code. The checks read files, run your commands and
+walk your git history — so they work the same under Claude Code, Codex, Cursor, Gemini CLI,
+a self-hosted DeepSeek, two of them at once, or nobody at all.
+<!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
+
+One piece is tool-specific, and only because tools differ: the automatic session briefing.
+`harnessimo hooks install --agent` writes it as a SessionStart hook for Claude Code, which
+has an API for that. Every other tool gets the same thing in one line — `harnessimo agent`
+prints the contract to paste into whatever instruction file it reads, be that `AGENTS.md`,
+`CLAUDE.md`, `GEMINI.md` or a Cursor rule:
+
+```
+$ harnessimo agent
+## Harness
+
+- Run `harnessimo brief` at the start of a session: it prints the live tracks, the
+  head of each handoff and what is in flight. Read it before touching anything.
+- Run `harnessimo check` before saying anything is done. Green is the claim; your
+  summary is not.
+- Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
+  own command and records the outcome — that is the only way something becomes passing.
+```
+
+That is the whole integration surface. There is no plugin to install, no model to configure
+and nothing to migrate when you switch — which is the point of keeping the rules in files
+rather than in a vendor's format.
+
+## Using it, by hand and by agent
+
+Same checks, two ways in.
+
+**A person** runs `harnessimo check` before pushing — or lets the pre-commit hook do it —
+and `harnessimo doctor` when they want to know what this repository actually guarantees.
+Nothing else is required: the checks read files and run commands, so they work in a
+repository with no agents anywhere near it.
+
+**An agent** gets three things it cannot get from an instruction file. At session start a
+hook hands it the live tracks, the head of each handoff and what is in flight, so it does
+not re-derive them. During the work, `harnessimo queue verify <id>` is the only way an item
+becomes `passing` — the agent runs the command, the tool records the outcome. At commit, the
+same gate a person gets.
+
+```bash
+harnessimo hooks install --agent   # SessionStart briefing, merged into .claude/settings.json
+harnessimo hooks install           # the fast gates, before every commit
+```
+
+Both flows in detail: [Use cases](USE-CASES.md).
+
+## Why you can trust it
+
+Every line here is checkable, which is the only kind of trust argument this project is
+entitled to make:
+
+- **Published by a workflow, not a person.** Releases are built and signed in GitHub Actions
+  and authenticated by OIDC — there is no npm token in this repository or in its secrets to
+  steal. Each version carries a provenance statement naming the commit and workflow that
+  produced it; `npm audit signatures` verifies it.
+- **Zero runtime dependencies**, by a rule its own CI enforces. Nothing it pulls in can break
+  the project it is guarding, and there is no supply chain under it to audit but this one.
+- **It is held to its own standard.** All nine checks run against this repository, including
+  a cold start that clones it into an empty directory and runs the documented commands, and
+  a re-verification of every passing claim. The badge above is that.
+- **Every rule has a test that proves it fires on bad input** — a rule that has only ever
+  passed is an assumption wearing a rule's clothes.
+- **Used in production, not only demonstrated.** Two repositories deleted their own versions
+  of these checks to adopt it; both are linked below and both are public.
+- **MIT, and small enough to read.** About three thousand lines. If it disappeared tomorrow
+  you could vendor it in an afternoon.
+
+## Who runs it
+
+Two production repos, both of which deleted their own versions of these checks:
+
+- [`ledger-lens`](https://github.com/atamaniuc/ledger-lens) — Next.js, Supabase, Python.
+  Swapped its documentation gates for this package; all 38 of its own unit tests passed
+  without edits, and the counts matched exactly (183 markers across 71 documents).
+- [`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) — dropped four
+  local scripts, picked up proof markers, work tracks and the task gate.
+
+This repo runs all nine checks on itself, including from a fresh clone.
+<!-- proof: npm run check -->
+
+## What it isn't
+
+- **Not a sandbox.** `locked` catches an agent editing its own scoring *in CI*. It won't stop
+  someone determined to work around it.
+- **Not a code reviewer.** It doesn't judge correctness, security or style.
+- **Not a test-quality checker.** A test that asserts nothing passes every rule here.
+- **Not a context tool.** Pair it with a code-graph or codebase-memory MCP — those answer
+  "what should I read", this answers "is it done".
+
+## Docs
+
+**<https://atamaniuc.github.io/Harnessimo/>** — every page is also in Russian:
+[по-русски](https://atamaniuc.github.io/Harnessimo/ru/), or the language switcher in the
+header.
+
+Every page answers one question. Find yours:
+
+| I want to… | Read |
+| --- | --- |
+| decide whether this is worth adopting | [Why this exists](WHY.md) |
+| see what it would actually catch in my repo | [Use cases](USE-CASES.md) |
+| get to a first green check | [Guide](GUIDE.md) |
+| turn on one more check, or turn one off | [Guide → turn on what hurts](GUIDE.md#turn-on) |
+| look up a config key | [Configuration](CONFIGURATION.md) |
+| put this into a repo that already has its own scripts | [Guide → adopting](GUIDE.md#adopting) |
+| understand why a rule exists at all | [The standard](STANDARD.md) |
+| ask something short that is not a bug | [FAQ](FAQ.md) |
+| fix a run that just went red | [Troubleshooting](TROUBLESHOOTING.md) |
+| know what was taken from OpenSpec, Spec Kit, BMAD and the rest | [SDD](SDD.md) |
+| contribute a change | [Contributing](https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md) |
+
+**For an agent:** every page above, as one file —
+[llms.txt](https://atamaniuc.github.io/Harnessimo/llms.txt).
+
+## Development
+
+```bash
+npm test          # the whole suite, no install — Node runs the TypeScript directly
+npm run check     # tests, then this repo's own checks
+npm run typecheck # tsc, strict, over src and test (needs npm i first)
+npm run build     # what a consumer installs: dist/, with declarations
+```
+
+TypeScript, strict, ESM, no runtime dependencies. Rules live in `src/` as pure functions
+over strings and in-memory trees; `src/resolver.ts` and `src/cli.ts` are the only files that
+touch the disk. <!-- proof: test/cli.test.ts -->
+
+There is no build step in the way of running it: sources import each other as `.ts`, so
+Node's own type stripping runs them as they are — which is why `npm test` needs nothing
+installed and the cold-start check still measures the repository rather than npm. `tsc`
+emits `dist/` (rewriting those specifiers to `.js`) and that is what gets published. Build
+output is not committed.
+<!-- proof: test/types.test.ts -->
+
+## License
+
+[MIT](https://github.com/atamaniuc/Harnessimo/blob/main/LICENSE). Fork it, vendor it, ship it commercially. If you improve a rule, send a PR —
+one copy is the whole point.
+
+==============================================================================
+FILE: docs/WHY.md
+ANSWERS: Why this, rather than what I already have?
+URL: https://atamaniuc.github.io/Harnessimo/WHY/
+==============================================================================
+
+# Why this exists
+
+**The honest question first: why would you add anything, when Kiro, Spec Kit, Copilot's
+coding agent and three agent CLIs are mature, free and already in your editor?**
+
+Because they are all on one side of the same line.
+
+```mermaid
+flowchart LR
+    subgraph P["Producing the work — crowded, and they are good at it"]
+        I["Instructions<br/><i>CLAUDE.md · AGENTS.md · rules · steering</i>"]
+        T["Tools & execution<br/><i>MCP · sandboxes · agent SDKs</i>"]
+        E["Environment<br/><i>cloud runners · devcontainers</i>"]
+        S["State<br/><i>memory · threads · knowledge</i>"]
+    end
+    subgraph V["Deciding it is done — thin everywhere"]
+        F["<b>Feedback</b><br/>run the tests, ask a human"]
+    end
+    P --> V
+    V -->|"red"| P
+
+    style F stroke-width:3px
+```
+
+Every product in that left box makes an agent produce more, faster, with better context.
+None of them changes **who decides the work is finished**. That decision is still the agent's
+own report, checked by whatever your repository already had: a test suite, and a person with
+time.
+
+Harnessimo is only the right-hand box, and only the parts a command can settle.
+
+## Where it sits next to the tools you know
+
+| | What it is strongest at | What it does not do | What this adds |
+|---|---|---|---|
+| **[Kiro](https://kiro.dev)** (AWS) | specs, steering files and agent hooks in one IDE, carried across IDE/CLI/web | steering *guides*; the docs describe no gate that fails a build when a claim stops being true | a command that goes red, in your CI, for that exact case |
+| **[Spec Kit](https://github.com/github/spec-kit)** (GitHub) | turning an intent into a spec, a plan and a task list | nothing re-runs the acceptance criteria; the task list is prose | a ticked box has to name a check, and the check has to pass |
+| **[BMAD](https://github.com/bmad-code-org/BMAD-METHOD)** | the whole delivery loop with specialised perspectives | "verify" is a phase an agent performs and reports on | the queue: only a passing command writes `passing`, and CI re-runs them |
+| **Copilot coding agent, Devin, Jules** | autonomy at scale, real sandboxes, PR-shaped output | verification is your existing CI plus human review | the checks that CI does not have because nobody writes them |
+| **Claude Code, Codex, Cursor, Gemini CLI** | the harness *mechanism* — hooks, instruction files, tool access | they supply the mechanism, not the rules; what to enforce is your problem | nine rules worth enforcing, and the wiring to run them |
+| **Danger JS, custom CI scripts** | arbitrary rules at PR time, if you write them | you write and maintain them, per repository, forever | the same rules, written once, tested, versioned, shared |
+
+Two things follow from that table.
+
+**It is not a competitor to any of them.** Nothing here generates code, plans work, holds
+context, or runs an agent. Use Kiro or Spec Kit or BMAD to decide what to build. This tells
+you afterwards whether what came back is what was claimed.
+
+**It is the only one you keep when you switch.** `.kiro/`, `.cursor/` and every vendor's
+memory format belong to that vendor. A `harnessimo.config.json`, proof markers in Markdown
+and a `specs/` directory are files. They survive changing model, editor, subscription and
+employer.
+
+## Who it is for
+
+**One person with three agents has a team lead's review load and no team.** That is the
+situation this was built in, and it is the situation it pays for.
+
+=== "Solo, agent-assisted"
+
+    You stop re-reading diffs to find out whether the thing the agent said it finished is
+    finished. `queue verify` runs the command; the tool writes the state. What you review is
+    the design, not the claim.
+
+=== "Vibe coding a real project"
+
+    The README, the plan and the task list stay true as the thing moves, because they name
+    evidence and the build resolves it. The next session — yours or an agent's — starts from
+    something accurate instead of from fiction someone wrote three days ago.
+
+=== "A team on an agentic SDLC"
+
+    "Done" stops being a status a person types and becomes an exit code, identical for every
+    person and every agent. New contributors get `harnessimo doctor` instead of tribal
+    knowledge about what this repository actually guarantees.
+
+=== "A long-lived codebase"
+
+    Work crosses session boundaries in handoffs that are machine-checked, so a track cannot
+    quietly point at a file somebody deleted, and a session cannot end without saying where
+    it stopped.
+
+**When it is not worth it**
+
+- A weekend script, or anything you will not return to.
+- You write the code yourself and review it yourself — the failures below are agent-shaped.
+- Nobody will write the proof markers. They are the one manual part, and a repository where
+  they are not written ends up with a gate that enforces nothing, which is worse than no
+  gate because it looks like one.
+
+## When to reach for it
+
+| The moment | What it looks like |
+|---|---|
+| You caught the second wrong "done" | not the first — the first is noise, the second is a pattern |
+| A document lied and cost you an hour | the README described infrastructure that was never built |
+| A session re-derived what the last one knew | you explained the same decision twice |
+| An agent changed a test to make a build green | which it will, given the opportunity |
+| Someone asks what this repository guarantees | and the answer is a paragraph rather than a command |
+
+## Why you can trust it
+
+A tool that says "trust your build, not your memory" has to be checkable itself. Each of
+these is a claim you can verify without asking anyone:
+
+**Published by a workflow, not a person.** Releases are built and signed in GitHub Actions
+and authenticated by OIDC trusted publishing. There is no npm token in this repository or
+in its secrets to steal, and the workflow filename is part of the credential. Every version
+carries a provenance statement naming the commit and workflow that produced it —
+`npm audit signatures` checks it, and the transparency-log entry is public.
+
+**Zero runtime dependencies**, enforced by its own CI rather than promised. Nothing it
+installs can break the project it guards, and there is no supply chain under it to audit but
+this one.
+
+**It is held to its own standard.** All nine checks run against this repository, including
+`--reverify`, which re-runs every claim that says it passes, and a cold start that clones the
+repository into an empty directory and runs the commands the documentation gives a newcomer.
+
+**Every rule has a test proving it fires on bad input.** A rule that has only
+ever passed is an assumption wearing a rule's clothes. The tests run with nothing installed.
+
+**Used, not only demonstrated.** Two public repositories deleted their own versions of these
+checks and depend on this package:
+[`ledger-lens`](https://github.com/atamaniuc/ledger-lens) (Next.js, Supabase, Python) and
+[`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) (pnpm workspace,
+content pipeline).
+
+**It does not know which model you use, and cannot come to depend on one.** The checks read
+files, run commands and walk git history; nothing in them is specific to a vendor, and the
+one tool-specific piece — the automatic session briefing — has a one-line equivalent for
+every other agent, printed by `harnessimo agent`. A tool that outlives your choice of model
+is worth more than one that is excellent inside somebody's product.
+<!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
+
+**Small enough to read, and MIT.** About three thousand lines of TypeScript with no runtime,
+no daemon and no service behind it. If it were abandoned tomorrow you could vendor it in an
+afternoon — which is the honest answer to "what if this project dies", and the reason it is
+deliberately not a platform.
+
+**What it will not claim.** It does not judge whether your tests are any good — a test that
+asserts nothing satisfies every rule here. `locked` is drift detection in CI, not a sandbox:
+an agent with push access that strips its own authorship trailer defeats it, and saying so
+is the point. It reviews nothing, and it knows nothing about your code's correctness.
+
+---
+
+Next: [the 15-minute guide](GUIDE.md) · [what it looks like in practice](USE-CASES.md) ·
+[what was taken from each system](SDD.md)
+
+==============================================================================
+FILE: docs/GUIDE.md
+ANSWERS: How do I work with this day to day?
+URL: https://atamaniuc.github.io/Harnessimo/GUIDE/
+==============================================================================
+
+# The 15-minute guide
+
+What this is, why you would want it, and how to get a green check in your own repository.
+Read top to bottom; it is meant to be finished in one sitting.
+
+
+## 1. Why
+
+You ask an agent for a feature. It writes code, runs a test, and reports success. Six of
+those reports are true. The seventh looks identical and is not: the test asserted nothing,
+or the documentation now describes a capability that was never built, or the task list has
+a tick nobody can trace to anything.
+
+The problem is not the model. It is that **"done" was decided by whoever did the work.**
+
+```mermaid
+flowchart LR
+    A["Agent finishes work"] --> B{"Who decides<br/>it is done?"}
+    B -- "the agent itself" --> C["Looks finished.<br/>Sometimes is."]
+    B -- "a command" --> D["Is finished,<br/>or fails loudly."]
+    C -.->|"discovered weeks later"| E["Rework, distrust,<br/>a README nobody believes"]
+
+    style C stroke-dasharray: 4 4
+    style D stroke-width:3px
+```
+
+This tool moves that decision out of prose and into commands that exit non-zero.
+
+## 2. The idea in one sentence
+
+**Every claim names the thing that proves it, and a command re-checks all of them.**
+
+A claim is a claim wherever it lives, so all three claim-shaped things go through the same
+checker:
+
+| Where the claim lives | What proves it |
+|---|---|
+| A sentence in a document | `<!-- proof: path/to/file.ts:<aSymbol> -->` |
+| A ticked box in a task list | the same marker, on the task |
+| An item in the work queue | its verification command, re-run in CI |
+
+## 3. Three minutes to a green check
+
+=== "pnpm"
+
+    ```bash
+    pnpm add -D harnessimo
+    pnpm exec harnessimo init
+    pnpm exec harnessimo check
+    ```
+
+=== "npm"
+
+    ```bash
+    npm i -D harnessimo
+    npx harnessimo init
+    npx harnessimo check
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn add -D harnessimo
+    yarn harnessimo init
+    yarn harnessimo check
+    ```
+
+=== "bun"
+
+    ```bash
+    bun add -d harnessimo
+    bunx harnessimo init
+    bunx harnessimo check
+    ```
+
+Later examples write `harnessimo …` on its own: prefix it with your runner — `pnpm exec`,
+`npx`, `yarn` or `bunx`.
+
+`init` reads your repository first — command runner, source directories, migrations, CI —
+and writes a configuration that already passes. Then three things and nothing else:
+
+```
+.harness/            the five subsystems, with starter documents
+  1-instructions/    your rules — rewrite these, they ship as examples
+  2-tools/           what your project can run
+  3-environment/     how it reproduces, and what agents may not touch
+  4-state/           PROGRESS.md, DECISIONS.md, the work queue
+  5-feedback/        the map of your checks
+specs/               TRACKS.md (live work), templates for a spec and a handoff
+harnessimo.config.json  which checks you asked for
+```
+
+The scaffold passes its own check immediately, so your first green run costs nothing —
+and every red one after that means something.
+<!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
+
+Then run:
+
+```bash
+harnessimo doctor
+```
+
+It prints what is enforced and what is not. **A section you leave out of the config is a
+check that does not run, and `doctor` says so.** That honesty is the point: a team that
+believes a check exists stops looking for the missing one.
+
+## 4. Turn on what hurts { #turn-on }
+
+Do not switch on all nine at once. Pick the one matching a problem you actually have,
+make it green, commit, then take the next.
+
+| The problem you have | Turn on | It fails when |
+|---|---|---|
+| The README describes things that no longer exist | `docs` | a claim's file, test or command is gone |
+| Work restarts from scratch each session | `tracks` | a track has no status, or links a deleted handoff |
+| Ticked boxes nobody can trace | `tracks.gateTasks` | a checked box names no check |
+| "Done" that turns out not to be | `queue` | an item claiming to pass fails when re-run |
+| Only works on the machine that built it | `coldStart` | a fresh clone cannot verify itself |
+| Debug leftovers, stale progress notes | `cleanExit` | a session left debris or wrote nothing down |
+| The agent file has become a 600-line manual | `instructions` | it is over its line limit |
+| An agent editing what grades it | `locked` | an agent commit touched those paths |
+| npm, the tags and the changelog telling different stories | `release` | a released version has no tag, or the changelog's top entry is not what ships |
+
+## 5. What a session looks like
+
+The daily loop, once it is set up. Two commands out of the five are the harness; the rest
+is ordinary work.
+
+```mermaid
+flowchart TD
+    S(["Session starts"]) --> R["Read PROGRESS.md → DECISIONS.md → TRACKS.md"]
+    R --> Q{"Picking up<br/>a live track?"}
+    Q -- yes --> HO["<b>Load its handoff first</b><br/>it says what to read — and what not to"]
+    Q -- no --> PICK["Pick an item from the queue"]
+    HO --> PICK
+    PICK --> WORK["Do the work"]
+    WORK --> V["<b>harnessimo queue verify &lt;id&gt;</b><br/>the harness runs the item's own check"]
+    V -- fails --> WORK
+    V -- passes --> WRITE["Update PROGRESS.md<br/>update the handoff if unfinished"]
+    WRITE --> C["<b>harnessimo check</b>"]
+    C -- red --> WORK
+    C -- green --> COMMIT(["Commit"])
+```
+
+Two rules make this work, and both are enforced rather than agreed:
+
+- **You never write `passing` yourself.** Only `harnessimo queue verify` does, and only after
+  running the item's own command. CI re-runs every such claim, so a hand-edited state is
+  detected rather than trusted.
+- **One item at a time.** Split attention produces work that is started everywhere and
+  finished nowhere.
+
+## 6. Unfinished work crosses the session boundary
+
+A session ends and its memory is gone. The queue says *which* item is in flight; it does
+not say where you stopped, what you already tried, or — most valuably — what the next
+session should **not** read.
+
+```mermaid
+flowchart LR
+    W["Work starts"] --> T["A line in <b>TRACKS.md</b><br/>essence · status · next step"]
+    T --> H["<b>handoff.md</b> beside the spec<br/>context · what to load<br/><b>what NOT to load</b> · state<br/>decisions · first step"]
+    H -- "session ends" --> U["Handoff updated in place"]
+    U --> H
+    H -- "track closes" --> D["Outcome → TRACKS-LOG.md<br/>decisions → DECISIONS.md<br/><b>handoff deleted</b>"]
+```
+
+The index is machine-checked, because **a handoff that lies is worse than no handoff** —
+the next session trusts it. A line with no status, or one linking a handoff that was
+deleted, fails the gate. <!-- proof: src/tracks.ts:checkHandoffRefs -->
+
+The "what NOT to load" section is the half everyone skips and the one that pays for the
+practice: a fresh session's budget goes on whatever you failed to rule out.
+
+## 7. On every commit
+
+```bash
+harnessimo hooks install
+```
+
+Writes `.githooks/pre-commit` and points git at it, so the fast checks run
+before a commit lands rather than after CI has spent four minutes on it.
+
+It runs **only** the second-scale gates. Re-verification, the cold start and your
+test suite stay in CI, where waiting costs nobody anything — a hook that makes
+every commit slow gets bypassed with `--no-verify`, and a bypassed hook enforces
+nothing. If your project has its own fast command, name it in the config and the
+hook runs it first:
+
+```jsonc
+{ "hooks": { "before": ["npm run validate >/dev/null"] } }
+```
+
+`harnessimo hooks status` answers the question nobody thinks to ask: the file
+exists, but is git actually using it? A hook that was never wired up looks
+exactly like one that passes.
+
+## 7b. In CI
+
+One job. It runs the same command you run locally, so there is no "works on my machine"
+gap to argue about:
+
+```yaml
+- run: npx harnessimo check --reverify
+```
+
+`--reverify` re-runs every item claiming to pass. That is the line that makes the queue's
+evidence *evidence* rather than a string someone typed.
+
+Two checks need a commit range and get their own step:
+
+```yaml
+- run: npx harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
+- run: npx harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
+```
+
+
+## 8. Adopting a repository that already has its own checks { #adopting }
+
+A new repository is one command. An existing one is a translation exercise, and that
+is the interesting case.
+
+### A new repository, in five steps after §3
+
+The install and `init` are §3 above; this is what to do with the scaffold it wrote.
+
+Then, in order:
+
+1. **Rewrite `CONSTRAINTS.md` with your project's real rules.** Keep the shape: the rule,
+   then who catches it, then why. Delete every example you have not adopted — an
+   aspirational constraint is a lie with good intentions.
+2. **Point `docs.commands` at your command runner** — `{ "make": "Makefile" }`,
+   `{ "task": "Taskfile.yml" }`, `{ "pnpm run": "package.json" }`. Without it, a
+   `<!-- proof: make <target> -->` marker cannot be resolved and says so rather than passing.
+3. **Add your central document to `docs.mustCarryProof`.** Usually `README.md`. This is
+   what makes strict mode mean anything.
+4. **Wire `harnessimo check` into CI** next to your existing gate.
+5. **Install both hooks.** `harnessimo hooks install` runs the fast gates before a commit
+   lands; `harnessimo hooks install --agent` hands the harness state to every new agent
+   session at startup. The second one is what stops "read the handoff first" from being a
+   rule that depends on memory.
+
+### An existing repository
+
+The rule for the whole migration: **adoption never trades a check away.** If the shared
+implementation cannot express something you already enforce, keep your check and write the
+gap down. Silently losing a gate to make a migration tidy is the exact failure this tool
+exists to prevent.
+
+#### 1. Inventory before you delete anything
+
+List what you enforce today and what enforces it. Then run:
+
+```bash
+harnessimo doctor
+```
+
+and compare, line by line. `doctor` reports what is configured, never what is aspirational,
+so the diff between those two lists is the real work.
+<!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
+
+#### 2. Translate, one section at a time
+
+Each section of `harnessimo.config.json` maps onto something you probably already have:
+
+| You have | Becomes |
+|---|---|
+| A script listing paths an agent may not touch | `locked.paths` + `locked.baseline` |
+| A clone-and-run smoke script | `coldStart.requiredFiles` / `.commands` / `.entryDocs` |
+| A feature list or item queue with states | `queue.file` |
+| A hand-maintained index of in-flight work | `tracks.file`, plus a handoff per track |
+| A docs audit script | `docs.roots`, `docs.mustCarryProof`, `docs.commands` |
+| A hand-written SessionStart hook | `harnessimo hooks install --agent` |
+| A hand-written pre-commit hook | `harnessimo hooks install` + `hooks.before` |
+| A grep for `TODO` / `console.log` in review | `cleanExit.markers` + `cleanExit.scan` |
+| A note asking people to keep `AGENTS.md` short | `instructions.limits` |
+| A release process nobody can tell has drifted | `release.manifest` + `release.changelog` |
+
+Turn one on, run `harnessimo check`, fix what it finds, commit. Then the next. A migration that
+turns on six checks at once produces one enormous red run that nobody can read.
+
+#### 3. Keep your wrapper if you have one
+
+A repository whose gate is a task in a `Taskfile`, or a TypeScript module with its own unit
+tests, does not have to give that up. Keep the wrapper and have it call the package, so the
+rule has one implementation and your project keeps its own entry point and its
+project-specific parts:
+
+```ts
+import { verifyProofs, createResolver } from "harnessimo";
+```
+<!-- proof: src/index.ts -->
+
+The test for whether the migration worked is not that the wrapper disappeared. It is that
+the *rule* exists once.
+
+#### 4. Delete the copies, in the same commit as the switch
+
+A vendored script that is no longer called is worse than one that is: the next person edits
+it and nothing happens. Delete it in the commit that switches over, so the diff shows the
+exchange rather than an accumulation.
+
+### Two worked examples
+
+**`code-knowledge-base`** (Make, pnpm workspace). Its harness maps almost exactly onto the
+shared one: `locked-surfaces.sh` becomes `locked.paths`, `cold-start.sh` becomes the
+`coldStart` section, `harness.ts` becomes `queue.file`. It gains what it did not have —
+proof markers, work tracks, the task gate — for the price of a config file.
+
+Its adoption also has one prerequisite worth copying: it was red in CI first, for an
+unrelated reason (a script moved during a reorganisation, and the queue item verifying it
+kept pointing at the old path). **Fix CI before adopting.** Otherwise the first red run
+after the migration is ambiguous, and an ambiguous red run gets ignored.
+
+**`ledger-lens`** (Taskfile, Next.js, Supabase, Python). It already had proof markers,
+tracks and the task gate as TypeScript with its own unit tests, so its migration is the
+"keep your wrapper" case: the module delegates to the package, and its project-specific
+resolver — Supabase migration prefixes, its own `MUST_CARRY_PROOF` list — becomes
+configuration. It gains locked surfaces and cold start, which it never had.
+
+### After adoption
+
+- Pin the version you adopted: `harnessimo@0.5.4` rather than a range. Tracking the latest
+  means a rule can tighten under you between two green runs, which is exactly the surprise
+  a gate must not produce.
+- Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one
+  answer to "what does this repository actually guarantee".
+
+## 9. Questions
+
+Moved, so they can be found by someone who is not reading a guide top to bottom:
+the [FAQ](FAQ.md) for questions, [troubleshooting](TROUBLESHOOTING.md) for a run that went red.
+
+## 10. Where to go next
+
+- [`STANDARD.md`](STANDARD.md) — the reasoning behind each rule, and which lecture of
+  [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/)
+  it comes from.
+- `harnessimo help` — every command, with its arguments.
+
+==============================================================================
+FILE: docs/CONFIGURATION.md
+ANSWERS: What can I put in the config, and what does each key do?
+URL: https://atamaniuc.github.io/Harnessimo/CONFIGURATION/
+==============================================================================
+
+# Configuration
+
+Every section is optional, and a section that is absent is a check that does not run —
+`harnessimo doctor` prints that list, and it is the honest answer to what a repository
+enforces.
+
+This page is generated from `schema/harnessimo.config.schema.json`. Editing it by hand is
+pointless: `npm run docs:sync` regenerates it and a test fails when the two disagree.
+
+## `docs`
+
+*Turns on: `proof`*
+
+Proof markers: every claim in prose names the evidence that makes it true.
+
+| Key | Type | What it does |
+|---|---|---|
+| `roots` | array of string | Directories to scan for Markdown. "." means the repository root, non-recursively. |
+| `skip` | array of string | Directory names never descended into. |
+| `maxDepth` | integer | How deep to descend below each root. Keeps a scan from wandering into a vendored tree. |
+| `mustCarryProof` | array of string | Documents that must carry at least one marker in strict mode. Put the ones that make promises here. |
+| `commands` | object | Marker prefix to the file that declares those commands, e.g. { "make": "Makefile", "task": "Taskfile.yml", "pnpm run": "package.json" }. |
+| `migrations` | string or null | Directory backing `migration:<prefix>` markers. |
+
+## `tracks`
+
+*Turns on: `tracks`*
+
+Handoff-driven development: the index of live work tracks and the handoffs it points at.
+
+| Key | Type | What it does |
+|---|---|---|
+| `file` | string | The index of live work tracks — one line per track, with a status and a next step. |
+| `log` | string | Where a closed track's outcome is distilled. |
+| `specsDir` | string | Where a lane's spec, tasks and handoff live, one directory per lane. |
+| `taskFile` | string | The file inside a lane holding its task list, whose checked boxes the task gate reads. |
+| `gateTasks` | boolean | Require a checked box in a live lane's task list to carry a proof marker. |
+
+## `queue`
+
+*Turns on: `queue`*
+
+The work queue. State moves only through a passing verification, and CI re-runs every claim.
+
+| Key | Type | What it does |
+|---|---|---|
+| `file` | string | The queue itself: every item, its state, and the command that verifies it. |
+| `timeoutMinutes` | number | A verification that runs longer than this is a failure with a stated cause, not a hang. |
+| `terminalByKind` | object | Where an item lands when its verification passes, per kind. |
+
+## `locked`
+
+*Turns on: `locked`*
+
+The files that define or enforce the acceptance signal, which an agent commit may not touch.
+
+| Key | Type | What it does |
+|---|---|---|
+| `paths` | array of string | Path prefixes. Empty means the check is off. |
+| `baseline` | string | File naming the commit from which enforcement applies. |
+| `agentTrailer` | string | The commit-message trailer that marks agent authorship. |
+
+## `coldStart`
+
+*Turns on: `cold-start`*
+
+Can a fresh clone install and verify itself using nothing but the repository?
+
+| Key | Type | What it does |
+|---|---|---|
+| `requiredFiles` | array of string | Files a fresh clone must contain before anything is run — the ones the first command assumes. |
+| `entryDocs` | array of string | Documents checked for paths that only resolve on one machine. |
+| `commands` | array of string | The documented commands, run inside the fresh clone. |
+
+## `cleanExit`
+
+*Turns on: `clean-exit`*
+
+Clean state at session exit (lecture 12): no debris left behind, and progress written down.
+
+| Key | Type | What it does |
+|---|---|---|
+| `scan` | array of string | Path prefixes whose changed files are read. Empty means the check is off. |
+| `markers` | array or null | Strings that pass a build and mean the work is unfinished. Null uses the defaults. |
+| `allow` | array of string | Path fragments exempted — typically the files that name the markers themselves. |
+| `progressFile` | string | The file a session must update when it changed code. |
+| `codePrefixes` | array of string | What counts as code for the progress rule. Empty means anything that is not Markdown. |
+| `progressThreshold` | number | Changed lines below which the progress rule stays quiet, so a one-line fix is not told to write a progress note. Defaults to 50. |
+| `requireCleanTree` | boolean | Also fail when the working tree has uncommitted changes. |
+
+## `instructions`
+
+*Turns on: `instructions`*
+
+The instruction file kept a router rather than a manual (lecture 04).
+
+| Key | Type | What it does |
+|---|---|---|
+| `limits` | object | Path to maximum line count. |
+
+## `release`
+
+*Turns on: `release`*
+
+The version is a claim made on several surfaces: they must agree.
+
+| Key | Type | What it does |
+|---|---|---|
+| `manifest` | string | Where the version being shipped is declared. Usually package.json. |
+| `changelog` | string | The file describing each released version. |
+| `tagPrefix` | string | What a tag for x.y.z looks like: "v" gives v1.2.3. |
+
+==============================================================================
+FILE: docs/USE-CASES.md
+ANSWERS: What will this actually catch for me?
+URL: https://atamaniuc.github.io/Harnessimo/USE-CASES/
+==============================================================================
+
+# Use cases
+
+Seven situations this was built for, and what actually happens in each. If you only read one
+section, read the first — it is the whole point: **you configure it once, and after that
+nobody has to remember it exists.**
+
+## Set it up once, then forget it
+
+Three commands, run a single time in a repository:
+
+=== "pnpm"
+
+    ```bash
+    pnpm exec harnessimo init                    # writes harnessimo.config.json from what you already have
+    pnpm exec harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    pnpm exec harnessimo hooks install           # the fast checks run before every commit
+    ```
+
+=== "npm"
+
+    ```bash
+    npx harnessimo init                    # writes harnessimo.config.json from what you already have
+    npx harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    npx harnessimo hooks install           # the fast checks run before every commit
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn harnessimo init                    # writes harnessimo.config.json from what you already have
+    yarn harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    yarn harnessimo hooks install           # the fast checks run before every commit
+    ```
+
+=== "bun"
+
+    ```bash
+    bunx harnessimo init                    # writes harnessimo.config.json from what you already have
+    bunx harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    bunx harnessimo hooks install           # the fast checks run before every commit
+    ```
+
+Plus ten lines in CI:
+
+```yaml
+- uses: actions/checkout@v5
+  with: { fetch-depth: 0 }          # locked and clean-exit read a commit range
+- uses: actions/setup-node@v5
+  with: { node-version: 22 }
+- run: npx harnessimo check --reverify
+```
+
+After that the harness fires at three moments on its own, with nobody in the loop:
+
+```mermaid
+flowchart LR
+    S["Session starts"] -->|"SessionStart hook<br/>harnessimo brief"| A["Agent knows the tracks,<br/>the handoffs, what is in flight"]
+    A --> W["It works"]
+    W -->|"pre-commit hook<br/>harnessimo check"| C["Commit — or a red gate<br/>naming the file and the fix"]
+    C -->|"push"| CI["CI: harnessimo check --reverify<br/>every passing claim re-run"]
+    CI -->|"merge"| S
+
+    style A stroke-width:3px
+    style CI stroke-width:3px
+```
+
+This is the difference between a rule and a harness. A rule in `AGENTS.md` — *"verify before
+you claim done"* — is obeyed on the runs you are watching. A hook is obeyed on the run at
+3am that nobody sees. <!-- proof: src/hooks.ts:hookScript -->
+
+**Autonomy is the payoff.** An agent can only be left alone as far as something other than
+the agent decides when the work is finished. Once these three touchpoints exist, a long
+unattended run either produces work that passes them or stops with a specific, actionable
+failure — instead of a cheerful summary of things that did not happen.
+
+---
+
+## Two ways to run it
+
+The checks do not care who is working. What differs is how they reach you.
+
+### By hand
+
+```bash
+harnessimo check        # everything this repository asked for; the CI command
+harnessimo doctor       # what is enforced here, and what is not
+harnessimo proof docs/  # one check, one directory, while you edit
+```
+
+The pre-commit hook runs the fast ones, so the loop is the one you already have: write,
+commit, and find out in a second rather than in CI. Nothing here needs an agent, an editor
+integration or a subscription — a repository with no AI in it gets the same value from
+`proof` and `cold-start`.
+
+### By agent
+
+An agent gets three things it cannot get from a line in `AGENTS.md`.
+
+**At the start of a session** the SessionStart hook prints the state instead of hoping the
+agent asks for it: live tracks, the head of each handoff, what is in flight, and which checks
+this repository enforces. That is `harnessimo brief`, wired up by
+`harnessimo hooks install --agent`.
+
+**During the work** the queue takes one decision away from it: `harnessimo queue verify <id>`
+runs the item's own command and records the outcome. The agent cannot write `passing`, and
+`check --reverify` re-runs every claim in CI, so editing the state file by hand is caught
+rather than trusted.
+
+**At commit** it hits the same gate a person does — and `locked` additionally refuses a
+commit carrying the agent trailer that touches the files defining success.
+
+Put the three rules an agent must follow in your instruction file, where they are short
+enough to survive:
+
+```markdown
+- Run `harnessimo check` before saying anything is done.
+- Never edit state in the queue file; use `harnessimo queue verify <id>`.
+- Starting a track means reading its handoff first — `harnessimo brief` prints them.
+```
+
+The rest is enforcement, and enforcement is not an instruction.
+
+---
+
+## 1. The README describes software that does not exist
+
+*Brownfield, inherited repo, or an agent that documented its intentions.*
+
+You write a claim once and attach its evidence:
+
+```markdown
+Totals round per currency, not per line.   <!-- proof: docs/<a-file>.md -->
+Check it yourself with `make verify`.     <!-- proof: make <a-target> -->
+```
+
+(Real markers name a real path; the angle brackets above are only so this page's own
+examples are not checked as claims.) Delete the document, or rename the target, and the
+build says so:
+
+```
+FAIL  proof markers
+  README.md:31  docs/ARCHITECTURE.md
+      no such file
+  README.md:32  make verify
+      no make command named "verify"
+```
+
+**Turn on:** `docs`. Add the documents that may never drift to `docs.mustCarryProof` — those
+must carry at least one marker, so a rewrite cannot quietly drop the evidence.
+<!-- proof: src/proof.ts:verifyProofs -->
+
+## 2. "Works on my machine" — and only there
+
+*Onboarding, a new agent session, a fresh CI runner.*
+
+`cold-start` clones your repository into an empty directory and runs the commands your own
+documentation gives a newcomer. No caches, no environment carried over, nothing that only
+exists on the machine that built it.
+
+```
+FAIL  cold start
+  the clone ran: npm ci && npm test
+    npm ci failed: package-lock.json is not committed
+```
+
+**Turn on:** `coldStart`, listing `requiredFiles`, `entryDocs` and the `commands` a newcomer
+runs. <!-- proof: src/coldstart.ts:coldStartProblems -->
+
+## 3. A feature that takes four sessions
+
+*Context dies at the end of every session; the next one re-derives it, or re-decides a
+question that was already settled.*
+
+Live work lives in `specs/TRACKS.md` — one line per track, each pointing at a `handoff.md`
+that says what to load, what *not* to load, where the work stopped and what the first step
+is. The next session gets it handed over at startup rather than re-reading the repository:
+
+```
+$ harnessimo brief
+== specs/TRACKS.md (live work tracks — load a track's handoff first) ==
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
+- Hosted deploy — none — blocked (on an API token)
+```
+
+The index is machine-checked, because a handoff that lies is worse than no handoff: a track
+with no status, or a link to a handoff someone deleted, fails the gate.
+
+**Turn on:** `tracks`. <!-- proof: src/tracks.ts:checkHandoffRefs -->
+
+## 4. "Done" that stopped being true
+
+*The task was genuinely finished in March. Something unrelated broke it in May, and the
+board still says done.*
+
+Each queue item carries its own verification command. Only the tool writes `passing`, and
+only after that command exits 0 — and `--reverify` re-runs every one of them in CI:
+
+```
+FAIL  queue
+  "checkout-totals" claims passing but its verification fails now
+    command: npm test -- checkout
+    fix:  fix the regression, or the claim was never true
+```
+
+Editing `state` by hand is not a shortcut; it is the thing this check catches.
+
+**Turn on:** `queue`. <!-- proof: src/queue.ts:checkQueue -->
+
+## 5. An agent that edits its own exam
+
+*The fastest way to make a red build green is to change what "green" means.*
+
+Name the surfaces that define success — the CI workflows, the constraints file, the eval
+thresholds. A commit carrying the agent trailer that touches them fails the build:
+
+```
+FAIL  locked surfaces
+  a1b2c3d  Co-Authored-By: Claude  touched .github/workflows/ci.yml
+    fix:  a human makes this change, or the baseline records why it moved
+```
+
+This is drift detection in CI, not a sandbox — it catches the honest case, which is the
+common one.
+
+**Turn on:** `locked`, with `paths`, a `baseline` and your `agentTrailer`.
+<!-- proof: src/locked.ts:lockedViolations -->
+
+## 6. The long unattended run
+
+*You start it and go to bed.*
+
+`clean-exit` reads what the session actually changed and refuses the two ways a run ends
+badly without failing: debris left in the code (`TODO`, `debugger`, `.only(` — you choose
+the markers), and a progress file that stayed frozen while hundreds of lines changed around
+it.
+
+```
+FAIL  clean exit
+  src/checkout/totals.ts:88        debugger
+  .harness/4-state/PROGRESS.md     unchanged while 412 lines of code moved
+    fix:  write down where this got to, or the next session starts blind
+```
+
+**Turn on:** `cleanExit`. The `progressThreshold` keeps a one-line fix from tripping it.
+<!-- proof: src/cleanexit.ts:progressProblems -->
+
+## 7. "What does this repo actually enforce?"
+
+*A new contributor, a code review, or you six months later.*
+
+```
+$ harnessimo doctor
+  enforced      proof markers    docs claims resolve to real files, tests and commands
+  enforced      work tracks      the track index resolves and every track carries a status
+  not enforced  queue            no queue section in harnessimo.config.json
+```
+
+A check you did not configure is reported as *not enforced*, in the same output, with the
+same weight. A harness that overstates its own coverage is the failure it exists to prevent.
+<!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
+
+## 8. The version means different things in different places
+
+*The badge says one thing, the registry serves another, and both are right about themselves.*
+
+This one is not hypothetical: while writing this tool, three versions reached npm through a
+manual workflow run while the repository's own tags stopped two releases earlier. Nothing
+noticed, because nothing was checking the most duplicated claim a project makes.
+
+```
+FAIL  release
+  CHANGELOG.md:1  v0.4.3
+      0.4.3 is described as released and has no v0.4.3 tag
+    why:  a version published outside the release flow leaves the repository behind
+    fix:  cut the release, or remove the entry if it never shipped
+```
+
+**Turn on:** `release`, naming your manifest, your changelog and the tag prefix. It reads the
+version from the manifest, the entries from the changelog and the tags from git; a version
+nobody wrote down, an entry that is not at the top, or a released version with no tag all
+fail. <!-- proof: src/release.ts:releaseProblems -->
+
+---
+
+## A full session, end to end
+
+```
+$ harnessimo brief
+== specs/TRACKS.md (live work tracks — load a track's handoff first) ==
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
+
+== work queue ==
+active: checkout-totals — an order total matches the sum of its lines, in every currency
+  verify with: harnessimo queue verify checkout-totals
+
+== enforced here ==
+proof, tracks, tasks, queue, coldStart, cleanExit
+
+# ... the agent works ...
+
+$ harnessimo queue verify checkout-totals
+running: npm test -- checkout
+  ✓ 12 tests passed
+checkout-totals: passing — evidence recorded
+
+$ git commit -m "feat(checkout): per-currency rounding (0007)"
+harnessimo: proof markers ok · tracks ok · task gate ok · queue ok
+[main 4f1a2b9] feat(checkout): per-currency rounding (0007)
+```
+
+The commit went through because the checks passed, not because anybody said it was done.
+
+---
+
+Next: [what was taken from OpenSpec, Spec Kit, BMAD and the rest](SDD.md), or
+[adopting it in an existing repo](GUIDE.md#adopting).
+
+==============================================================================
+FILE: docs/STANDARD.md
+ANSWERS: Why does each rule exist, and where does it come from?
+URL: https://atamaniuc.github.io/Harnessimo/STANDARD/
+==============================================================================
+
+# The standard
+
+What a harness is, what the parts are for, and why each rule here exists. The tool is the
+enforcement; this is the thing being enforced.
+
+The model and its vocabulary come from
+[**Learn Harness Engineering**](https://walkinglabs.github.io/learn-harness-engineering/ru/).
+This document does not restate the course — it says which of its ideas are implemented here,
+how, and where this implementation makes a choice the course leaves open.
+
+## The claim
+
+A harness is *«всё в инженерной инфраструктуре за пределами весов модели»* — everything in
+the engineering infrastructure outside the model's weights
+([lecture 02](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-02-what-a-harness-actually-is/)).
+Infrastructure decides which of a model's capabilities actually show up in practice.
+
+The failure mode is specific. A capable model rarely fails by producing obvious nonsense.
+It fails by **declaring victory**: a documented capability nobody built, a ticked box nobody
+re-ran, a test suite that quietly stopped asserting anything. Each is invisible to a reader
+and visible to a command — which is the whole opening.
+
+So the design principle is: **move every judgement about "done" out of prose and into
+something that exits non-zero.** Lecture 09 calls this *«экстернализировать суждение о
+завершении»* — externalising the completion judgement — on the grounds that
+*«современные нейронные сети систематически сверх-уверены»*.
+<!-- proof: src/queue.ts:checkQueue -->
+
+## Where each check comes from
+
+| Lecture | Idea | Implemented as |
+|---|---|---|
+| 02 · what a harness is | five subsystems, kitchen metaphor | the `.harness/` layout |
+| 03 · repository as source of truth | nothing outside the repo exists | `harnessimo proof`, `harnessimo cold-start` |
+| 04 · one giant instruction file fails | instructions are a router | `harnessimo instructions` |
+| 05 · continuity between sessions | PROGRESS, DECISIONS, session protocol | `.harness/4-state/`, `harnessimo tracks` |
+| 06 · initialization as its own phase | a scaffolded start | `harnessimo init` |
+| 05 · continuity between sessions | state handed over, not looked up | `harnessimo brief`, the SessionStart hook |
+| 07 · overreach and under-finishing | WIP = 1, scope belongs to the human | `harnessimo queue activate` |
+| 08 · feature lists as primitives | behaviour + verification + state | `harnessimo queue` |
+| 09 · declaring victory too early | the passing-state gate, evidence | `harnessimo queue verify`, `--reverify` |
+| 10 · end-to-end as ground truth | the real run is the proof | `harnessimo cold-start` |
+| 12 · clean state at session end | no debris, progress written down | `harnessimo clean-exit` |
+
+Three things here are **not** from the course: proof markers, handoff-driven development,
+and the release check. The first two came out of production repositories and are described
+in their own sections below. The third came out of this one: three versions reached the
+registry while the repository's tags stopped two releases earlier, and the failure was
+invisible precisely because a version is claimed in so many places at once — the manifest,
+the changelog, the tags, a badge. `harnessimo release` requires the ones the repository
+controls to agree. <!-- proof: src/release.ts:releaseProblems -->
+
+## Layer 1 — Instructions *(«подсистема инструкций» — the recipe shelf)*
+
+Deliberately short. A long instruction file eats the working memory it is trying to direct,
+and what lands in the middle is what gets ignored — the argument of
+[lecture 04](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-04-why-one-giant-instruction-file-fails/).
+The entry file is a router: what the project is, how to run it, how to check it, and links
+to topical documents.
+
+The only way a router stays a router is if something fails when it stops being one, so the
+line limit is a check rather than a note. <!-- proof: src/cleanexit.ts:instructionProblems -->
+
+The rule that makes this layer worth having is **labelling**: every constraint states
+whether a command fails on it, or whether it is caught in review. Of the ten constraints in
+this repository's own `CONSTRAINTS.md`, four are review-only, and they say so.
+
+**Why labelling matters more than the rules:** claiming enforcement that does not exist is
+worse than claiming none, because a team that believes a check exists stops looking for the
+missing one. Two of the repositories this came from had a constraints file asserting
+"enforced by CI" at a time when CI had never run once — in one case because the workflow
+triggered on `main` while the branch was still called `master`.
+
+The Definition of Ready and the Definition of Done live here, referenced and never copied.
+The decidable parts are enforced at the two moments they matter: when an item is started,
+and when it is closed. <!-- proof: src/readiness.ts:readiness -->
+
+## Layer 2 — Tools *(«подсистема инструментов» — the knife rack)*
+
+One command surface, and the queue is a *command*, not a file you edit.
+
+[Lecture 08](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-08-why-feature-lists-are-harness-primitives/)
+calls the feature list *«позвоночник harness'а»* — the backbone — and prescribes the triple:
+a behaviour, a command that verifies it, and a state. Its central rule is that
+*«агент не может напрямую перевести фичу в `passing`»*: only the harness may, and only after
+the verification command succeeds.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> not_started
+    not_started --> active: harnessimo queue activate<br/>(Definition of Ready holds, WIP = 1)
+    active --> passing: verification passed<br/><b>only the harness writes this</b>
+    active --> blocked: verification failed<br/>(reason recorded)
+    blocked --> active: cause fixed
+    passing --> blocked: CI re-verification fails<br/>(the claim was never true)
+
+    note right of passing
+        Evidence is the command's own output.
+        A claim with no output cannot be re-checked,
+        so it is not allowed to exist.
+    end note
+```
+
+Two details that only appear once this runs in anger:
+
+- **Verification runs with stdin closed and a hard timeout.** A command that stops to ask a
+  question would otherwise block forever, and a loop that can hang silently has no stop
+  condition. A harness without a stop condition is not a harness.
+- **Nested calls degrade.** An item whose verification invokes the harness would recurse
+  until killed, so a nested run checks invariants only.
+  <!-- proof: src/cli.ts:HARNESS_REVERIFY -->
+
+## Layer 3 — Environment *(«подсистема среды» — the stove)*
+
+Reproducibility, so that "works here" and "works anywhere" are the same statement: a pinned
+runtime, a lockfile, and an honest list of services.
+
+Then the part the course leaves implicit and production makes urgent: **locked surfaces.** A
+system that improves itself will, given the opportunity, improve its own score instead of
+its own work. Every documented reward hack broke this invariant — the agent edited or
+removed the instrumentation its checker depended on. So the files defining the acceptance
+signal are placed out of the loop's reach, and the reach is enforced by a command rather
+than an instruction, because instructions get optimised away.
+<!-- proof: src/locked.ts:lockedViolations -->
+
+The baseline exists because the commit that creates a protected file necessarily touches it.
+Moving it forward widens what the system may change, which is a human decision.
+
+**The limit is part of the design, not an omission:** this assumes commits pass through CI.
+It is drift detection. An agent with push access that strips its own trailer defeats it.
+
+## Layer 4 — State *(«подсистема состояния» — the prep table)*
+
+A session ends and its memory is gone.
+[Lecture 05](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-05-why-long-running-tasks-lose-continuity/)
+puts it as treating the agent as *«гениальный инженер с амнезией»* — a brilliant engineer
+with amnesia — who writes down the critical facts before leaving the shift, with a target of
+a three-minute recovery for the next session.
+
+Three artifacts, each answering a different question:
+
+- **PROGRESS.md** — where things stand. Read first, updated last.
+- **DECISIONS.md** — what was decided, why, and what was rejected. Append-only, so a later
+  session does not quietly undo a deliberate choice, and a rejected option stays rejected
+  instead of being rediscovered every few weeks.
+- **The queue** — one item at a time, each carrying its behaviour, its verifying command,
+  its state, and the output that proved it.
+
+Work in progress is capped at one — the concern of
+[lecture 07](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-07-why-agents-overreach-and-under-finish/).
+A wide half-finished diff is worse than a narrow done one.
+
+**Written state only pays off if it is read**, and "load the handoff first" in an instruction
+file is a rule that depends on the reader remembering it — which is the weakest place to put
+anything. `harnessimo brief` prints what a session should read first, and
+`harnessimo hooks install --agent` wires it to the agent's SessionStart hook, so the state
+arrives whether or not anyone remembers to fetch it. Same argument as every gate here,
+applied to reading rather than to finishing: take the judgement away from the party with an
+incentive to skip it. <!-- proof: src/brief.ts:briefText -->
+
+It earns its keep immediately by making stale state loud: run against this repository the
+first time, it showed a track index still calling finished work active. A file nobody opens
+goes stale in silence.
+
+## Layer 5 — Feedback *(«подсистема обратной связи» — the quality-control window)*
+
+Checks live next to the code they check; one document maps them. A rule kept far from what
+it governs goes stale without anyone noticing.
+
+Lecture 09 prescribes three levels, and skipping any of them means not finished:
+
+```mermaid
+flowchart TD
+    W["Work an agent calls finished"] --> L1
+
+    L1["<b>1 · Синтаксис и статический анализ</b><br/>types, schemas, lint<br/><i>fast, and blind to behaviour</i>"]
+    L1 -- passes --> L2["<b>2 · Верификация runtime-поведения</b><br/>tests, especially negative ones<br/><i>a rule with no failing test is an assumption</i>"]
+    L2 -- passes --> L3["<b>3 · Системное подтверждение</b><br/>the real end-to-end run<br/><i>harnessimo cold-start, in an empty directory</i>"]
+    L3 -- passes --> DONE(["Finished"])
+
+    L1 -- fails --> BACK["Not finished.<br/>No level may be skipped."]
+    L2 -- fails --> BACK
+    L3 -- fails --> BACK
+```
+
+The third level is the one most projects skip and the one that catches what the first two
+are blind to: something that works only because of state on this machine
+([lecture 10](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-10-why-end-to-end-testing-changes-results/)).
+`harnessimo cold-start` clones the project into an empty directory and runs the documented
+commands there. <!-- proof: src/coldstart.ts:coldStartProblems -->
+
+It is also the honest test of the documentation, which is
+[lecture 03](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-03-why-the-repository-must-become-the-system-of-record/)'s
+point: what is not written down does not exist for someone arriving fresh — and every
+session after the first arrives fresh.
+
+## Leaving a clean state
+
+[Lecture 12](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-12-why-every-session-must-leave-a-clean-state/)
+adds the condition that closes the loop: a session ends with the build green, the tests
+green, progress documented, no stale artifacts, and the standard startup path intact. Its
+word for what happens otherwise is *«энтропия»* — each session leaves a little debris, no
+single piece is worth stopping for, and after twenty sessions nobody can start the project
+in three minutes any more.
+
+The build and the tests are the project's own gate. What `harnessimo clean-exit` adds is the
+part a build is blind to: debug leftovers that compile perfectly, and a progress file that
+was not touched while the code around it changed.
+<!-- proof: src/cleanexit.ts:debrisProblems -->
+
+Two deliberate choices:
+
+- **Scoped to what the session changed**, not the whole repository. A project adopting the
+  rule should not be blocked by debris that predates it, and the rule is about what a
+  session leaves behind, not about history.
+- **The markers are configuration.** `.only(` is fatal in a test suite and meaningless in a
+  stylesheet; `console.log` is debris in an application and the product in a command-line
+  tool. This repository excludes it for exactly that reason, and says so in its config.
+
+## The sixth thing — handoff-driven development
+
+Not from the course. The five subsystems describe how a project is governed; they say
+nothing about what happens when a session ends **mid-lane**, which is the normal case.
+Specs describe what a lane must deliver; they do not describe where the work stopped, what
+was already tried and rejected, or — most valuably — what the next session must *not* read.
+
+```mermaid
+flowchart LR
+    W["Work starts"] --> T["A line in <b>TRACKS.md</b><br/>essence · handoff link<br/>status · next step"]
+    T --> H["<b>handoff.md</b> beside the spec<br/>context · what to load<br/><b>what NOT to load</b><br/>state · decisions · first step"]
+    H -- "session ends" --> U["Updated in place,<br/>never appended to"]
+    U --> H
+    H -- "track closes" --> D["<b>Distillation</b><br/>outcome → TRACKS-LOG.md<br/>decisions → DECISIONS.md<br/>handoff deleted"]
+    D --> G(["Git carries the rest"])
+```
+
+All three rules are machine-checked, because **a handoff that lies is worse than no
+handoff** — the next session trusts it. A track line with no status, a link to a deleted
+handoff, or any document elsewhere still pointing at one, fails the gate.
+<!-- proof: src/tracks.ts:checkHandoffRefs -->
+
+The "what not to load" section is the part that is easy to skip and pays for the practice on
+its own: a fresh session's budget goes on whatever you failed to rule out.
+
+## How the pieces meet
+
+A claim is a claim wherever it appears, so all three claim-shaped things go through one
+checker:
+
+| Where the claim lives | What proves it |
+|---|---|
+| Prose in a document | `<!-- proof: path[:symbol|#test] -->` |
+| A ticked box in a task list | the same marker, on the task |
+| An item in the queue | its `verification` command, re-run in CI |
+
+That is deliberate. A second, divergent notion of "verified" is how a project ends up with a
+gate that agrees with itself and disagrees with reality.
+<!-- proof: src/tasks.ts:checkTaskGate -->
+
+## What is deliberately not here
+
+- **Coverage thresholds.** They measure lines executed, not behaviour verified, and a team
+  that has to hit one writes tests for the easy paths.
+- **Estimates.** Work in progress is capped at one item; duration is information, not a
+  commitment.
+- **Per-item human review as a gate.** Reserved for what humans are actually needed for:
+  changing the gates, widening the editable surface, licence and legal decisions, and
+  deciding to abandon a direction. Models trained on successful outcomes are badly
+  calibrated about when to stop.
+- **Observability and loop/graph engineering** (lectures 11, 13, 14). They are the layer
+  above this one: this tool bounds a single agent's work, and says nothing yet about running
+  many of them. Naming the gap is better than implying it is covered.
+- **Any judgement of whether a check is good.** A test that asserts nothing satisfies every
+  rule here. This makes claims falsifiable; it does not make them true.
+
+## Provenance
+
+The model, the five subsystems, the kitchen metaphor, the feature-list triple, the
+passing-state gate, the three levels of validation and the clean-state condition come from
+[Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/).
+
+Handoff-driven development comes from
+[yetanothervan/handoff-driven-development](https://github.com/yetanothervan/handoff-driven-development).
+
+The implementation was extracted from
+[`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) (the five
+subsystems, the queue, locked surfaces, cold start) and
+[`ledger-lens`](https://github.com/atamaniuc/ledger-lens) (proof markers, HDD, the task
+gate).
+
+==============================================================================
+FILE: docs/FAQ.md
+ANSWERS: A short question that is not a bug and not a setup problem
+URL: https://atamaniuc.github.io/Harnessimo/FAQ/
+==============================================================================
+
+# FAQ
+
+## Deciding
+
+**Do I have to adopt all of it?**
+
+No. One check is a real improvement, and `doctor` keeps telling you the truth about the
+other eight. A repository that enables two checks and knows it enables two is in better
+shape than one that believes it enables nine.
+
+**When is the answer "you do not need this"?**
+
+When you are the only person in the repository, the agent's work is small enough to read in
+full, and you already read all of it. The checks pay for themselves when *nobody is
+reading the whole diff* — a second contributor, a long unattended run, work that spans
+sessions. Below that line they are ceremony, and ceremony that costs more than the error it
+prevents is not discipline.
+
+**Does this replace my tests?**
+
+No. It checks that your claims point at things that exist and still pass. A test that
+asserts nothing satisfies every rule here.
+
+**Does it work with my agent?**
+
+Yes. The checks are commands: they read files, run your commands and walk git history.
+Claude Code, Codex, Cursor, Copilot, DeepSeek, an agent you wrote yourself — none of them
+are special-cased, because none of them are consulted. `harnessimo agent` prints a
+three-line contract to paste into whatever instruction file your tool reads, and
+`hooks install --agent` wires the one tool that has a startup hook API.
+
+**My repository is not JavaScript.**
+
+Fine. Point `docs.commands` at your `Makefile` or `Taskfile.yml` and carry on. Node runs
+the tool; nothing about your project has to be JavaScript.
+
+**Should I also run a code-graph or codebase-memory tool?**
+
+Yes, and separately. Those index your repository and serve it to the agent — they answer
+"what do I need to read". This answers "is it finished". They meet the same friction from
+opposite ends, and bundling them would cost more than it gives.
+
+## Running it
+
+**Which check should I turn on first?**
+
+The one matching a problem you have actually had this month. The
+[guide's table](GUIDE.md#turn-on) maps symptoms to checks. Turning on all nine
+at once produces one enormous red run that nobody reads.
+
+**How do I turn a check off?**
+
+Delete its section from `harnessimo.config.json`. A check runs when its configuration
+exists, and `doctor` will then list it as "not set" — which is the honest state, not a
+hidden one.
+
+**Is it slow?**
+
+The pre-commit hook runs only the second-scale gates; re-verification, the cold start and
+your own commands belong in CI. A hook that makes every commit slow gets bypassed, and a
+bypassed gate enforces nothing.
+
+**What does it install into my repository?**
+
+`.harness/` (five folders of starter documents you are meant to rewrite), `specs/` (a track
+index and templates) and `harnessimo.config.json`. Nothing else, and no runtime
+dependencies — the package has none, by a rule its own CI enforces.
+
+**Can an agent edit the rules to make its own work pass?**
+
+Not without it showing. That is what `locked` is for: the files that define success are
+named in the config, and a commit carrying an agent trailer that touches them fails. Moving
+the boundary is a separate, human-visible commit.
+
+## Trust
+
+**Why should I believe the checks work?**
+
+Every rule has a test proving it fires on bad input — a rule that has only ever passed is
+an assumption wearing a rule's clothes. All nine run against this repository, including a
+cold start that clones it into an empty directory, and every published version is built and
+signed by a workflow with no stored credentials.
+
+**What happens when a rule is wrong?**
+
+Open an issue or a pull request. A rule that exists twice — once here and once forked into
+your repository — is the problem this was built to remove.
+
+**Who is behind it, and what happens if that stops?**
+
+One author, two production repositories using it, MIT-licensed, no runtime
+dependencies. If it were abandoned tomorrow the checks are a few thousand lines of pure
+functions you could vendor in an afternoon. That is deliberate: a gate you cannot take over
+is a gate you should not depend on.
+
+## Still not answered
+
+For a breakage, [troubleshooting](TROUBLESHOOTING.md). Otherwise open an issue:
+<https://github.com/atamaniuc/Harnessimo/issues>.
+
+==============================================================================
+FILE: docs/TROUBLESHOOTING.md
+ANSWERS: It is broken — what now?
+URL: https://atamaniuc.github.io/Harnessimo/TROUBLESHOOTING/
+==============================================================================
+
+# Troubleshooting
+
+Every entry below is a failure this repository or one of its two consumers actually hit.
+The fix is what worked, not what should have.
+
+## `release` says the checkout has no tags
+
+```
+FAIL  release
+  CHANGELOG.md:1  (no tags)
+      this checkout has no tags, so whether the released versions are tagged cannot be checked
+    fix:  fetch tags — actions/checkout needs fetch-depth: 0
+```
+
+Nothing is wrong with your repository. `actions/checkout` clones one commit and no tags by
+default, so the check cannot see what it is meant to compare. Give the job its input:
+
+```yaml
+- uses: actions/checkout@v5
+  with:
+    fetch-depth: 0
+```
+
+Every job that runs `harnessimo check` needs this, not just the one you noticed.
+
+## A proof marker fails and the file is obviously there
+
+Three causes, in the order they are usually true:
+
+1. **The path is relative to the repository root, not the document.** A marker in
+   `docs/GUIDE.md` naming `src/cli.ts` is right; naming `../src/cli.ts` is not.
+2. **The symbol moved or was renamed.** `<!-- proof: src/<module>.ts:<aSymbol> -->` fails the moment
+   `<aSymbol>` is renamed. This is the check working: the claim outlived
+   the thing it pointed at.
+3. **The command has no runner.** `<!-- proof: make <target> -->` needs `docs.commands` to
+   say what `make` is — `{ "make": "Makefile" }`. Without it the marker cannot be resolved,
+   and it says so rather than passing.
+
+## `clean-exit` says progress was not written down
+
+```
+.harness/4-state/PROGRESS.md:1  (not updated)
+    21 file(s) changed and this was not one of them
+```
+
+The session changed code and left the file the next session reads first describing the old
+state. Either update it, or — if this repository keeps "where I stopped" somewhere else,
+such as a per-track handoff — set `cleanExit.progressFile` to `null` and say why in the
+config's `$comment`. Turning a rule off deliberately, in writing, is not the same as
+ignoring it.
+
+## `locked` refuses a commit that only touched CI
+
+That is the check doing its job: `.github/workflows/` is in `locked.paths`, and an agent
+commit may not change the files that decide whether its work passed.
+
+The intended path is not to weaken the rule. Land the change, then move the baseline in a
+separate commit that records *why*:
+
+```
+# The fourteenth corrects the constraint count that file states about itself.
+4a2726ae71df13b215b061744f084f9e08df959a
+```
+
+The baseline file's history becomes the audit trail for every time a locked surface moved.
+
+## The pre-commit hook rejects something that `check` accepts
+
+The hook and your terminal are running different builds. The generated hook looks for
+`node_modules/.bin/harnessimo`, then `src/cli.ts`, then `dist/cli.js`, then `PATH` — so a
+stale `dist/` shadows the sources it was built from. Rebuild, or delete `dist/`.
+
+If you need to land a commit while the hook is wrong, fix the hook. `--no-verify` turns the
+gate off for everyone who copies the command out of your shell history.
+
+## `cold-start` fails but the repository works fine here
+
+It is meant to. The check clones into an empty directory and runs the documented commands
+with nothing from your machine — no `.env`, no global install, no cached `node_modules`.
+A failure means a new contributor or a fresh CI runner cannot start, which was true before
+the check was added and merely invisible.
+
+Read what it printed: a missing file is a missing file, and a failing command is a command
+your README promises and the repository cannot honour.
+
+## `queue verify` passes locally and fails in CI
+
+CI runs `check --reverify`, which re-runs the verification of every item claiming to pass
+rather than trusting the recorded state. An item that went green once and was edited by
+hand fails here. That gap between "the file says passing" and "it passes" is the entire
+reason the queue exists.
+
+## Nothing runs: "no harnessimo.config.json here"
+
+The tool reads the config from the current working directory. Run it from the repository
+root, or run `harnessimo init` if this repository has not been set up.
+
+## `doctor` says a check is "not set" and you expected it on
+
+A check turns on when its configuration section exists — no section, no check. `doctor`
+prints the honest list, and that list is the answer to "what does this repository actually
+enforce". Add the section named in the [guide's table](GUIDE.md#turn-on) and
+run `doctor` again.
+
+## Still stuck
+
+Open an issue with the command you ran and its full output:
+<https://github.com/atamaniuc/Harnessimo/issues>. The output names a file, a line and a fix;
+if it did not, that is a bug in the message and worth reporting on its own.
+
+==============================================================================
+FILE: docs/SDD.md
+ANSWERS: Where did these ideas come from, and what was left behind?
+URL: https://atamaniuc.github.io/Harnessimo/SDD/
+==============================================================================
+
+# SDD
+
+**Spec-driven development, and what was taken from each system built around it.**
+
+Six systems were read before any of this was written: OpenSpec, Agent OS, Spec Kit and BMAD
+on the SDD side, handoff-driven development and plain TDD next to them, plus the Learn
+Harness Engineering course the vocabulary comes from. Each one organises how work gets
+done. **None of them re-checks the claim that the work is finished** — and that is the only
+thing this package does.
+
+So nothing here competes with them. Every rule below is one idea taken from one of those
+systems and reduced to a command that exits non-zero, with the framework, the CLI, the
+personas and the templates left behind.
+
+```mermaid
+flowchart LR
+    P["Plan<br/><i>OpenSpec · Spec Kit · BMAD</i>"] --> B["Build<br/><i>your agent</i>"]
+    B --> V["Verify<br/><b>Harnessimo</b>"]
+    V -->|"green"| D["Merged"]
+    V -->|"red: file, line, fix"| B
+    D --> H["Carry over<br/><i>HDD: tracks + handoffs</i>"]
+    H --> P
+
+    style V stroke-width:3px
+```
+
+## The map
+
+| System | Taken | Left behind | Lives here as |
+|---|---|---|---|
+| [OpenSpec](https://github.com/Fission-AI/OpenSpec) | `specs/` is the current truth; one spec, one deliverable; archive after shipping | the CLI and its change/archive machinery | `tracks` + the `specs/` scaffold |
+| [Agent OS](https://buildermethods.com/agent-os) | standards live apart from specs and are never copied into them | the document hierarchy, the role scaffolding | `instructions` + `.harness/1-instructions/` |
+| [Spec Kit](https://github.com/github/spec-kit) | an acceptance criterion must be executable | the templates and slash-command bindings | `tasks` + `proof` |
+| [BMAD](https://github.com/bmad-code-org/BMAD-METHOD) | verification is a step with its own artifact | the agent personas and prompts | `queue` |
+| [HDD](https://github.com/yetanothervan/handoff-driven-development) | unfinished work crosses sessions in a written handoff | the as-built spec genres, the separate audit script | `tracks` + `brief` |
+| TDD | the judgement about "works" belongs in something that exits non-zero | nothing — it is extended, not replaced | `queue` runs your tests |
+| [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/) | the five subsystems, and externalising the completion judgement | — it is the course this implements | `init`, `locked`, `cleanExit`, `coldStart` |
+
+Everything below is the same table, one system at a time, with the file it lives in and the
+commands you actually type.
+
+---
+
+## OpenSpec
+
+**What it is.** Spec-driven development for AI assistants: a change gets a proposal, a spec
+and a task list in its own folder, and the folder is archived once it ships. `specs/` is the
+current truth about the system, not a pile of historical documents.
+
+**Taken**
+
+- one spec = one deliverable, in its own directory;
+- `specs/` describes what is true now, and a shipped change leaves it rather than accreting;
+- closing a piece of work is a distillation, not an append.
+
+**Left behind**
+
+- the CLI and its change/archive commands. A directory and a Markdown file do not need a
+  binary, and a tool that owns your specs is a tool you have to keep alive;
+- the proposal/solution document set. One `spec.md` with executable criteria carries it.
+
+**Where it is implemented**
+
+| Piece | File | Check | Config |
+|---|---|---|---|
+| The track index resolves and every track carries a status | `src/tracks.ts` | `harnessimo tracks` | `tracks.file`, `tracks.log` |
+| The `specs/` shape, the spec and handoff templates | `templates/specs/` | written by `init` | `tracks.specsDir` |
+
+<!-- proof: src/tracks.ts:checkTracks -->
+
+**How to use it**
+
+```bash
+harnessimo init          # writes specs/TRACKS.md, TRACKS-LOG.md and the two templates
+cp specs/spec.template.md specs/0007-checkout/spec.md
+harnessimo tracks        # the index must resolve and carry statuses
+```
+
+When the work ships, its outcome goes into `specs/TRACKS-LOG.md` in one or two sentences and
+the track line disappears. Git keeps the rest — that is the archive.
+
+---
+
+## Agent OS
+
+**What it is.** A way of capturing a team's standards — conventions, architectural
+decisions — so they are injected into an agent's context instead of being re-explained in
+every prompt, and kept separate from the specs they shape.
+
+**Taken**
+
+- standards and specs are different things and live in different places;
+- a standard is referenced, never copied into a spec, so there is one copy to correct;
+- the instruction file is a router to those documents, not the documents themselves.
+
+**Left behind**
+
+- the layered document hierarchy and the role scaffolding. The shape here is five
+  directories from lecture 02, not a taxonomy of documents.
+
+**Where it is implemented**
+
+| Piece | File | Check | Config |
+|---|---|---|---|
+| The instruction file stays a router | `src/cleanexit.ts` | `harnessimo instructions` | `instructions.limits` |
+| Where the standards live | `templates/.harness/1-instructions/` | written by `init` | — |
+
+<!-- proof: src/cleanexit.ts:instructionProblems -->
+
+**How to use it**
+
+```json
+{ "instructions": { "limits": { "AGENTS.md": 120, "CLAUDE.md": 120 } } }
+```
+
+```
+$ harnessimo instructions
+FAIL  instructions
+  AGENTS.md  187 lines, limit 120
+    fix:  move a section into a document and link it — lecture 04: what lands in
+          the middle of a long instruction file is what gets ignored
+```
+
+The limit is the enforcement. A rule that says "keep it short" and never fails is a wish.
+
+---
+
+## Spec Kit — spec-driven development
+
+**What it is.** GitHub's SDD toolkit: `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`,
+`/speckit.implement` turn an intent into a spec, a plan and a task list per feature.
+
+**Taken** — one rule, and it is the most valuable idea in any of these systems:
+
+> **an acceptance criterion must be executable** — a test name, an eval case, a query.
+
+**Left behind**
+
+- the 300-line templates and the slash-command bindings. Generate your specs with Spec Kit,
+  with BMAD, or by hand; this does not care which.
+
+**Where it is implemented**
+
+| Piece | File | Check | Config |
+|---|---|---|---|
+| A ticked box must name a check that passes | `src/tasks.ts` | `harnessimo tasks` | `tracks.gateTasks`, `tracks.taskFile` |
+| A claim in a document must name its evidence | `src/proof.ts` | `harnessimo proof` | `docs.roots`, `docs.commands` |
+
+<!-- proof: src/tasks.ts:verifyTaskGates -->
+
+**How to use it**
+
+Point the gate at whatever the generator produced:
+
+```json
+{
+  "tracks": { "specsDir": "specs", "taskFile": "tasks.md", "gateTasks": true },
+  "docs":   { "roots": ["docs", "specs"], "commands": { "npm run": "package.json" } }
+}
+```
+
+Then a tick has to carry its evidence:
+
+```markdown
+- [x] T3 Totals round per currency, not per line
+      <!-- proof: tests/<file>.spec.ts#<the test name> -->
+```
+
+```
+FAIL  task gate
+  specs/0007-checkout/tasks.md:14  T3 is checked but names no proof
+```
+
+Only live tracks are gated, so adopting this does not require going back through every
+finished spec.
+
+---
+
+## BMAD
+
+**What it is.** An agile framework for AI-driven delivery: clarify → plan → build and
+verify, worked through specialised perspectives (product, architecture, UX, development,
+testing) that produce durable artifacts instead of chat.
+
+**Taken**
+
+- verification is a step with its own artifact, not a feeling at the end of a story;
+- a unit of work is sized to be finished, and carries what would settle it.
+
+**Left behind**
+
+- the agent personas. No prompts ship in this package, and none are needed: the queue does
+  not care who or what did the work.
+
+**Where it is implemented**
+
+| Piece | File | Check | Config |
+|---|---|---|---|
+| Only a passing command moves an item to `passing` | `src/queue.ts` | `harnessimo queue verify <id>` | `queue.file` |
+| Every passing claim is re-run | `src/queue.ts` | `harnessimo check --reverify` | `queue.timeoutMinutes` |
+| WIP limit and the review backlog | `src/readiness.ts` | `harnessimo queue activate <id>` | `wip_limit` in the queue file |
+
+<!-- proof: src/queue.ts:verifyItem --> <!-- proof: src/readiness.ts:readiness -->
+
+**How to use it**
+
+Each item is a story with the command that closes it:
+
+```json
+{
+  "id": "checkout-totals",
+  "behavior": "An order total matches the sum of its lines, in every currency.",
+  "verification": "npm test -- checkout",
+  "state": "not_started"
+}
+```
+
+```bash
+harnessimo queue status              # what is in flight, what is waiting
+harnessimo queue verify checkout-totals   # activates it, runs the command, records the outcome
+harnessimo check --reverify          # CI re-runs every item claiming to pass
+```
+
+The agent never writes `state` itself. That is the whole point of the section: editing it by
+hand is not a shortcut, it is the thing `--reverify` catches.
+
+---
+
+## HDD — handoff-driven development
+
+**What it is.** A session ends and its memory is gone, so unfinished work crosses that
+boundary in a written handoff rather than in someone's head.
+
+**Taken**
+
+- a live track index, one line per track: essence, handoff link, status, next step;
+- a `handoff.md` next to the spec: context, what to load **and what not to**, state,
+  decisions taken, first step — edited in place, never appended to;
+- closing a track distils the outcome into a log and deletes the handoff.
+
+**Left behind**
+
+- the as-built spec genres and the separate audit script. The audit is a check inside the
+  same gate everything else runs through, so there is one command, not two.
+
+**Where it is implemented**
+
+| Piece | File | Check | Config |
+|---|---|---|---|
+| A dead handoff link, or a track with no status, fails | `src/tracks.ts` | `harnessimo tracks` | `tracks.file` |
+| The next session is handed the state at startup | `src/brief.ts` | `harnessimo brief` | — |
+| The hook that runs it without anyone remembering | `src/hooks.ts` | `harnessimo hooks install --agent` | — |
+
+<!-- proof: src/tracks.ts:checkHandoffRefs --> <!-- proof: src/brief.ts:briefText -->
+
+**How to use it**
+
+```bash
+harnessimo hooks install --agent   # merges a SessionStart hook into .claude/settings.json
+harnessimo brief                   # the same output, on demand
+```
+
+```
+== specs/TRACKS.md (live work tracks — load a track's handoff first) ==
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
+- Hosted deploy — none — blocked (on an API token)
+```
+
+A handoff nobody reads is a diary. A handoff pushed into the session's first turn is a
+protocol — which is why the delivery half matters as much as the check.
+
+---
+
+## TDD
+
+**What it is.** The oldest version of the same principle: the judgement about "works" is
+externalised into something that exits non-zero, and it is written before the code.
+
+**Taken** — the principle, extended to the three places tests do not reach: documentation
+(`proof`), task lists (`tasks`) and workflow state (`queue`).
+
+**Left behind** — nothing. If your tests are good, the queue costs one line of JSON per item,
+because the command it runs is the test you already have.
+
+**How to use it**
+
+```json
+{ "id": "cart-merge", "verification": "npm test -- cart", "state": "not_started" }
+```
+
+That is the whole integration. The value added is not another test framework: it is that the
+result is written down by the tool and re-run later, so "it passed in March" cannot stand in
+for "it passes now".
+
+---
+
+## Learn Harness Engineering
+
+**What it is.** The course this implements, and where the vocabulary comes from: a harness is
+everything in the engineering infrastructure outside the model's weights.
+
+**Taken**
+
+- the five subsystems — instructions, tools, environment, state, feedback — as the directory
+  layout `init` writes;
+- externalising the completion judgement (lecture 09);
+- the reward-hacking failure: a system that can edit its own scoring will;
+- a clean session exit (lecture 12) and the instruction-file limit (lecture 04).
+
+**Where it is implemented**
+
+| Piece | File | Check | Config |
+|---|---|---|---|
+| The five directories, with starter documents | `templates/.harness/` | written by `init` | — |
+| The scoring surfaces are out of an agent's reach | `src/locked.ts` | `harnessimo locked` | `locked.paths`, `locked.baseline` |
+| No debris, and progress written down | `src/cleanexit.ts` | `harnessimo clean-exit` | `cleanExit.*` |
+| A fresh clone runs from the repository alone | `src/coldstart.ts` | `harnessimo cold-start` | `coldStart.commands` |
+
+<!-- proof: src/locked.ts:lockedViolations --> <!-- proof: src/coldstart.ts:coldStartProblems -->
+
+**How to use it**
+
+```bash
+harnessimo init      # the five directories and the starter documents
+harnessimo doctor    # which of the checks are on, and which are not
+```
+
+[The standard](STANDARD.md) says which lecture each rule comes from, and where this
+implementation makes a choice the course leaves open.
+
+---
+
+## What none of them gave: documentation that cannot lie
+
+Every system above produces documents. None of them re-checks that the documents are still
+true, and the failure this package was written for was exactly that: a README describing
+infrastructure that had never been built.
+
+So the proof marker is the one part that is not borrowed. A claim names its evidence, and the
+build resolves it:
+
+```markdown
+Totals round per currency, not per line.   <!-- proof: docs/<a-file>.md -->
+Check it yourself with `make verify`.     <!-- proof: make <a-target> -->
+```
+
+```
+FAIL  proof markers
+  README.md:31  docs/ARCHITECTURE.md
+      no such file
+```
+
+Implemented in `src/proof.ts`, run by `harnessimo proof`, configured under `docs`.
+`docs.mustCarryProof` names the documents that must carry at least one marker, so a rewrite
+cannot quietly drop the evidence along with the claim.
+<!-- proof: src/proof.ts:verifyProofs -->
+
+---
+
+## What this does not decide for you
+
+No personas, no prompt templates, no opinion on how a spec should be written or how big a
+story should be. There is no runtime, no daemon and no dependency. The rules are plain
+functions over strings; `src/resolver.ts` and `src/cli.ts` are the only files that
+touch the disk.
+
+Pick the system you like from the list above. This is the part that tells you the truth about
+it afterwards.
+
+---
+
+Next: [use cases and what it looks like in practice](USE-CASES.md) ·
+[why each rule exists](STANDARD.md) · [adopting it in an existing repo](GUIDE.md#adopting)

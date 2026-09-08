@@ -66,9 +66,10 @@
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json",
     "check": "node --test test/*.test.ts && node src/cli.ts check",
-    "docs:sync": "node scripts/site-home.ts",
+    "docs:sync": "node scripts/site-home.ts && node scripts/config-reference.ts && node scripts/llms-txt.ts",
     "demo": "node scripts/record-demo.ts",
-    "harnessimo": "node src/cli.ts"
+    "harnessimo": "node src/cli.ts",
+    "docs:check": "node scripts/site-home.ts --check && node scripts/config-reference.ts --check && node scripts/llms-txt.ts --check"
   },
   "homepage": "https://atamaniuc.github.io/Harnessimo/",
   "bugs": {

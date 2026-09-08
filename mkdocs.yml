@@ -12,6 +12,7 @@ nav:
   - Home: index.md
   - Why this exists: WHY.md
   - Guide (15 min): GUIDE.md
+  - Configuration: CONFIGURATION.md
   - Use cases: USE-CASES.md
   - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
   - The standard: STANDARD.md
@@ -67,6 +68,7 @@ plugins:
             Home: Главная
             Why this exists: Зачем это
             Guide (15 min): Гайд (15 минут)
+            Configuration: Конфигурация
             Use cases: Сценарии
             SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD — что взято из OpenSpec, Spec Kit, BMAD
             The standard: Стандарт
