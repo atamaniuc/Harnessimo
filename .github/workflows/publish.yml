@@ -17,13 +17,23 @@ name: Publish to npm
 # That is the trade, and it is the right way round — the name is part of the
 # credential.
 
-# Only on a published release. The manual trigger is deliberately gone: three
-# versions reached npm through it while the repository's own tags stopped at
-# v0.4.1, and a surface people install from must not be able to get ahead of
-# the history. One path, so there is nothing to keep in step.
+# Publishing requires a release to exist — checked here rather than implied by
+# the trigger, which is a lesson this file learned the hard way.
+#
+# The first attempt was `on: release` alone, after three versions reached npm
+# through a manual run while the repository's tags stopped two releases behind.
+# That looked airtight and published nothing: a release created by a workflow
+# using GITHUB_TOKEN does not raise events, by GitHub's loop-prevention rule, so
+# the trigger never fired. A trigger that cannot fire is not a guarantee, it is
+# a silence.
+#
+# So the manual trigger is back and the invariant is enforced directly: this
+# refuses to publish a version that has no matching GitHub release. npm cannot
+# get ahead of the history, and the reason it cannot is a step someone can read.
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -52,6 +62,21 @@ jobs:
       # A release cut for a version that is already on the registry — which is
       # what fixing the missed tags does — would otherwise fail the run for a
       # state that is already correct.
+      - name: Does a release exist for this version?
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = require("./package.json").version;
+            try {
+              await github.rest.repos.getReleaseByTag({ ...context.repo, tag: `v${version}` });
+              core.info(`v${version} is released; publishing it`);
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              core.setFailed(
+                `no v${version} release: cut one first, so the registry cannot lead the repository`,
+              );
+            }
+
       - name: Is this version already published?
         id: published
         run: |

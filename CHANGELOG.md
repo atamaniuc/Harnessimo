@@ -23,9 +23,10 @@ release workflow refuses to cut one from a commit that does not pass its own che
 
 ### Changed
 
-- Publishing happens only on a published release; the manual trigger that produced the
-  version drift is gone, and a version already on the registry is skipped rather than
-  failing the run.
+- Publishing refuses a version that has no matching GitHub release, so the registry cannot
+  get ahead of the repository — checked as a step rather than implied by the trigger, since
+  a release created by a workflow raises no events and the trigger alone published nothing.
+  A version already on the registry is skipped rather than failing the run.
 - The generated pre-commit hook prefers the sources over `dist/`, which had it checking
   commits against a stale build.
 - The three versions that shipped without tags now have them, on the commits that actually
