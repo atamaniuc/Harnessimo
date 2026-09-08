@@ -193,6 +193,10 @@
           },
           "description": "What counts as code for the progress rule. Empty means anything that is not Markdown."
         },
+        "progressThreshold": {
+          "type": "number",
+          "description": "Changed lines below which the progress rule stays quiet, so a one-line fix is not told to write a progress note. Defaults to 50."
+        },
         "requireCleanTree": {
           "type": "boolean",
           "description": "Also fail when the working tree has uncommitted changes."

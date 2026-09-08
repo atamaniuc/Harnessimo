@@ -216,5 +216,5 @@ The commit went through because the checks passed, not because anybody said it w
 
 ---
 
-Next: [where this sits next to SDD, HDD and BMAD](METHODS.md), or
+Next: [what was taken from OpenSpec, Spec Kit, BMAD and the rest](METHODS.md), or
 [adopting it in an existing repo](ADOPTING.md).

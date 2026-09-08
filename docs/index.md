@@ -99,7 +99,7 @@ on by itself. The table of "what's going wrong → which check" is in
 |---|---|
 | get a green check in fifteen minutes | [The guide](GUIDE.md) · [по-русски](GUIDE.ru.md) |
 | see it on situations you recognise | [Use cases](USE-CASES.md) |
-| know how it fits the method you already use | [SDD, HDD, BMAD](METHODS.md) |
+| know what was taken from OpenSpec, Spec Kit, BMAD, Agent OS, HDD — and what was not | [Sources](METHODS.md) |
 | know why each rule exists | [The standard](STANDARD.md) |
 | migrate a repo that already has its own checks | [Adopting](ADOPTING.md) |
 
