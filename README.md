@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![release](https://img.shields.io/github/v/release/atamaniuc/Harnessimo?label=release)](https://github.com/atamaniuc/Harnessimo/releases/latest)
 [![docs](https://img.shields.io/badge/docs-atamaniuc.github.io%2FHarnessimo-blue)](https://atamaniuc.github.io/Harnessimo/)
+[![npm](https://img.shields.io/npm/v/harnessimo?label=npm)](https://www.npmjs.com/package/harnessimo)
 [![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 
 <p align="center">
@@ -21,7 +22,7 @@ Zero dependencies, one config file, any language — it reads your files, runs y
 walks your git history. <!-- proof: package.json:"files" -->
 
 ```bash
-pnpm add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+pnpm add -D harnessimo
 pnpm exec harnessimo init      # scans your repo, writes a config that already passes
 pnpm exec harnessimo check     # run this in CI
 ```
@@ -30,20 +31,17 @@ pnpm exec harnessimo check     # run this in CI
 <summary>npm, yarn, bun</summary>
 
 ```bash
-TARBALL=https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
-
-npm i  -D $TARBALL  && npx  harnessimo init && npx  harnessimo check
-yarn add -D $TARBALL && yarn harnessimo init && yarn harnessimo check
-bun add  -d $TARBALL && bunx harnessimo init && bunx harnessimo check
+npm i  -D harnessimo && npx  harnessimo init && npx  harnessimo check
+yarn add -D harnessimo && yarn harnessimo init && yarn harnessimo check
+bun add  -d harnessimo && bunx harnessimo init && bunx harnessimo check
 ```
 
 All four were run against this release before being written down. On the
 [docs site](https://atamaniuc.github.io/Harnessimo/) the same commands are tabs, one per
 package manager.
 
-The install target is the tarball attached to each release rather than the git repository:
-a git install would hand you TypeScript with nothing built, and the lifecycle script that is
-supposed to fix that does not run under pnpm or yarn. Both were tried.
+It is published to npm, so the install is the boring line above. Releases also carry the
+same tarball as an asset for anyone pinning by URL.
 
 </details>
 
@@ -191,8 +189,8 @@ touch the disk. <!-- proof: test/cli.test.ts -->
 There is no build step in the way of running it: sources import each other as `.ts`, so
 Node's own type stripping runs them as they are — which is why `npm test` needs nothing
 installed and the cold-start check still measures the repository rather than npm. `tsc`
-emits `dist/` (rewriting those specifiers to `.js`) and the release workflow packs it into
-the tarball you install. Build output is not committed.
+emits `dist/` (rewriting those specifiers to `.js`) and that is what gets published. Build
+output is not committed.
 <!-- proof: test/types.test.ts -->
 
 ## License

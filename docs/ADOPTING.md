@@ -11,7 +11,7 @@ in fifteen minutes and this document assumes it.
 === "pnpm"
 
     ```bash
-    pnpm add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    pnpm add -D harnessimo
     pnpm exec harnessimo init
     pnpm exec harnessimo check
     ```
@@ -19,7 +19,7 @@ in fifteen minutes and this document assumes it.
 === "npm"
 
     ```bash
-    npm i -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    npm i -D harnessimo
     npx harnessimo init
     npx harnessimo check
     ```
@@ -27,7 +27,7 @@ in fifteen minutes and this document assumes it.
 === "yarn"
 
     ```bash
-    yarn add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    yarn add -D harnessimo
     yarn harnessimo init
     yarn harnessimo check
     ```
@@ -35,7 +35,7 @@ in fifteen minutes and this document assumes it.
 === "bun"
 
     ```bash
-    bun add -d https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    bun add -d harnessimo
     bunx harnessimo init
     bunx harnessimo check
     ```
@@ -144,7 +144,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ## After adoption
 
-- Pin the release you adopted: install from `https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz` rather than from a branch. Tracking `main`
+- Pin the version you adopted: `harnessimo@0.4.1` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

@@ -48,7 +48,7 @@ flowchart LR
 === "pnpm"
 
     ```bash
-    pnpm add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    pnpm add -D harnessimo
     pnpm exec harnessimo init
     pnpm exec harnessimo check
     ```
@@ -56,7 +56,7 @@ flowchart LR
 === "npm"
 
     ```bash
-    npm i -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    npm i -D harnessimo
     npx harnessimo init
     npx harnessimo check
     ```
@@ -64,7 +64,7 @@ flowchart LR
 === "yarn"
 
     ```bash
-    yarn add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    yarn add -D harnessimo
     yarn harnessimo init
     yarn harnessimo check
     ```
@@ -72,7 +72,7 @@ flowchart LR
 === "bun"
 
     ```bash
-    bun add -d https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+    bun add -d harnessimo
     bunx harnessimo init
     bunx harnessimo check
     ```
