@@ -45,7 +45,7 @@ checker:
 === "pnpm"
 
     ```bash
-    pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
+    pnpm add -D github:atamaniuc/Harnessimo#v0.4.0
     pnpm exec harnessimo init
     pnpm exec harnessimo check
     ```
@@ -53,7 +53,7 @@ checker:
 === "npm"
 
     ```bash
-    npm i -D github:atamaniuc/Harnessimo#v0.3.0
+    npm i -D github:atamaniuc/Harnessimo#v0.4.0
     npx harnessimo init
     npx harnessimo check
     ```
@@ -61,7 +61,7 @@ checker:
 === "yarn"
 
     ```bash
-    yarn add -D github:atamaniuc/Harnessimo#v0.3.0
+    yarn add -D github:atamaniuc/Harnessimo#v0.4.0
     yarn harnessimo init
     yarn harnessimo check
     ```
@@ -69,7 +69,7 @@ checker:
 === "bun"
 
     ```bash
-    bun add -d github:atamaniuc/Harnessimo#v0.3.0
+    bun add -d github:atamaniuc/Harnessimo#v0.4.0
     bunx harnessimo init
     bunx harnessimo check
     ```

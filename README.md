@@ -21,7 +21,7 @@ Zero dependencies, one config file, any language — it reads your files, runs y
 walks your git history. <!-- proof: package.json:"files" -->
 
 ```bash
-pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
+pnpm add -D github:atamaniuc/Harnessimo#v0.4.0
 pnpm exec harnessimo init      # scans your repo, writes a config that already passes
 pnpm exec harnessimo check     # run this in CI
 ```
@@ -30,9 +30,9 @@ pnpm exec harnessimo check     # run this in CI
 <summary>npm, yarn, bun</summary>
 
 ```bash
-npm i -D github:atamaniuc/Harnessimo#v0.3.0     && npx harnessimo init  && npx harnessimo check
-yarn add -D github:atamaniuc/Harnessimo#v0.3.0  && yarn harnessimo init && yarn harnessimo check
-bun add -d github:atamaniuc/Harnessimo#v0.3.0   && bunx harnessimo init && bunx harnessimo check
+npm i -D github:atamaniuc/Harnessimo#v0.4.0     && npx harnessimo init  && npx harnessimo check
+yarn add -D github:atamaniuc/Harnessimo#v0.4.0  && yarn harnessimo init && yarn harnessimo check
+bun add -d github:atamaniuc/Harnessimo#v0.4.0   && bunx harnessimo init && bunx harnessimo check
 ```
 
 All four were run against this release before being written down. On the
