@@ -1,0 +1,129 @@
+name: Repository operations
+
+# The operations an agent session cannot perform directly, in one reviewed place.
+#
+# Two things are out of reach from a session: git credentials there may push a
+# branch but not create a tag or delete a ref, and GITHUB_TOKEN cannot hold
+# Administration rights at all — no `permissions:` block grants them. Both are
+# deliberate, and neither is worth working around by hand every few weeks.
+#
+# So the privileged half lives here instead:
+#
+#   * the About panel is a file (.github/repo-about.json) applied on push, so
+#     the sidebar is reviewed like code rather than typed into a web form;
+#   * branch cleanup and tag repair are dispatchable, with a fixed list of what
+#     they may touch.
+#
+# It needs a secret named REPO_ADMIN_TOKEN: a fine-grained personal access
+# token scoped to THIS REPOSITORY ONLY, with Administration: write (About) and
+# Contents: write (refs). Nothing else — not organisation access, not other
+# repositories. Until that secret exists every job here skips itself and says
+# what is missing, exactly like publishing did before its token arrived.
+#
+# The token never reaches a session's context: it is read here, used here, and
+# every use is a run in the Actions log with an author, a time and its inputs.
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/repo-about.json"]
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "What to do"
+        required: true
+        type: choice
+        options: [apply-about, delete-branch, retag]
+      branch:
+        description: "delete-branch: which branch. Refused unless it looks temporary."
+        required: false
+        type: string
+      tag:
+        description: "retag: the tag to move, e.g. v0.5.0"
+        required: false
+        type: string
+      sha:
+        description: "retag: the commit it should point at"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is this armed?
+        id: armed
+        run: |
+          if [ -n "${{ secrets.REPO_ADMIN_TOKEN }}" ]; then
+            echo "armed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "armed=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Not armed"
+              echo
+              echo "No \`REPO_ADMIN_TOKEN\` secret, so this did nothing."
+              echo
+              echo "To arm it: a fine-grained personal access token, scoped to this repository"
+              echo "only, with **Administration: write** and **Contents: write**, saved as the"
+              echo "repository secret \`REPO_ADMIN_TOKEN\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - if: steps.armed.outputs.armed == 'true'
+        uses: actions/checkout@v5
+
+      - name: Apply the About panel
+        if: steps.armed.outputs.armed == 'true' && (github.event_name == 'push' || inputs.operation == 'apply-about')
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.REPO_ADMIN_TOKEN }}
+          script: |
+            const about = JSON.parse(require("fs").readFileSync(".github/repo-about.json", "utf8"));
+            await github.rest.repos.update({
+              ...context.repo,
+              description: about.description,
+              homepage: about.homepage,
+            });
+            await github.rest.repos.replaceAllTopics({ ...context.repo, names: about.topics });
+            core.summary.addRaw(`About applied: ${about.topics.length} topics, homepage ${about.homepage}`);
+            await core.summary.write();
+
+      - name: Delete a temporary branch
+        if: steps.armed.outputs.armed == 'true' && inputs.operation == 'delete-branch'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.REPO_ADMIN_TOKEN }}
+          script: |
+            const branch = (context.payload.inputs.branch || "").trim();
+            // A token that may delete refs should not be pointed at a branch by
+            // free text. Only the shapes this repository creates as scaffolding.
+            const temporary = /^(tag|release|claude)[/-]/.test(branch);
+            if (!temporary || ["main", "gh-pages"].includes(branch)) {
+              core.setFailed(`refusing to delete "${branch}": only tag-*, release-* and claude/* are temporary here`);
+              return;
+            }
+            await github.rest.git.deleteRef({ ...context.repo, ref: `heads/${branch}` });
+            core.info(`deleted ${branch}`);
+
+      - name: Move a tag to the commit it should have
+        if: steps.armed.outputs.armed == 'true' && inputs.operation == 'retag'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.REPO_ADMIN_TOKEN }}
+          script: |
+            const tag = (context.payload.inputs.tag || "").trim();
+            const sha = (context.payload.inputs.sha || "").trim();
+            if (!/^v\d+\.\d+\.\d+/.test(tag) || !/^[0-9a-f]{40}$/.test(sha)) {
+              core.setFailed("retag needs a vX.Y.Z tag and a full commit sha");
+              return;
+            }
+            try {
+              await github.rest.git.updateRef({ ...context.repo, ref: `tags/${tag}`, sha, force: true });
+            } catch (error) {
+              if (error.status !== 422) throw error;
+              await github.rest.git.createRef({ ...context.repo, ref: `refs/tags/${tag}`, sha });
+            }
+            core.info(`${tag} now points at ${sha}`);

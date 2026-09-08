@@ -60,3 +60,19 @@ extend the tool into those are likely to be declined — with the reason, not si
 ## License
 
 MIT. By contributing you agree your work ships under it.
+
+## What only a workflow can do
+
+Two things are out of reach from an agent session, deliberately: its git credentials may
+push a branch but not create a tag or delete a ref, and `GITHUB_TOKEN` cannot hold
+Administration rights at all — no `permissions:` block grants them.
+
+`.github/workflows/ops.yml` holds that half. The About panel is a file
+(`.github/repo-about.json`) applied when it changes; branch cleanup and tag repair are
+dispatchable with a fixed list of what they may touch. It needs a `REPO_ADMIN_TOKEN`
+secret — a fine-grained token scoped to this repository only, with Administration: write
+and Contents: write — and skips itself, saying so, until that exists.
+
+The token stays in the secret store: it is read inside a run, used there, and every use is
+logged with its author, time and inputs. Releases need none of this — publishing
+authenticates by OIDC and has no token at all.

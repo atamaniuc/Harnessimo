@@ -1,0 +1,17 @@
+{
+  "$comment": "GitHub's About panel, as a file. The API needs Administration: write, which GITHUB_TOKEN cannot hold, so .github/workflows/ops.yml applies this with a repository-scoped PAT. Editing it here means the sidebar is reviewed like anything else instead of typed into a web form nobody sees again.",
+  "description": "Nine checks that stop an AI coding agent from calling unfinished work done. Zero dependencies, any language, any agent.",
+  "homepage": "https://atamaniuc.github.io/Harnessimo/",
+  "topics": [
+    "ai-agents",
+    "agentic-coding",
+    "harness",
+    "spec-driven-development",
+    "handoff-driven-development",
+    "claude-code",
+    "codex",
+    "ci",
+    "developer-tools",
+    "typescript"
+  ]
+}

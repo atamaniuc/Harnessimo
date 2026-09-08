@@ -165,3 +165,28 @@ the trusted workflow is the only way in.
 npmjs. It is stricter, and for a one-person project it is a manual step per release that
 would eventually be skipped by publishing another way — which is worse than not having it.
 
+---
+
+## 2026-09-08 — The privileged half is a workflow, not a person
+
+Operations an agent session cannot perform — creating tags, deleting refs, editing the
+About panel — are done by `.github/workflows/ops.yml` with a repository-scoped token in a
+secret, rather than by asking someone to click through a web form.
+
+**Why:** every such ask is an interruption with a delay attached, and the things being asked
+for are small and repetitive. Worse, they are invisible: a description typed into a form is
+not reviewed, not versioned, and nobody can tell later what it used to say. As a file it is
+a diff.
+
+**Why not simply give the session a token:** a token in a session's context can be logged,
+echoed into a transcript, or carried into a tool call that was not the one it was meant for
+— which already happened once in this project's short history. Inside a workflow it is read
+and used in the same run, and every use is a line in the Actions log with an author, a time
+and its inputs.
+
+**The limits, stated rather than discovered later:** the token may edit this repository's
+settings, and anyone with write access can dispatch the workflow. So the operations are a
+closed list, deletion is refused for anything that does not look like scaffolding
+(`tag-*`, `release-*`, `claude/*`, never `main` or `gh-pages`), and retagging demands a
+full commit sha. Publishing is deliberately not among them: it authenticates by OIDC and
+needs no token at all.
