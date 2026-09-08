@@ -30,7 +30,10 @@ against this repository by `npm run check`.
 - Privileged repository operations live in `.github/workflows/ops.yml` under a
   fine-grained PAT (`SUDO_TOKEN`): the About block, tag repair, and deletion of the
   temporary `tag-*` / `release-*` / `claude/*` branches. Nothing there needs a human at a
-  keyboard, and the workflow refuses anything outside that list.
+  keyboard, and the workflow refuses anything outside that list. It reaches the sibling
+  repositories too — a personal account cannot share a secret between repositories, so one
+  copy of the token acts on the repositories named in `.github/ops-repos.json`, and a
+  branch carrying unmerged commits is refused whatever its name looks like.
 
 ## Done
 
@@ -48,9 +51,18 @@ against this repository by `npm run check`.
 
 0. Nothing blocking. Registry, releases, tags, changelog and the docs site all agree.
 
-1. Watch whether the release check earns its place in a repository that is not this one —
+1. **Spec 0002, docs consolidation — half shipped, one decision open.** `ADOPTING.md` is
+   now `GUIDE.md` §8 in both languages, retired URLs redirect in both locales, and
+   `test/docs-structure.test.ts` holds nav, redirects and page length. Whether `STANDARD`
+   and `USE-CASES` become one reference is left to the human on purpose: a straight merge
+   is ~600 lines and breaks the page-size criterion in the same spec, and raising a limit
+   to fit the work is the move this tool exists to catch. Three options are in the handoff.
+2. **Spec 0001, metric thresholds — a finding, not a design.** Both source repositories
+   invented the same rule independently (a scored metric with a declared floor, in a file
+   the agent may not edit) and this package cannot express it. Open question in the
+   handoff: a tenth check, or a documented use of the queue.
+3. Watch whether the release check earns its place in a repository that is not this one —
    it is the only check born from this project's own failure rather than from the lectures.
-2. Nothing else queued. New work starts from a spec.
 
 ## Settled recently
 
