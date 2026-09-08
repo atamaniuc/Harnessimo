@@ -15,6 +15,10 @@ on:
         description: "Tag to create, e.g. v0.1.0"
         required: true
         type: string
+      sha:
+        description: "Commit to tag. Defaults to the ref this was run on."
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -48,7 +52,10 @@ jobs:
         with:
           script: |
             const tag = context.payload.inputs.tag;
-            const sha = context.sha;
+            // A release is normally cut from the ref this ran on. The input
+            // exists for the case that produced the release check: versions
+            // published without a tag, whose commits are in the past.
+            const sha = context.payload.inputs.sha || context.sha;
             try {
               await github.rest.git.createRef({
                 ...context.repo,

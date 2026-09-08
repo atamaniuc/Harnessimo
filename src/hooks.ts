@@ -35,10 +35,14 @@ export function hookScript(extraCommands: string[] = []) {
     "# this script failed on its first run.",
     'if [ -x node_modules/.bin/harnessimo ]; then',
     '  HARNESSIMO="node_modules/.bin/harnessimo"',
-    'elif [ -f dist/cli.js ]; then',
-    '  HARNESSIMO="node dist/cli.js"',
+    // Source before build: in the repository that develops this, dist/ is a
+    // stale artifact between builds, and a hook checking a commit against
+    // yesterday's rules is worse than no hook. A consumer has no src/cli.ts,
+    // so the order costs them nothing.
     'elif [ -f src/cli.ts ]; then',
     '  HARNESSIMO="node src/cli.ts"',
+    'elif [ -f dist/cli.js ]; then',
+    '  HARNESSIMO="node dist/cli.js"',
     'elif command -v harnessimo >/dev/null 2>&1; then',
     '  HARNESSIMO="harnessimo"',
     "else",

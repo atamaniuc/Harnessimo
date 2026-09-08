@@ -37,6 +37,7 @@ const SECTION_DEFAULTS = {
     requireCleanTree: false,
   },
   instructions: { limits: {} },
+  release: { manifest: "package.json", changelog: "CHANGELOG.md", tagPrefix: "v" },
   hooks: { before: [] }, // project commands the pre-commit hook runs before the gates
 };
 
@@ -105,5 +106,6 @@ export function enabledChecks(config: LoadedConfig): EnabledChecks {
     coldStart: Boolean(config.coldStart?.commands?.length),
     cleanExit: Boolean(config.cleanExit?.scan?.length),
     instructions: Boolean(Object.keys(config.instructions?.limits ?? {}).length),
+    release: Boolean(config.release),
   };
 }

@@ -17,10 +17,13 @@ name: Publish to npm
 # That is the trade, and it is the right way round — the name is part of the
 # credential.
 
+# Only on a published release. The manual trigger is deliberately gone: three
+# versions reached npm through it while the repository's own tags stopped at
+# v0.4.1, and a surface people install from must not be able to get ahead of
+# the history. One path, so there is nothing to keep in step.
 on:
   release:
     types: [published]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -46,4 +49,18 @@ jobs:
       - run: node dist/cli.js check
       # No NODE_AUTH_TOKEN: the OIDC exchange is the authentication, and
       # provenance is signed with the same identity.
-      - run: npm publish --provenance --access public
+      # A release cut for a version that is already on the registry — which is
+      # what fixing the missed tags does — would otherwise fail the run for a
+      # state that is already correct.
+      - name: Is this version already published?
+        id: published
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "harnessimo@$VERSION" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "harnessimo@$VERSION is already on the registry; nothing to publish." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.published.outputs.skip == 'false'
+        run: npm publish --provenance --access public

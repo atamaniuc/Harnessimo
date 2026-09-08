@@ -24,6 +24,11 @@ test("the CLI is located rather than assumed to be on PATH", () => {
   const script = hookScript();
   assert.match(script, /node_modules\/\.bin\/harnessimo/);
   assert.match(script, /dist\/cli\.js/);
+  // Source first: a stale build must not be what checks a commit.
+  assert.ok(
+    script.indexOf("src/cli.ts") < script.indexOf("dist/cli.js"),
+    "the hook should prefer the sources over a build that may be stale",
+  );
   assert.match(script, /command -v harnessimo/);
   assert.match(script, /harnessimo not found/);
 });

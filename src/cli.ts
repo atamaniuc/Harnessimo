@@ -31,6 +31,7 @@ import {
 import { formatLockedViolations, lockedViolations } from "./locked.ts";
 import { coldStartProblems } from "./coldstart.ts";
 import { debrisProblems, instructionProblems, progressProblems } from "./cleanexit.ts";
+import { releaseProblems } from "./release.ts";
 import { detectConfig } from "./detect.ts";
 import { HOOKS_DIR, HOOK_PATH, hookScript, hookStatus } from "./hooks.ts";
 import { briefJson, briefText, handoffPaths, mergeSessionStartHook } from "./brief.ts";
@@ -309,6 +310,53 @@ function runInstructions() {
   return { problems, summary: `${paths.length} instruction file(s) within their line limits` };
 }
 
+/**
+ * The version claims agree. A version reaches people through the registry, the
+ * tags and the changelog, and those go out of step the moment one of them is
+ * updated by a path that skips the others — which is how this repository ended
+ * up serving 0.4.4 from npm while its own history stopped at v0.4.1.
+ */
+function runRelease(): CheckResult {
+  const cfg = config();
+  const release = requireSection(cfg, "release", 'add a "release" section naming the manifest and changelog');
+  const manifestPath = join(ROOT, release.manifest);
+  const changelogPath = join(ROOT, release.changelog);
+  if (!existsSync(manifestPath) || !existsSync(changelogPath)) {
+    return {
+      problems: [
+        {
+          file: existsSync(manifestPath) ? release.changelog : release.manifest,
+          line: 1,
+          target: "(missing)",
+          reason: "the release check needs both the manifest and the changelog to exist",
+        },
+      ],
+      summary: "",
+    };
+  }
+  const version = String(
+    (JSON.parse(readFileSync(manifestPath, "utf8")) as { version?: string }).version ?? "",
+  );
+  let tags: string[] = [];
+  try {
+    tags = git("tag", "--list").split("\n").filter(Boolean);
+  } catch {
+    /* no tags, or no git: the checks below then report what is untagged */
+  }
+  const problems = releaseProblems({
+    version,
+    changelog: readFileSync(changelogPath, "utf8"),
+    tags,
+    manifestPath: release.manifest,
+    changelogPath: release.changelog,
+    tagPrefix: release.tagPrefix,
+  });
+  return {
+    problems,
+    summary: `version ${version} agrees with ${release.changelog} and the tags`,
+  };
+}
+
 // ---------------------------------------------------------------- commands
 
 function cmdCheck() {
@@ -326,6 +374,7 @@ function cmdCheck() {
   if (enabled.tasks) results.push(["task gate", runTasks()]);
   if (enabled.queue) results.push(["queue", runQueueCheck({ reverify: flags.has("--reverify") })]);
   if (enabled.instructions) results.push(["instructions", runInstructions()]);
+  if (enabled.release) results.push(["release", runRelease()]);
 
   let failed = 0;
   for (const [name, result] of results) {
@@ -357,6 +406,7 @@ function cmdDoctor() {
     ["cold start", enabled.coldStart, "a fresh clone runs from the repository alone"],
     ["clean exit", enabled.cleanExit, "a session leaves no debris and writes down where it got to"],
     ["instructions", enabled.instructions, "the instruction file stays a router, not a manual"],
+    ["release", enabled.release, "the version agrees across the manifest, the changelog and the tags"],
   ];
   for (const [name, on, what] of rows) {
     ok(`  ${on ? "enforced " : "not set  "} ${name.padEnd(16)} ${what}`);
@@ -734,6 +784,7 @@ usage: harnessimo <command> [options]
   cold-start             a fresh clone installs and verifies from the repo alone
   clean-exit [base] [head]  the session left no debris and wrote down where it got to
   instructions           the instruction file is still a router, not a manual
+  release                the version agrees across manifest, changelog and tags
   brief [--json]         what a session should read first: tracks, handoffs, queue
   hooks <sub>            status | install [--agent] | uninstall — the gates, on commit
   init [--force]         scaffold .harness/, specs/ and harnessimo.config.json
@@ -785,6 +836,9 @@ switch (command) {
     break;
   case "instructions":
     single("the instruction files", runInstructions());
+    break;
+  case "release":
+    single("the version claims", runRelease());
     break;
   case "init":
     cmdInit();

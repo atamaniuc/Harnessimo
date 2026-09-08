@@ -132,6 +132,14 @@ export interface CleanExitConfig {
   requireCleanTree: boolean;
 }
 
+export interface ReleaseConfig {
+  /** Where the version being shipped is declared. */
+  manifest: string;
+  changelog: string;
+  /** What a tag for version x.y.z looks like: `v` gives `v1.2.3`. */
+  tagPrefix: string;
+}
+
 export interface InstructionsConfig {
   /** Path -> maximum lines. */
   limits: Record<string, number>;
@@ -154,12 +162,21 @@ export interface LoadedConfig {
   coldStart?: ColdStartConfig;
   cleanExit?: CleanExitConfig;
   instructions?: InstructionsConfig;
+  release?: ReleaseConfig;
   hooks?: HooksConfig;
 }
 
 /** Which checks a configuration turns on. */
 export type EnabledChecks = Record<
-  "proof" | "tracks" | "tasks" | "queue" | "locked" | "coldStart" | "cleanExit" | "instructions",
+  | "proof"
+  | "tracks"
+  | "tasks"
+  | "queue"
+  | "locked"
+  | "coldStart"
+  | "cleanExit"
+  | "instructions"
+  | "release",
   boolean
 >;
 

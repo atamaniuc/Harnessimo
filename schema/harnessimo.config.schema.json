@@ -217,6 +217,28 @@
           "description": "Path to maximum line count."
         }
       }
+    },
+    "release": {
+      "type": "object",
+      "description": "The version is a claim made on several surfaces: they must agree.",
+      "additionalProperties": false,
+      "properties": {
+        "$comment": {
+          "type": "string"
+        },
+        "manifest": {
+          "type": "string",
+          "description": "Where the version being shipped is declared. Usually package.json."
+        },
+        "changelog": {
+          "type": "string",
+          "description": "The file describing each released version."
+        },
+        "tagPrefix": {
+          "type": "string",
+          "description": "What a tag for x.y.z looks like: \"v\" gives v1.2.3."
+        }
+      }
     }
   }
 }
