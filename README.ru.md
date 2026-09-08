@@ -308,6 +308,7 @@ harnessimo hooks install           # быстрые проверки перед 
 | включить ещё одну проверку или выключить лишнюю | [Гайд → включайте то, что болит](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#turn-on) |
 | посмотреть ключ конфига | [Конфигурация](https://atamaniuc.github.io/Harnessimo/ru/CONFIGURATION/) |
 | внедрить в репозиторий, где уже есть свои скрипты | [Гайд → внедрение](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#adopting) |
+| запустить несколько агентов на одном репозитории | [Больше одного агента](https://atamaniuc.github.io/Harnessimo/ru/PARALLEL/) |
 | понять, почему правило вообще существует | [Стандарт](https://atamaniuc.github.io/Harnessimo/ru/STANDARD/) |
 | задать короткий вопрос, который не баг | [FAQ](https://atamaniuc.github.io/Harnessimo/ru/FAQ/) |
 | починить прогон, который только что стал красным | [Что делать](https://atamaniuc.github.io/Harnessimo/ru/TROUBLESHOOTING/) |

@@ -204,6 +204,13 @@ deleted, fails the gate. <!-- proof: src/tracks.ts:checkHandoffRefs -->
 The "what NOT to load" section is the half everyone skips and the one that pays for the
 practice: a fresh session's budget goes on whatever you failed to rule out.
 
+## 6b. More than one agent { #parallel }
+
+Once work runs as several agents — subagents in one session, parallel worktrees, a headless
+run beside a person typing — a lane declares which paths it owns, `harnessimo tracks` fails
+when two live lanes claim the same ones, and `hooks install --agent` stops a turn ending
+while `check` is red. [More than one agent](PARALLEL.md) has all of it.
+
 ## 7. On every commit
 
 ```bash
@@ -352,7 +359,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.7.0` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.8.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

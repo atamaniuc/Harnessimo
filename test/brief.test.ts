@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {agentContract, briefJson, briefText, handoffPaths, mergeSessionStartHook, sectionOf } from "../src/brief.ts";
+import { agentContract, briefJson, briefText, handoffPaths, mergeHook, mergeSessionStartHook, sectionOf } from "../src/brief.ts";
 
 const tracks = [
   "# Work tracks",
@@ -118,4 +118,56 @@ test("the contract names whatever runner the project uses", () => {
 test("nothing in the contract is specific to one vendor's agent", () => {
   // The claim that this works with any agent is only true while this is.
   assert.doesNotMatch(agentContract(), /claude|codex|cursor|gemini|anthropic|openai/i);
+});
+
+
+// ---- spec 0006: one lane, and the fence around the others
+
+const TWO = {
+  tracksText:
+    "# Work tracks\n\n" +
+    "- **Search** — [handoff](specs/0001-search/handoff.md) — active, next: T1\n" +
+    "- **Totals** — [handoff](specs/0002-totals/handoff.md) — active, next: T2\n",
+  handoffs: [
+    { path: "specs/0001-search/handoff.md", text: `# Search\n${"body\n".repeat(30)}` },
+    { path: "specs/0002-totals/handoff.md", text: "# Totals\n\nSecond lane.\n" },
+  ],
+  fences: [
+    { lane: "specs/0001-search", paths: ["src/search/"] },
+    { lane: "specs/0002-totals", paths: ["src/totals.ts"] },
+  ],
+};
+
+test("a scoped brief carries one lane, whole, and the fence around every other", () => {
+  const text = briefText({ ...TWO, focus: "specs/0001-search" });
+
+  assert.match(text, /- \*\*Search\*\*/);
+  assert.doesNotMatch(text, /- \*\*Totals\*\*/, "another lane's track line is not this agent's business");
+  assert.doesNotMatch(text, /first 20 lines/, "the lane being worked on is not truncated");
+  assert.match(text, /you own: src\/search\//);
+  assert.match(text, /specs\/0002-totals owns: src\/totals\.ts/, "the fence names what is not yours");
+});
+
+test("an unscoped brief is unchanged, and still lists every fence", () => {
+  const text = briefText(TWO);
+  assert.match(text, /- \*\*Totals\*\*/);
+  assert.match(text, /first 20 lines/);
+  assert.match(text, /specs\/0001-search owns: src\/search\//);
+  assert.doesNotMatch(text, /you own:/);
+});
+
+test("a lane that declares nothing gets no fence section rather than an empty one", () => {
+  const text = briefText({ ...TWO, fences: [{ lane: "specs/0001-search", paths: [] }] });
+  assert.doesNotMatch(text, /declared paths/);
+});
+
+test("hooks for other events are added without disturbing the ones already there", () => {
+  const existing = { hooks: { SessionStart: [{ hooks: [{ type: "command", command: "./brief.sh" }] }] } };
+  const { settings, added } = mergeHook(existing, "Stop", "./gate.sh", { timeout: 120 });
+
+  assert.equal(added, true);
+  assert.equal(settings.hooks!.SessionStart![0]!.hooks![0]!.command, "./brief.sh");
+  assert.equal(settings.hooks!.Stop![0]!.hooks![0]!.command, "./gate.sh");
+  assert.equal(settings.hooks!.Stop![0]!.hooks![0]!.timeout, 120);
+  assert.equal(mergeHook(settings, "Stop", "./gate.sh").added, false, "installing twice adds it once");
 });

@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { HOOK_PATH, hookScript, hookStatus } from "../src/hooks.ts";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { AGENT_GATE_PATH, HOOK_PATH, agentGateScript, hookScript, hookStatus } from "../src/hooks.ts";
 
 test("the hook runs the fast gate and nothing slow", () => {
   const script = hookScript();
@@ -61,3 +65,81 @@ test("nothing installed says so plainly", () => {
   assert.match(hookStatus({ hookExists: false, hooksPath: null }).message, /no pre-commit hook/);
   assert.equal(HOOK_PATH, ".githooks/pre-commit");
 });
+
+// ---- spec 0006: the turn boundary
+
+test("the gate is a file in the repository, like every other hook here", () => {
+  // Not in .git/hooks and not in a settings blob: a reviewable file everyone
+  // gets, which is the same rule the pre-commit hook follows.
+  assert.equal(AGENT_GATE_PATH, ".claude/hooks/harnessimo-gate.sh");
+  assert.match(agentGateScript(), /\$HARNESSIMO check/);
+  assert.doesNotMatch(agentGateScript(), /--reverify|cold-start|npm test/);
+});
+
+test("the gate blocks a turn while check is red, and hands the report back", () => {
+  const { dir, ran } = gateFixture("exit 1");
+  const result = runGate(dir, '{"stop_hook_active":false}');
+
+  assert.equal(result.status, 2, "exit 2 is the code an agent is shown");
+  assert.match(result.stderr, /FAIL work tracks/, "the report goes with it, not just a refusal");
+  assert.match(result.stderr, /cannot end while a check is red/);
+  assert.equal(existsSync(ran), true, "the check actually ran");
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a green check lets the turn end", () => {
+  const { dir } = gateFixture("exit 0");
+  assert.equal(runGate(dir, '{"stop_hook_active":false}').status, 0);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a turn already continuing from this hook is not blocked again", () => {
+  const { dir, ran } = gateFixture("exit 1");
+  // Both spellings, because the field arrives as JSON and whitespace is not
+  // ours to predict.
+  for (const input of ['{"stop_hook_active":true}', '{"session":"x", "stop_hook_active": true}']) {
+    assert.equal(runGate(dir, input).status, 0, `blocking again on ${input} is a loop`);
+  }
+  assert.equal(existsSync(ran), false, "and the check is not even run — the answer cannot change");
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("no CLI means no gate, and no noise at the end of every turn", () => {
+  const dir = mkdtempSync(join(tmpdir(), "harness-gate-"));
+  mkdirSync(join(dir, ".claude", "hooks"), { recursive: true });
+  writeFileSync(join(dir, ".claude/hooks/harnessimo-gate.sh"), agentGateScript(), { mode: 0o755 });
+  const result = runGate(dir, '{"stop_hook_active":false}');
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr.trim(), "");
+  rmSync(dir, { recursive: true, force: true });
+});
+
+/** A repository whose `harnessimo` is a stub with the exit code we want to test. */
+function gateFixture(exit: string): { dir: string; ran: string } {
+  const dir = mkdtempSync(join(tmpdir(), "harness-gate-"));
+  const ran = join(dir, "ran");
+  mkdirSync(join(dir, ".claude", "hooks"), { recursive: true });
+  mkdirSync(join(dir, "node_modules", ".bin"), { recursive: true });
+  writeFileSync(join(dir, ".claude/hooks/harnessimo-gate.sh"), agentGateScript(), { mode: 0o755 });
+  writeFileSync(
+    join(dir, "node_modules/.bin/harnessimo"),
+    `#!/bin/sh\ntouch "${ran}"\necho "  FAIL work tracks"\n${exit}\n`,
+    { mode: 0o755 },
+  );
+  return { dir, ran };
+}
+
+function runGate(dir: string, input: string): { status: number; stderr: string } {
+  try {
+    execFileSync("sh", [join(dir, ".claude/hooks/harnessimo-gate.sh")], {
+      cwd: dir,
+      input,
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
+    });
+    return { status: 0, stderr: "" };
+  } catch (caught) {
+    const error = caught as { status?: number; stderr?: string };
+    return { status: error.status ?? 1, stderr: error.stderr ?? "" };
+  }
+}

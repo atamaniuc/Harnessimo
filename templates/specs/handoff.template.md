@@ -14,6 +14,18 @@ came out of an incident, a review, or a decision, link it.
 - **What NOT to load**, and why. This half is the one that saves a session: the next
   agent's budget goes on whatever you fail to rule out.
 
+## Owns
+
+The paths this lane is editing, so a second lane can see the fence: a file
+(`src/a.ts`), a directory (`src/`) or a prefix (`src/**`). Nothing else — a
+claim whose overlap cannot be computed protects nothing.
+
+- <the paths this lane is editing, one per line>
+
+Leave the list as it is when nobody else is working here. Declaring nothing is
+not an error; two lanes declaring the same path is, and `harnessimo tracks`
+says so.
+
 ## State
 
 What is built and proven, what is written but unproven, what has not been started. Name

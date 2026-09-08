@@ -319,6 +319,7 @@ Every page answers one question. Find yours:
 | turn on one more check, or turn one off | [Guide → turn on what hurts](GUIDE.md#turn-on) |
 | look up a config key | [Configuration](CONFIGURATION.md) |
 | put this into a repo that already has its own scripts | [Guide → adopting](GUIDE.md#adopting) |
+| run several agents against one repository | [More than one agent](PARALLEL.md) |
 | understand why a rule exists at all | [The standard](STANDARD.md) |
 | ask something short that is not a bug | [FAQ](FAQ.md) |
 | fix a run that just went red | [Troubleshooting](TROUBLESHOOTING.md) |

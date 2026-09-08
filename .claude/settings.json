@@ -11,6 +11,30 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-gate.sh",
+            "timeout": 120,
+            "statusMessage": "Running the harness gates…"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-gate.sh",
+            "timeout": 120,
+            "statusMessage": "Running the harness gates…"
+          }
+        ]
+      }
     ]
   }
 }

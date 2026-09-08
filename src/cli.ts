@@ -18,6 +18,7 @@ import { loadConfig, enabledChecks, ConfigError, CONFIG_FILE } from "./config.ts
 import { collectDocs, collectFiles, createResolver, readAll } from "./resolver.ts";
 import { findMarkers, verifyProofs } from "./proof.ts";
 import { checkHandoffRefs, checkTracks, trackLines } from "./tracks.ts";
+import { checkClaims, duplicateNumbers, parseClaims } from "./claims.ts";
 import { verifyTaskGates } from "./tasks.ts";
 import { liveTrackSpecDirs } from "./tracks.ts";
 import {
@@ -33,8 +34,8 @@ import { coldStartProblems } from "./coldstart.ts";
 import { debrisProblems, instructionProblems, progressProblems } from "./cleanexit.ts";
 import { releaseProblems } from "./release.ts";
 import { detectConfig } from "./detect.ts";
-import { HOOKS_DIR, HOOK_PATH, hookScript, hookStatus } from "./hooks.ts";
-import { agentContract, briefJson, briefText, handoffPaths, mergeSessionStartHook } from "./brief.ts";
+import { AGENT_GATE_PATH, HOOKS_DIR, HOOK_PATH, agentGateScript, hookScript, hookStatus } from "./hooks.ts";
+import { agentContract, briefJson, briefText, handoffPaths, mergeHook, mergeSessionStartHook } from "./brief.ts";
 import { DEFAULT_WINDOW_MINUTES, decideRead, emptyState, ledger, ledgerReport } from "./tokens.ts";
 import {
   fillTemplate,
@@ -193,8 +194,32 @@ function runTracks() {
   }
   const text = resolver.readFile(tracks.file);
   const problems = checkTracks(text, resolver, tracks.file);
+
+  // Spec 0006. Two agents on one repository break what one agent never does.
+  // Both rules belong to this check rather than to a tenth: they are about the
+  // set of live lanes being coherent, which is what `tracks` already means.
+  problems.push(...duplicateNumbers(laneNames(tracks.specsDir), tracks.specsDir));
+  const lanes = liveTrackSpecDirs(text, tracks.specsDir).map((lane) => {
+    const file = `${lane}/handoff.md`;
+    return { lane, file, claims: resolver.fileExists(file) ? parseClaims(resolver.readFile(file)) : [] };
+  });
+  problems.push(...checkClaims(lanes));
+
   const lines = trackLines(text).length;
-  return { problems, summary: `${lines} live track(s) in ${tracks.file} resolve and carry a status` };
+  const claimed = lanes.reduce((n, lane) => n + lane.claims.length, 0);
+  const fences = claimed > 0 ? `, ${claimed} declared path(s) do not collide` : "";
+  return { problems, summary: `${lines} live track(s) in ${tracks.file} resolve and carry a status${fences}` };
+}
+
+/** Lane directory names under a specs directory, or none when it does not exist. */
+function laneNames(specsDir: string): string[] {
+  try {
+    return readdirSync(join(ROOT, specsDir), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch {
+    return [];
+  }
 }
 
 function runTasks() {
@@ -680,13 +705,41 @@ function cmdBrief() {
     }
   }
 
+  // What every live lane says it is working on, so a brief can print the fence
+  // as well as the work. Read from the handoffs, which is where a claim lives
+  // and dies with the lane.
+  const specsDir = cfg.tracks?.specsDir ?? "specs";
+  const fences = (tracksText ? liveTrackSpecDirs(tracksText, specsDir) : []).map((lane) => ({
+    lane,
+    paths: parseClaims(read(`${lane}/handoff.md`) ?? "").map((claim) => claim.path),
+  }));
+
+  // `--track` narrows the brief to one lane: the unit handed to a second agent.
+  let focus: string | undefined;
+  const wanted = flagValue("--track");
+  if (wanted !== undefined) {
+    if (!wanted || wanted.startsWith("--")) die("harnessimo: usage — `harnessimo brief --track <slug>`");
+    const lanes = fences.map((f) => f.lane);
+    focus = lanes.find((lane) => lane === wanted || lane.slice(specsDir.length + 6) === wanted);
+    if (!focus) {
+      die(
+        `harnessimo: no live track named "${wanted}"\n` +
+          (lanes.length > 0
+            ? `  fix:  one of ${lanes.map((l) => l.slice(specsDir.length + 6)).join(", ")}`
+            : `  fix:  ${tracksPath} lists no live track with a handoff`),
+      );
+    }
+  }
+
   const text = briefText({
     tracksText,
-    handoffs,
+    handoffs: focus ? handoffs.filter((h) => h.path.startsWith(`${focus}/`)) : handoffs,
     queue,
     progressText: cfg.cleanExit?.progressFile ? read(cfg.cleanExit.progressFile) : null,
     enabled: cfg.path ? enabledChecks(cfg) : {},
     tracksPath,
+    focus,
+    fences,
   });
 
   if (flags.has("--json")) {
@@ -760,16 +813,42 @@ function cmdHooks() {
         );
       }
     }
-    const { settings: merged, added } = mergeSessionStartHook(settings, command);
-    if (added) {
-      writeFileSync(settingsPath, JSON.stringify(merged, null, 2) + "\n");
-      ok("harnessimo: added the SessionStart hook to .claude/settings.json");
+    // The other half of the gate (spec 0006): a turn does not end on a claim.
+    // `brief` covers the start of a session and the pre-commit hook covers the
+    // start of a commit; between them an agent can finish a turn saying "done"
+    // with the checks red, and hand the work on before a commit ever happens.
+    const gate = join(ROOT, AGENT_GATE_PATH);
+    if (!existsSync(gate) || flags.has("--force")) {
+      writeFileSync(gate, agentGateScript(), { mode: 0o755 });
+      ok(`harnessimo: wrote ${AGENT_GATE_PATH}`);
     } else {
-      ok("harnessimo: .claude/settings.json already runs it");
+      ok(`harnessimo: ${AGENT_GATE_PATH} already exists (--force overwrites)`);
+    }
+    const gateCommand = `$CLAUDE_PROJECT_DIR/${AGENT_GATE_PATH}`;
+
+    let settingsOut: AgentSettings = settings;
+    const wired: string[] = [];
+    for (const [event, cmd, meta] of [
+      ["SessionStart", command, { timeout: 10, statusMessage: "Loading harness state…" }],
+      // SubagentStop as well as Stop: in a parallel run the subagent is the
+      // one finishing a lane, and it is the turn nobody is watching.
+      ["Stop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
+      ["SubagentStop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
+    ] as const) {
+      const { settings: next, added } = mergeHook(settingsOut, event, cmd, meta);
+      settingsOut = next;
+      if (added) wired.push(event);
+    }
+    if (wired.length > 0) {
+      writeFileSync(settingsPath, JSON.stringify(settingsOut, null, 2) + "\n");
+      ok(`harnessimo: added ${wired.join(", ")} to .claude/settings.json`);
+    } else {
+      ok("harnessimo: .claude/settings.json already runs all of them");
     }
     return ok(
       "\nA new session now starts with the live tracks, the head of each handoff,\n" +
-        "what is in flight, and what this repository enforces.\n\n" +
+        "what is in flight, and what this repository enforces — and a turn does not\n" +
+        "end while `harnessimo check` is red.\n\n" +
         "Using something other than Claude Code? `harnessimo agent` prints the same\n" +
         "contract for any tool that reads an instruction file.",
     );
@@ -819,7 +898,7 @@ usage: harnessimo <command> [options]
   clean-exit [base] [head]  the session left no debris and wrote down where it got to
   instructions           the instruction file is still a router, not a manual
   release                the version agrees across manifest, changelog and tags
-  brief [--json]         what a session should read first: tracks, handoffs, queue
+  brief [--json] [--track <slug>]  what a session reads first; --track narrows it to one lane
   track <sub> <slug>     new [--title] | close --outcome — open and close a lane
   budget [--reset]       what this session read, and what it read twice
   guard read <path>      refuse a re-read of a file that has not changed (exit 2)

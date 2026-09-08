@@ -263,7 +263,7 @@ boundary in a written handoff rather than in someone's head.
 **How to use it**
 
 ```bash
-harnessimo hooks install --agent   # merges a SessionStart hook into .claude/settings.json
+harnessimo hooks install --agent   # SessionStart, Stop and SubagentStop in .claude/settings.json
 harnessimo brief                   # the same output, on demand
 ```
 

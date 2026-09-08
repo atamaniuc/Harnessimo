@@ -15,6 +15,7 @@ nav:
   - Guide (15 min): GUIDE.md
   - Configuration: CONFIGURATION.md
   - Reference: REFERENCE.md
+  - More than one agent: PARALLEL.md
   - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
   - The standard: STANDARD.md
   - FAQ: FAQ.md

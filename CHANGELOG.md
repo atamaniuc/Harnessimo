@@ -7,6 +7,41 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.8.0] — 2026-09-08
+
+### Added
+
+- **A lane declares what it owns.** `## Owns` in a handoff lists the paths that lane is
+  working on — a file, a directory, or a prefix ending in `/**`. `harnessimo tracks` fails
+  when two live lanes claim overlapping paths, naming both lanes and both claims. Overlap
+  is prefix containment and nothing cleverer: a pattern whose intersection cannot be
+  computed by reading it protects nothing, and a fence that silently does not hold is worse
+  than no fence. Declaring nothing stays legal — a repository with one lane in flight needs
+  none of this.
+- **Two lane directories can no longer share a number.** `track new` allocates from the
+  filesystem, so two worktrees read the same state and both take `0006`; the directories
+  differ, so git merges them without a word. The check fails on the merged tree, which is
+  the only place the collision exists. A lock would not have helped: no lock in one worktree
+  is visible in another.
+- **`Stop` and `SubagentStop` hooks**, installed by `harnessimo hooks install --agent`
+  alongside the startup hook. A red `check` blocks the end of a turn and hands the report
+  back to the agent. Until now the harness gated the start of a session and the start of a
+  commit, and an agent could finish a turn saying "done" with the checks red — which is
+  every turn, in a run where work passes to another agent instead of to a commit. The hook
+  does not block a turn already continuing because it blocked once: a gate that cannot be
+  satisfied is a loop, and a loop is how a gate gets deleted.
+- **`harnessimo brief --track <slug>`** — one lane's track line, its whole handoff, what it
+  owns and what the other live lanes own, and none of their state. The unit handed to a
+  second agent. The unscoped `brief` is unchanged.
+- `docs/PARALLEL.md` (and `.ru`), a page for the reader who has more than one agent, plus
+  the `## Owns` section in the shipped handoff template.
+
+### Changed
+
+- `mergeHook(settings, event, command)` generalises `mergeSessionStartHook`, which stays as
+  a named wrapper. Every other event's hooks are carried over untouched: the settings file
+  belongs to the project, not to this package.
+
 ## [0.7.0] — 2026-09-08
 
 ### Added
@@ -249,6 +284,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.8.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.8.0
 [0.7.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.7.0
 [0.6.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.6.0
 [0.5.4]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.4

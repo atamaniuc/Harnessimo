@@ -34,6 +34,7 @@ const ORDER = [
   "GUIDE.md",
   "CONFIGURATION.md",
   "REFERENCE.md",
+  "PARALLEL.md",
   "STANDARD.md",
   "FAQ.md",
   "TROUBLESHOOTING.md",

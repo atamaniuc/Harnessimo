@@ -14,6 +14,12 @@ import type { AgentSettings, BriefInput, SessionStartEntry } from "./types.ts";
 
 const HANDOFF_LINES = 20;
 
+/** What one live lane says it is working on, as the brief prints it. */
+export interface LaneFence {
+  lane: string;
+  paths: string[];
+}
+
 export function briefText({
   tracksText,
   handoffs = [],
@@ -21,18 +27,47 @@ export function briefText({
   progressText,
   enabled = {},
   tracksPath = "specs/TRACKS.md",
+  focus,
+  fences = [],
 }: BriefInput): string {
   const out: string[] = [];
 
-  if (tracksText) {
+  // Scoped to one lane, this is the unit handed to a second agent: its own
+  // track line, its whole handoff, and the fence around everyone else's work —
+  // and none of the other lanes' state, which is the half that costs tokens
+  // and invites a second agent into work that is not its own.
+  if (tracksText && focus) {
+    const mine = tracksText.split("\n").filter((line) => line.startsWith("- ") && line.includes(`${focus}/`));
+    out.push(`== ${tracksPath} (your track) ==`);
+    out.push(mine.length > 0 ? mine.join("\n") : `(${focus} is not in the index — add it, or the next session will not find it)`);
+  } else if (tracksText) {
     out.push(`== ${tracksPath} (live work tracks — load a track's handoff before starting on it) ==`);
     out.push(tracksText.trimEnd());
   }
 
   for (const handoff of handoffs) {
-    const head = handoff.text.split("\n").slice(0, HANDOFF_LINES).join("\n").trimEnd();
-    out.push(`\n== ${handoff.path} (first ${HANDOFF_LINES} lines) ==`);
-    out.push(head);
+    // The whole handoff when it is the one lane being worked on; the head of
+    // each when the brief is the index of everything in flight.
+    const body = focus
+      ? handoff.text.trimEnd()
+      : handoff.text.split("\n").slice(0, HANDOFF_LINES).join("\n").trimEnd();
+    out.push(`\n== ${handoff.path}${focus ? "" : ` (first ${HANDOFF_LINES} lines)`} ==`);
+    out.push(body);
+  }
+
+  if (fences.some((fence) => fence.paths.length > 0)) {
+    out.push("\n== declared paths ==");
+    if (focus) {
+      const mine = fences.filter((f) => f.lane === focus).flatMap((f) => f.paths);
+      const theirs = fences.filter((f) => f.lane !== focus && f.paths.length > 0);
+      out.push(mine.length > 0 ? `you own: ${mine.join(", ")}` : "you own: nothing declared yet");
+      for (const fence of theirs) out.push(`${fence.lane} owns: ${fence.paths.join(", ")}`);
+    } else {
+      for (const fence of fences) {
+        if (fence.paths.length > 0) out.push(`${fence.lane} owns: ${fence.paths.join(", ")}`);
+      }
+    }
+    out.push("Editing a path another lane owns is a merge that resolves text and not intent.");
   }
 
   if (queue?.items?.length) {
@@ -105,34 +140,40 @@ export function handoffPaths(tracksText: string): string[] {
 }
 
 /**
- * Adds the SessionStart hook to an agent settings object without disturbing
- * anything else in it, and without adding itself twice.
+ * Adds one hook to an agent settings object without disturbing anything else
+ * in it, and without adding itself twice.
  *
+ * Every other event's hooks are carried over untouched: this file belongs to
+ * the project, not to this package, and a tool that rewrites what it does not
+ * understand is a tool nobody installs twice.
+ *
+ * @param event  the hook event, e.g. `SessionStart` or `Stop`
  */
+export function mergeHook(
+  settings: AgentSettings,
+  event: string,
+  command: string,
+  meta: { timeout?: number; statusMessage?: string } = {},
+): { settings: AgentSettings; added: boolean } {
+  const next: AgentSettings = { ...settings };
+  const hooks = { ...(next.hooks ?? {}) };
+  const entries: SessionStartEntry[] = [...(hooks[event] ?? [])];
+
+  const already = entries.some((entry) => (entry.hooks ?? []).some((h) => h.command === command));
+  if (already) return { settings, added: false };
+
+  entries.push({ hooks: [{ type: "command", command, ...meta }] });
+  hooks[event] = entries;
+  next.hooks = hooks;
+  return { settings: next, added: true };
+}
+
+/** The startup hook, in the shape it has always been written. */
 export function mergeSessionStartHook(
   settings: AgentSettings,
   command: string,
 ): { settings: AgentSettings; added: boolean } {
-  const next: AgentSettings = { ...settings };
-  const hooks = { ...(next.hooks ?? {}) };
-  const sessionStart: SessionStartEntry[] = [...(hooks.SessionStart ?? [])];
-
-  const already = sessionStart.some((entry) => (entry.hooks ?? []).some((h) => h.command === command));
-  if (already) return { settings, added: false };
-
-  sessionStart.push({
-    hooks: [
-      {
-        type: "command",
-        command,
-        timeout: 10,
-        statusMessage: "Loading harness state…",
-      },
-    ],
-  });
-  hooks.SessionStart = sessionStart;
-  next.hooks = hooks;
-  return { settings: next, added: true };
+  return mergeHook(settings, "SessionStart", command, { timeout: 10, statusMessage: "Loading harness state…" });
 }
 
 /**

@@ -84,3 +84,61 @@ export function hookStatus({ hookExists, hooksPath }: { hookExists: boolean, hoo
   }
   return { ok: false, message: `no pre-commit hook\n  fix:  harnessimo hooks install` };
 }
+
+/**
+ * The agent-side half of the gate: a turn does not end while `check` is red.
+ *
+ * `brief` covers the start of a session and the pre-commit hook covers the
+ * start of a commit. Between them an agent can finish a turn saying "done"
+ * with the checks failing — and when the work is handed to another agent
+ * rather than committed, no other gate ever runs. This is that hole.
+ *
+ * `check` and not the full suite, for the reason the pre-commit hook gives:
+ * these are the six checks that take about a second. Cold start,
+ * re-verification and the tests belong in CI, where waiting costs nobody.
+ */
+export const AGENT_GATE_PATH = ".claude/hooks/harnessimo-gate.sh";
+
+export function agentGateScript() {
+  return (
+    [
+      "#!/usr/bin/env sh",
+      "# Blocks the end of a turn while `harnessimo check` is red, and hands the",
+      "# report back to the agent rather than to a log nobody reads.",
+      "#",
+      "# Written by `harnessimo hooks install --agent`. Edit it freely — it is a",
+      "# normal file in the repository, and nothing here rewrites it without --force.",
+      "set -e",
+      'cd "${CLAUDE_PROJECT_DIR:-.}"',
+      "",
+      "# The turn is already continuing because this hook blocked it once.",
+      "# Blocking again is a loop, and a loop is how a gate gets deleted.",
+      "input=$(cat)",
+      "case \"$input\" in",
+      '  *\'"stop_hook_active":true\'*|*\'"stop_hook_active": true\'*) exit 0 ;;',
+      "esac",
+      "",
+      "if [ -x node_modules/.bin/harnessimo ]; then",
+      '  HARNESSIMO="node_modules/.bin/harnessimo"',
+      "elif [ -f src/cli.ts ]; then",
+      '  HARNESSIMO="node src/cli.ts"',
+      "elif [ -f bin/harnessimo.mjs ]; then",
+      '  HARNESSIMO="node bin/harnessimo.mjs"',
+      "elif command -v harnessimo >/dev/null 2>&1; then",
+      '  HARNESSIMO="harnessimo"',
+      "else",
+      "  # No CLI, no gate — and no noise at the end of every turn either.",
+      "  exit 0",
+      "fi",
+      "",
+      "if report=$($HARNESSIMO check 2>&1); then",
+      "  exit 0",
+      "fi",
+      "",
+      "# Exit code 2 is the one an agent is shown; the report goes with it, so the",
+      "# next thing it reads is the file, the line and the fix.",
+      '{ echo "$report"; echo; echo "harnessimo: this turn cannot end while a check is red."; } >&2',
+      "exit 2",
+    ].join("\n") + "\n"
+  );
+}

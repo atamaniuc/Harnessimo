@@ -182,6 +182,27 @@
           "belongs": "WHY.md"
         }
       ]
+    },
+    "PARALLEL.md": {
+      "answers": "How do several agents work on one repository without colliding?",
+      "profile": "user",
+      "owns": [
+        "a lane declares the paths it owns",
+        "two lanes cannot answer to one number",
+        "the Stop and SubagentStop gate",
+        "handing one lane to one agent",
+        "what this deliberately does not do"
+      ],
+      "excludes": [
+        {
+          "heading": "Opening and closing a lane",
+          "belongs": "GUIDE.md"
+        },
+        {
+          "heading": "Turn on what hurts",
+          "belongs": "GUIDE.md"
+        }
+      ]
     }
   }
 }

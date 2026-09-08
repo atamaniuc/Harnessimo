@@ -218,6 +218,14 @@ export interface BriefInput {
   /** Which checks are configured, so the brief can say what is *not* enforced. */
   enabled?: Partial<EnabledChecks>;
   tracksPath?: string;
+  /**
+   * One lane directory, when the brief is being handed to an agent working on
+   * that lane alone: its track line and its whole handoff, instead of every
+   * lane's.
+   */
+  focus?: string;
+  /** What each live lane declares it is working on. */
+  fences?: { lane: string; paths: string[] }[];
 }
 
 /** One entry in Claude Code's SessionStart hook array. */

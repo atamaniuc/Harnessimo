@@ -163,3 +163,43 @@ test("a lane opened by the tool passes the tool's own checks, and closing it dis
   assert.equal(closed.status, 0, closed.out);
   assert.equal(run(dir, "check").status, 0, "and it still passes with the handoff gone");
 });
+
+// ---- spec 0006: more than one agent
+
+const TWO_LANES = {
+  ...BASE,
+  "specs/TRACKS.md":
+    "# Work tracks\n\n" +
+    "- **Search** — [handoff](specs/0001-search/handoff.md) — active, next: T1\n" +
+    "- **Totals** — [handoff](specs/0002-totals/handoff.md) — active, next: T1\n",
+  "specs/0001-search/handoff.md": "# Handoff — search\n\n## Owns\n\n- src/search/\n",
+  "specs/0002-totals/handoff.md": "# Handoff — totals\n\n## Owns\n\n- src/totals.ts\n",
+};
+
+test("two lanes working in different places both pass, and the check says so", () => {
+  const dir = fixture(TWO_LANES);
+  const { status, out } = run(dir, "check");
+  assert.equal(status, 0, out);
+  assert.match(out, /2 declared path\(s\) do not collide/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("two lanes claiming one path fail, naming the other lane", () => {
+  const dir = fixture({
+    ...TWO_LANES,
+    "specs/0002-totals/handoff.md": "# Handoff — totals\n\n## Owns\n\n- src/search/totals.ts\n",
+  });
+  const { status, out } = run(dir, "check");
+  assert.equal(status, 1);
+  assert.match(out, /specs\/0002-totals\/handoff\.md:5/);
+  assert.match(out, /also claimed by specs\/0001-search/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("two lane directories sharing a number fail, which is how the merge is caught", () => {
+  const dir = fixture({ ...BASE, "specs/0001-totals/spec.md": "# 0001 — totals\n" });
+  const { status, out } = run(dir, "check");
+  assert.equal(status, 1);
+  assert.match(out, /0001-search and 0001-totals share one number/);
+  rmSync(dir, { recursive: true, force: true });
+});

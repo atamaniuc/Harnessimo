@@ -51,6 +51,8 @@ starts in minutes.
 ## Working rules
 
 - **WIP = 1.** One queue item active at a time. Enforced.
+- **Working beside another agent?** Declare the paths under `## Owns` in this lane's
+  handoff. Two live lanes claiming one path fails `tracks`. See `docs/PARALLEL.md`.
 - **Never edit `state` or `evidence` by hand.** Run `node src/cli.ts queue verify <id>`;
   CI re-runs every passing claim, so a hand-written state is detected rather than trusted.
 - **Never add a runtime dependency.** See `.harness/1-instructions/CONSTRAINTS.md` #1.

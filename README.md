@@ -303,6 +303,7 @@ Every page answers one question. Find yours:
 | turn on one more check, or turn one off | [Guide → turn on what hurts](https://atamaniuc.github.io/Harnessimo/GUIDE/#turn-on) |
 | look up a config key | [Configuration](https://atamaniuc.github.io/Harnessimo/CONFIGURATION/) |
 | put this into a repo that already has its own scripts | [Guide → adopting](https://atamaniuc.github.io/Harnessimo/GUIDE/#adopting) |
+| run several agents against one repository | [More than one agent](https://atamaniuc.github.io/Harnessimo/PARALLEL/) |
 | understand why a rule exists at all | [The standard](https://atamaniuc.github.io/Harnessimo/STANDARD/) |
 | ask something short that is not a bug | [FAQ](https://atamaniuc.github.io/Harnessimo/FAQ/) |
 | fix a run that just went red | [Troubleshooting](https://atamaniuc.github.io/Harnessimo/TROUBLESHOOTING/) |
