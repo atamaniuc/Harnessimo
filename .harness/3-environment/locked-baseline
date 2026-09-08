@@ -11,5 +11,9 @@
 # decision, and this line is where the decision is recorded. The fifth move
 # adds publish.yml and changes how the release ships the package; the sixth
 # prepares publishing to authenticate by OIDC; the seventh removes the stored
-# token from it entirely.
-b0a0280885d95d026dc3998ca93556c5bc468f9b
+# decision, and this line is where the decision is recorded. The fifth move
+# adds publish.yml and changes how the release ships the package; the sixth
+# prepares publishing to authenticate by OIDC; the seventh removes the stored
+# token; the eighth makes publishing release-only and idempotent, after three
+# versions reached the registry without a tag.
+f8575548b2225431a2a3fabe69adf5c3f32061b4
