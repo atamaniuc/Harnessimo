@@ -15,7 +15,7 @@ export { lockedViolations, formatLockedViolations } from "./locked.ts";
 export { coldStartProblems } from "./coldstart.ts";
 export { debrisProblems, progressProblems, instructionProblems, DEFAULT_MARKERS } from "./cleanexit.ts";
 export { hookScript, hookStatus, HOOK_PATH, HOOKS_DIR } from "./hooks.ts";
-export { briefText, briefJson, handoffPaths, mergeSessionStartHook, sectionOf } from "./brief.ts";
+export { agentContract, briefText, briefJson, handoffPaths, mergeSessionStartHook, sectionOf } from "./brief.ts";
 export { changelogVersions, releaseProblems } from "./release.ts";
 export { loadConfig, enabledChecks, ConfigError } from "./config.ts";
 export { createResolver, collectDocs, collectFiles, readAll } from "./resolver.ts";

@@ -263,6 +263,28 @@ $ harnessimo doctor
 которого он существует.
 <!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
 
+## 8. Версия означает разное в разных местах
+
+*Бейдж говорит одно, реестр отдаёт другое, и оба правы относительно себя.*
+
+Это не гипотетический случай: пока писался этот инструмент, три версии уехали в npm через
+ручной запуск workflow, а собственные теги репозитория остановились двумя релизами раньше.
+Никто не заметил, потому что никто не проверял самое дублируемое утверждение, какое делает
+проект.
+
+```
+FAIL  release
+  CHANGELOG.md:1  v0.4.3
+      0.4.3 is described as released and has no v0.4.3 tag
+    why:  a version published outside the release flow leaves the repository behind
+    fix:  cut the release, or remove the entry if it never shipped
+```
+
+**Включить:** `release`, указав манифест, changelog и префикс тега. Он читает версию из
+манифеста, записи из changelog и теги из git; версия, которую никто не записал, запись не на
+верхней позиции и выпущенная версия без тега — всё это падает.
+<!-- proof: src/release.ts:releaseProblems -->
+
 ---
 
 ## Сессия целиком

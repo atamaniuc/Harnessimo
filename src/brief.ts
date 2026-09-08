@@ -134,3 +134,26 @@ export function mergeSessionStartHook(
   next.hooks = hooks;
   return { settings: next, added: true };
 }
+
+/**
+ * What an agent has to be told, for the tools that have no hook to install
+ * into. Three rules, short enough to survive in an instruction file, plus the
+ * command that hands over the state.
+ *
+ * The checks themselves need none of this: they read files and run commands,
+ * and nothing in them knows which model wrote the code. This is only about the
+ * one thing that cannot be enforced from outside — that a session begins by
+ * reading what the last one left.
+ */
+export function agentContract(runner = "harnessimo"): string {
+  return [
+    "## Harness",
+    "",
+    `- Run \`${runner} brief\` at the start of a session: it prints the live tracks, the`,
+    "  head of each handoff and what is in flight. Read it before touching anything.",
+    `- Run \`${runner} check\` before saying anything is done. Green is the claim; your`,
+    "  summary is not.",
+    "- Never edit state in the queue file. `" + runner + " queue verify <id>` runs the item's",
+    "  own command and records the outcome — that is the only way something becomes passing.",
+  ].join("\n");
+}

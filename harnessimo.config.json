@@ -91,5 +91,11 @@
       "AGENTS.md": 120,
       ".harness/1-instructions/CONSTRAINTS.md": 90
     }
+  },
+  "release": {
+    "$comment": "This repository published three versions to npm through a manual workflow run while its own tags stopped at v0.4.1. The check exists because of that, and it is on here first.",
+    "manifest": "package.json",
+    "changelog": "CHANGELOG.md",
+    "tagPrefix": "v"
   }
 }

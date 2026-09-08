@@ -259,6 +259,27 @@ A check you did not configure is reported as *not enforced*, in the same output,
 same weight. A harness that overstates its own coverage is the failure it exists to prevent.
 <!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
 
+## 8. The version means different things in different places
+
+*The badge says one thing, the registry serves another, and both are right about themselves.*
+
+This one is not hypothetical: while writing this tool, three versions reached npm through a
+manual workflow run while the repository's own tags stopped two releases earlier. Nothing
+noticed, because nothing was checking the most duplicated claim a project makes.
+
+```
+FAIL  release
+  CHANGELOG.md:1  v0.4.3
+      0.4.3 is described as released and has no v0.4.3 tag
+    why:  a version published outside the release flow leaves the repository behind
+    fix:  cut the release, or remove the entry if it never shipped
+```
+
+**Turn on:** `release`, naming your manifest, your changelog and the tag prefix. It reads the
+version from the manifest, the entries from the changelog and the tags from git; a version
+nobody wrote down, an entry that is not at the top, or a released version with no tag all
+fail. <!-- proof: src/release.ts:releaseProblems -->
+
 ---
 
 ## A full session, end to end

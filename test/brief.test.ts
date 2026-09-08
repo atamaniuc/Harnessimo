@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { briefJson, briefText, handoffPaths, mergeSessionStartHook, sectionOf } from "../src/brief.ts";
+import {agentContract, briefJson, briefText, handoffPaths, mergeSessionStartHook, sectionOf } from "../src/brief.ts";
 
 const tracks = [
   "# Work tracks",
@@ -100,4 +100,22 @@ test("an existing hook from another tool is preserved", () => {
   const { settings } = mergeSessionStartHook(existing, "./ours.sh");
   const commands = settings.hooks!.SessionStart!.flatMap((e) => (e.hooks ?? []).map((h) => h.command));
   assert.deepEqual(commands, ["./theirs.sh", "./ours.sh"]);
+});
+
+test("the agent contract is short enough to survive an instruction file", () => {
+  const contract = agentContract();
+  assert.ok(contract.split("\n").length <= 12, "a contract nobody finishes reading enforces nothing");
+  // The three things an agent cannot be trusted to do without being told.
+  assert.match(contract, /brief/);
+  assert.match(contract, /check/);
+  assert.match(contract, /queue verify/);
+});
+
+test("the contract names whatever runner the project uses", () => {
+  assert.match(agentContract("pnpm exec harnessimo"), /pnpm exec harnessimo brief/);
+});
+
+test("nothing in the contract is specific to one vendor's agent", () => {
+  // The claim that this works with any agent is only true while this is.
+  assert.doesNotMatch(agentContract(), /claude|codex|cursor|gemini|anthropic|openai/i);
 });

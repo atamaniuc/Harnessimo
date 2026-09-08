@@ -99,6 +99,7 @@ Each section of `harnessimo.config.json` maps onto something you probably alread
 | A hand-written pre-commit hook | `harnessimo hooks install` + `hooks.before` |
 | A grep for `TODO` / `console.log` in review | `cleanExit.markers` + `cleanExit.scan` |
 | A note asking people to keep `AGENTS.md` short | `instructions.limits` |
+| A release process nobody can tell has drifted | `release.manifest` + `release.changelog` |
 
 Turn one on, run `harnessimo check`, fix what it finds, commit. Then the next. A migration that
 turns on six checks at once produces one enormous red run that nobody can read.

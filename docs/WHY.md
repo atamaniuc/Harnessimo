@@ -117,7 +117,7 @@ this one.
 `--reverify`, which re-runs every claim that says it passes, and a cold start that clones the
 repository into an empty directory and runs the commands the documentation gives a newcomer.
 
-**115 tests, and every rule has one proving it fires on bad input.** A rule that has only
+**131 tests, and every rule has one proving it fires on bad input.** A rule that has only
 ever passed is an assumption wearing a rule's clothes. The tests run with nothing installed.
 
 **Used, not only demonstrated.** Two public repositories deleted their own versions of these
@@ -125,6 +125,13 @@ checks and depend on this package:
 [`ledger-lens`](https://github.com/atamaniuc/ledger-lens) (Next.js, Supabase, Python) and
 [`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) (pnpm workspace,
 content pipeline).
+
+**It does not know which model you use, and cannot come to depend on one.** The checks read
+files, run commands and walk git history; nothing in them is specific to a vendor, and the
+one tool-specific piece — the automatic session briefing — has a one-line equivalent for
+every other agent, printed by `harnessimo agent`. A tool that outlives your choice of model
+is worth more than one that is excellent inside somebody's product.
+<!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
 
 **Small enough to read, and MIT.** About three thousand lines of TypeScript with no runtime,
 no daemon and no service behind it. If it were abandoned tomorrow you could vendor it in an

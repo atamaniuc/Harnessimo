@@ -42,8 +42,13 @@ something that exits non-zero.** Lecture 09 calls this *«экстернализ
 | 10 · end-to-end as ground truth | the real run is the proof | `harnessimo cold-start` |
 | 12 · clean state at session end | no debris, progress written down | `harnessimo clean-exit` |
 
-Two things here are **not** from the course: proof markers and handoff-driven development.
-Both came out of production repositories and are described in their own sections below.
+Three things here are **not** from the course: proof markers, handoff-driven development,
+and the release check. The first two came out of production repositories and are described
+in their own sections below. The third came out of this one: three versions reached the
+registry while the repository's tags stopped two releases earlier, and the failure was
+invisible precisely because a version is claimed in so many places at once — the manifest,
+the changelog, the tags, a badge. `harnessimo release` requires the ones the repository
+controls to agree. <!-- proof: src/release.ts:releaseProblems -->
 
 ## Layer 1 — Instructions *(«подсистема инструкций» — the recipe shelf)*
 

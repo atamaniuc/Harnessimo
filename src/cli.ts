@@ -34,7 +34,7 @@ import { debrisProblems, instructionProblems, progressProblems } from "./cleanex
 import { releaseProblems } from "./release.ts";
 import { detectConfig } from "./detect.ts";
 import { HOOKS_DIR, HOOK_PATH, hookScript, hookStatus } from "./hooks.ts";
-import { briefJson, briefText, handoffPaths, mergeSessionStartHook } from "./brief.ts";
+import { agentContract, briefJson, briefText, handoffPaths, mergeSessionStartHook } from "./brief.ts";
 import type {
   AgentSettings,
   DocsConfig,
@@ -738,7 +738,12 @@ function cmdHooks() {
     } else {
       ok("harnessimo: .claude/settings.json already runs it");
     }
-    return ok("\nA new session now starts with the live tracks, the head of each handoff,\nwhat is in flight, and what this repository enforces.");
+    return ok(
+      "\nA new session now starts with the live tracks, the head of each handoff,\n" +
+        "what is in flight, and what this repository enforces.\n\n" +
+        "Using something other than Claude Code? `harnessimo agent` prints the same\n" +
+        "contract for any tool that reads an instruction file.",
+    );
   }
 
   if (sub === "install") {
@@ -786,6 +791,7 @@ usage: harnessimo <command> [options]
   instructions           the instruction file is still a router, not a manual
   release                the version agrees across manifest, changelog and tags
   brief [--json]         what a session should read first: tracks, handoffs, queue
+  agent                  the contract to paste into any agent's instruction file
   hooks <sub>            status | install [--agent] | uninstall — the gates, on commit
   init [--force]         scaffold .harness/, specs/ and harnessimo.config.json
 
@@ -845,6 +851,12 @@ switch (command) {
     break;
   case "hooks":
     cmdHooks();
+    break;
+  case "agent":
+    // For every tool without a hook API: the same contract, as text to paste
+    // into whatever instruction file it reads — AGENTS.md, CLAUDE.md,
+    // GEMINI.md, .cursor/rules. The checks do not care which.
+    ok(agentContract());
     break;
   case "brief":
     cmdBrief();

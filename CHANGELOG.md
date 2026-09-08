@@ -7,6 +7,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.5.0] — 2026-09-08
+
+### Added
+
+- A ninth check, `harnessimo release`: the version in the manifest, the versions in the
+  changelog and the git tags must agree. It exists because this repository published 0.4.2,
+  0.4.3 and 0.4.4 to npm through a manual workflow run while its own tags stopped at
+  v0.4.1 — the release badge and the registry disagreed, and nothing was watching the most
+  duplicated claim a project makes.
+- `harnessimo agent`: the three-line contract to paste into any tool's instruction file, so
+  the session briefing is not limited to the one agent with a hook API.
+- `templates/README.md` and `test/templates.test.ts`, so the starter documents `init` ships
+  cannot quietly become copies of this repository's own rules.
+
+### Changed
+
+- Publishing happens only on a published release; the manual trigger that produced the
+  version drift is gone, and a version already on the registry is skipped rather than
+  failing the run.
+- The generated pre-commit hook prefers the sources over `dist/`, which had it checking
+  commits against a stale build.
+- The three versions that shipped without tags now have them, on the commits that actually
+  shipped them.
+
 ## [0.4.4] — 2026-09-08
 
 ### Added
@@ -108,6 +132,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.5.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.0
 [0.4.4]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.4.4
 [0.4.3]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.4.3
 [0.4.2]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.4.2

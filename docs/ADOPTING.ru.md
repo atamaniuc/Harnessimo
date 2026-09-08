@@ -100,6 +100,7 @@ harnessimo doctor
 | Самописный pre-commit хук | `harnessimo hooks install` + `hooks.before` |
 | Grep по `TODO` / `console.log` на ревью | `cleanExit.markers` + `cleanExit.scan` |
 | Просьба держать `AGENTS.md` коротким | `instructions.limits` |
+| Релизный процесс, о расхождении которого никто не узнаёт | `release.manifest` + `release.changelog` |
 
 Включите одну, запустите `harnessimo check`, почините найденное, закоммитьте. Потом
 следующую. Миграция, которая включает шесть проверок разом, даёт один огромный красный

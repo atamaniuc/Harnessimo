@@ -143,7 +143,7 @@ not enforced: locked, instructions
 Одна команда встраивает это в вашего агента: `harnessimo hooks install --agent`.
 <!-- proof: src/brief.ts:briefText -->
 
-## Все восемь проверок
+## Все девять проверок
 
 | Команда | Падает, когда |
 |---|---|
@@ -155,6 +155,7 @@ not enforced: locked, instructions
 | `harnessimo cold-start` | свежий клон не может установиться и проверить себя |
 | `harnessimo clean-exit` | сессия оставила `TODO`, `debugger`, `.only(` |
 | `harnessimo instructions` | ваш AGENTS.md перерос лимит строк, который вы задали |
+| `harnessimo release` | версия в манифесте, changelog и тегах разошлась |
 
 `harnessimo doctor` печатает, какие из них включены — и какие нет. Ничего не включается
 без вашего ведома.
@@ -190,6 +191,36 @@ pnpm exec harnessimo init && pnpm exec harnessimo check
 | Агент правит то, что его оценивает | `locked` |
 
 Подробно: [Внедрение в существующий репозиторий](https://atamaniuc.github.io/Harnessimo/ru/ADOPTING/).
+
+## Любой агент, любая модель
+
+Здесь ничто не знает, какая модель написала код. Проверки читают файлы, запускают ваши
+команды и ходят по истории git — поэтому одинаково работают под Claude Code, Codex, Cursor,
+Gemini CLI, self-hosted DeepSeek, двумя из них одновременно или вообще без агентов.
+<!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
+
+Единственная привязанная к инструменту часть — автоматический брифинг сессии, и только
+потому, что инструменты разные. `harnessimo hooks install --agent` ставит его
+SessionStart-хуком для Claude Code, у которого для этого есть API. Любой другой инструмент
+получает то же самое одной строкой: `harnessimo agent` печатает контракт, который надо
+вставить в тот файл инструкций, который он читает, — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`
+или правило Cursor:
+
+```
+$ harnessimo agent
+## Harness
+
+- Run `harnessimo brief` at the start of a session: it prints the live tracks, the
+  head of each handoff and what is in flight. Read it before touching anything.
+- Run `harnessimo check` before saying anything is done. Green is the claim; your
+  summary is not.
+- Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
+  own command and records the outcome — that is the only way something becomes passing.
+```
+
+Это вся поверхность интеграции. Нет ни плагина, ни модели для настройки, ни того, что
+придётся мигрировать при переезде, — ради этого правила и держатся в файлах, а не в формате
+вендора.
 
 ## Как этим пользоваться: руками и агентом
 
@@ -227,7 +258,7 @@ harnessimo hooks install           # быстрые проверки перед 
 - **Он живёт по собственному стандарту.** Все восемь проверок применяются к этому
   репозиторию, включая cold start, который клонирует его в пустой каталог и запускает
   документированные команды, и перепроверку каждого утверждения о прохождении.
-- **115 тестов**, и у каждого правила есть тест, доказывающий, что оно срабатывает на плохом
+- **131 тест**, и у каждого правила есть тест, доказывающий, что оно срабатывает на плохом
   входе, — правило, которое умеет только проходить, это допущение в одежде правила.
 - **Используется в проде, а не только показывается.** Два репозитория удалили свои версии
   этих проверок ради него; оба публичные и указаны ниже.
@@ -272,7 +303,7 @@ harnessimo hooks install           # быстрые проверки перед 
 ## Разработка
 
 ```bash
-npm test          # 115 тестов, без установки — Node сам снимает типы с TypeScript
+npm test          # 131 тест, без установки — Node сам снимает типы с TypeScript
 npm run check     # тесты, затем собственные проверки этого репозитория
 npm run typecheck # tsc, strict, по src и test (нужен npm i)
 npm run build     # то, что ставит потребитель: dist/ с декларациями

@@ -139,7 +139,7 @@ not enforced: locked, instructions
 One command wires that into your agent: `harnessimo hooks install --agent`.
 <!-- proof: src/brief.ts:briefText -->
 
-## All eight checks
+## All nine checks
 
 | Command | Fails when |
 |---|---|
@@ -151,6 +151,7 @@ One command wires that into your agent: `harnessimo hooks install --agent`.
 | `harnessimo cold-start` | a fresh clone can't install and verify itself |
 | `harnessimo clean-exit` | a session left `TODO`, `debugger`, `.only(` behind |
 | `harnessimo instructions` | your AGENTS.md grew past the line limit you set |
+| `harnessimo release` | the version in the manifest, the changelog and the tags disagree |
 
 `harnessimo doctor` prints which of these are on — and which are off. Nothing is switched on
 that you didn't ask for.
@@ -185,6 +186,35 @@ Turn on one check, make it green, commit. Then the next one.
 | An agent editing what grades it | `locked` |
 
 Details: [Adopting an existing repo](https://atamaniuc.github.io/Harnessimo/ADOPTING/).
+
+## Any agent, any model
+
+Nothing here knows which model wrote the code. The checks read files, run your commands and
+walk your git history — so they work the same under Claude Code, Codex, Cursor, Gemini CLI,
+a self-hosted DeepSeek, two of them at once, or nobody at all.
+<!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
+
+One piece is tool-specific, and only because tools differ: the automatic session briefing.
+`harnessimo hooks install --agent` writes it as a SessionStart hook for Claude Code, which
+has an API for that. Every other tool gets the same thing in one line — `harnessimo agent`
+prints the contract to paste into whatever instruction file it reads, be that `AGENTS.md`,
+`CLAUDE.md`, `GEMINI.md` or a Cursor rule:
+
+```
+$ harnessimo agent
+## Harness
+
+- Run `harnessimo brief` at the start of a session: it prints the live tracks, the
+  head of each handoff and what is in flight. Read it before touching anything.
+- Run `harnessimo check` before saying anything is done. Green is the claim; your
+  summary is not.
+- Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
+  own command and records the outcome — that is the only way something becomes passing.
+```
+
+That is the whole integration surface. There is no plugin to install, no model to configure
+and nothing to migrate when you switch — which is the point of keeping the rules in files
+rather than in a vendor's format.
 
 ## Using it, by hand and by agent
 
@@ -222,7 +252,7 @@ entitled to make:
 - **It is held to its own standard.** All eight checks run against this repository, including
   a cold start that clones it into an empty directory and runs the documented commands, and
   a re-verification of every passing claim. The badge above is that.
-- **115 tests**, and every rule has one that proves it fires on bad input — a rule that only
+- **131 tests**, and every rule has one that proves it fires on bad input — a rule that only
   passes is an assumption wearing a rule's clothes.
 - **Used in production, not only demonstrated.** Two repositories deleted their own versions
   of these checks to adopt it; both are linked below and both are public.
@@ -268,7 +298,7 @@ header.
 ## Development
 
 ```bash
-npm test          # 115 tests, no install — Node runs the TypeScript directly
+npm test          # 131 tests, no install — Node runs the TypeScript directly
 npm run check     # tests, then this repo's own checks
 npm run typecheck # tsc, strict, over src and test (needs npm i first)
 npm run build     # what a consumer installs: dist/, with declarations
