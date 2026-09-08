@@ -2,21 +2,20 @@ name: Publish to npm
 
 # Publishes the package on a release, and on demand.
 #
-# Authentication is moving to trusted publishing: npm verifies a short-lived
-# OIDC token this workflow gets from GitHub, so nothing long-lived is stored
-# anywhere. It is configured on the package, not here — npmjs.com → harnessimo
-# → Settings → Trusted Publisher → GitHub Actions, repository
-# atamaniuc/Harnessimo, workflow publish.yml.
+# Authentication is trusted publishing: npm verifies a short-lived OIDC token
+# this workflow gets from GitHub, matched against a publisher configured on the
+# package itself (npmjs.com → harnessimo → Settings → Trusted Publisher →
+# GitHub Actions, atamaniuc/Harnessimo, publish.yml).
 #
-# Until that is in place NODE_AUTH_TOKEN is kept as a fallback: the npm CLI
-# prefers OIDC when a trusted publisher matches and falls back to the token
-# otherwise, so both work and neither has to be timed against the other. Once a
-# publish has succeeded through OIDC, the token step and the NPM_TOKEN secret
-# both go — that is the whole point of the exercise.
+# There is deliberately no token here. A stored npm token is a credential that
+# outlives the job it was made for, works from anywhere, and is one leaked log
+# away from someone else publishing as you. The OIDC token is minted per run,
+# scoped to this repository and this workflow file, and expires in minutes.
 #
-# The token that is there must be an *automation* token. An ordinary one fails
-# with EOTP: this account requires a second factor for writes, and CI has no
-# authenticator.
+# Which also means: renaming this file, or moving the publish into another
+# workflow, breaks publishing until the trusted publisher is updated to match.
+# That is the trade, and it is the right way round — the name is part of the
+# credential.
 
 on:
   release:
@@ -45,8 +44,6 @@ jobs:
       # The same gate CI runs, against the built package, so a publish cannot
       # ship something the checks never saw.
       - run: node dist/cli.js check
+      # No NODE_AUTH_TOKEN: the OIDC exchange is the authentication, and
+      # provenance is signed with the same identity.
       - run: npm publish --provenance --access public
-        env:
-          # Ignored once trusted publishing is configured; removed with the
-          # secret when that is confirmed.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
