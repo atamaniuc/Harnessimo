@@ -11,7 +11,8 @@
     "skip": [
       "node_modules",
       ".git",
-      "templates"
+      "templates",
+      "dist"
     ],
     "mustCarryProof": [
       "README.md",

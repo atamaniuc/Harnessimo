@@ -107,8 +107,17 @@ settles it.
 Sources import each other with `.ts` specifiers, so Node's type stripping runs them as
 they are — `npm test` and `node src/cli.ts check` still need no install, which is what
 keeps the cold-start check honest. `tsc` rewrites those specifiers to `.js` when it emits
-`dist/`, and `prepare` builds that on a git install, so a consumer installing from a tag
-gets JavaScript and declarations without knowing any of this.
+`dist/`.
+
+**`dist/` is committed, and that was measured rather than assumed.** The first attempt used
+a `prepare` script, which is the documented way to make a git dependency build itself. It
+works on npm and fails on the other two that were tried: pnpm 10 refuses to run a
+dependency's lifecycle scripts at all and stops the install, and yarn 1 installs the
+repository without building it — both leaving a consumer with a package containing no
+JavaScript. Committing the build is what makes `pnpm add`, `yarn add`, `bun add` and
+`npm i` from a git tag all work with nothing to configure. The claim that it matches its
+source is checked like any other: `scripts/build-is-current.mjs` rebuilds in CI and fails
+if anything moved.
 
 **Cost, accepted:** two devDependencies, a `dist/` to build before publishing, and
 `erasableSyntaxOnly` as a permanent restriction — no enums, no namespaces, no parameter

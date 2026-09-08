@@ -63,7 +63,6 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "prepare": "node scripts/prepare.mjs",
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json",
     "check": "node --test test/*.test.ts && node src/cli.ts check",

@@ -46,14 +46,13 @@ test("the package points consumers at what the build produces", () => {
   assert.ok(pkg.files.includes("dist"), "dist/ must be published");
 });
 
-test("a consumer installing from a git tag gets a build", () => {
-  // npm, pnpm, yarn and bun all run `prepare` when a dependency is installed
-  // from a repository rather than the registry. Without it the package would
-  // arrive as TypeScript with no dist/, and every import would fail.
-  assert.ok(pkg.scripts.prepare, "no prepare script: a git install would arrive without dist/");
-  assert.ok(
-    existsSync(join(ROOT, "scripts/prepare.mjs")),
-    "prepare points at a file that is not there",
-  );
+test("a consumer installing from a git tag gets JavaScript, not TypeScript", () => {
+  // Not a lifecycle script: pnpm 10 refuses to run a dependency's scripts and
+  // yarn 1 does not build git dependencies, so both would install a package
+  // with nothing runnable in it. dist/ is committed, and CI proves it matches
+  // the source (scripts/build-is-current.mjs).
   assert.match(pkg.scripts.build ?? "", /tsconfig\.build\.json/);
+  for (const file of ["dist/index.js", "dist/index.d.ts", "dist/cli.js"]) {
+    assert.ok(existsSync(join(ROOT, file)), `${file} is missing: run npm run build`);
+  }
 });

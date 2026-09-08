@@ -185,8 +185,9 @@ touch the disk. <!-- proof: test/cli.test.ts -->
 There is no build step in the way of running it: sources import each other as `.ts`, so
 Node's own type stripping runs them as they are — which is why `npm test` needs nothing
 installed and the cold-start check still measures the repository rather than npm. `tsc`
-emits `dist/` for consumers, rewriting those specifiers to `.js`, and a git install builds
-it through `prepare`. <!-- proof: test/types.test.ts -->
+emits `dist/` for consumers, rewriting those specifiers to `.js`, and `dist/` is committed:
+it is what a git install gets, and CI fails if it does not match the source it was built
+from. <!-- proof: test/types.test.ts -->
 
 ## License
 
