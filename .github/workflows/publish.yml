@@ -1,15 +1,22 @@
 name: Publish to npm
 
-# The install line the documentation should have: `npm i -D harnessimo@0.4.1`,
-# working in every package manager with no tarball URL and no git dependency.
+# Publishes the package on a release, and on demand.
 #
-# It runs on a published release and skips itself when NPM_TOKEN is absent, so
-# arming it is one action by a person who owns the npm account:
+# Authentication is moving to trusted publishing: npm verifies a short-lived
+# OIDC token this workflow gets from GitHub, so nothing long-lived is stored
+# anywhere. It is configured on the package, not here — npmjs.com → harnessimo
+# → Settings → Trusted Publisher → GitHub Actions, repository
+# atamaniuc/Harnessimo, workflow publish.yml.
 #
-#   1. create an automation token on npmjs.com
-#   2. add it as the repository secret NPM_TOKEN
+# Until that is in place NODE_AUTH_TOKEN is kept as a fallback: the npm CLI
+# prefers OIDC when a trusted publisher matches and falls back to the token
+# otherwise, so both work and neither has to be timed against the other. Once a
+# publish has succeeded through OIDC, the token step and the NPM_TOKEN secret
+# both go — that is the whole point of the exercise.
 #
-# Nothing else changes: the same build, the same package, the same version.
+# The token that is there must be an *automation* token. An ordinary one fails
+# with EOTP: this account requires a second factor for writes, and CI has no
+# authenticator.
 
 on:
   release:
@@ -18,6 +25,7 @@ on:
 
 permissions:
   contents: read
+  # The OIDC token trusted publishing verifies, and what signs provenance.
   id-token: write
 
 jobs:
@@ -29,24 +37,16 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      - name: Is this armed?
-        id: armed
-        run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "armed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "armed=false" >> "$GITHUB_OUTPUT"
-            echo "NPM_TOKEN is not set: skipping the publish rather than failing the release." >> "$GITHUB_STEP_SUMMARY"
-          fi
-      - if: steps.armed.outputs.armed == 'true'
-        run: npm ci --no-audit --no-fund
-      - if: steps.armed.outputs.armed == 'true'
-        run: npm run build
-      # The same gate the release ran, against the built package, so a publish
-      # cannot ship something the checks never saw.
-      - if: steps.armed.outputs.armed == 'true'
-        run: node dist/cli.js check
-      - if: steps.armed.outputs.armed == 'true'
-        run: npm publish --provenance --access public
+      # Trusted publishing needs a newer npm than Node 22 ships with (10.x).
+      # Pinned to the major so a broken patch cannot take publishing down.
+      - run: npm install -g npm@^11
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      # The same gate CI runs, against the built package, so a publish cannot
+      # ship something the checks never saw.
+      - run: node dist/cli.js check
+      - run: npm publish --provenance --access public
         env:
+          # Ignored once trusted publishing is configured; removed with the
+          # secret when that is confirmed.
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
