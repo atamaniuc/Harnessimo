@@ -1,11 +1,15 @@
 // Type declarations for Harnessimo's public API.
 //
 // The implementation is plain JavaScript with JSDoc; these declarations are what
-// a TypeScript consumer compiles against. They are written by hand and checked
-// by the consumers rather than by a build step here, because installing
-// TypeScript to type-check a zero-dependency package would break the property
-// that makes its cold-start test meaningful: `npm test` on a clean checkout,
-// with no install at all.
+// a TypeScript consumer compiles against. They are written by hand rather than
+// built, because installing TypeScript to type-check a zero-dependency package
+// would break the property that makes its cold-start test meaningful: `npm test`
+// on a clean checkout, with no install at all.
+//
+// Two files describing the same functions can drift, and did — so the JSDoc is
+// the source, and `npm run typecheck` fails when a public export declares `any`
+// there (scripts/declarations-carry-types.mjs). A name declared here that is not
+// exported at runtime fails test/types.test.mjs.
 
 export interface Problem {
   file: string;

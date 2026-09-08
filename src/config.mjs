@@ -93,6 +93,10 @@ export function loadConfig(root = process.cwd()) {
 }
 
 /** Which checks this configuration turns on, for `harnessimo doctor`. */
+/**
+ * @param {Record<string, any>} config  a loaded configuration
+ * @returns {Record<string, boolean>} check name -> whether it is configured
+ */
 export function enabledChecks(config) {
   return {
     proof: Boolean(config.docs),

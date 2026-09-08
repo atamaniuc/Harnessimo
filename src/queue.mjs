@@ -31,19 +31,35 @@ export class HarnessError extends Error {
 
 const DEFAULT_TERMINAL = { code: "passing" };
 
+/**
+ * The shapes the queue works with. They are declared here, next to the code
+ * that reads them, so `types/index.d.ts` and this file cannot drift into
+ * describing different objects — which they had: half of these were `any`.
+ *
+ * @typedef {{ id: string, kind?: string, behavior: string, verification: string,
+ *             state: string, evidence: string | null, depends_on?: string[],
+ *             [key: string]: unknown }} QueueItem
+ * @typedef {{ wip_limit?: number, review_queue_limit?: number, items: QueueItem[],
+ *             [key: string]: unknown }} FeatureList
+ */
+
 /** @param {{ kind?: string }} item @param {Record<string,string>} terminalByKind */
 function terminalState(item, terminalByKind) {
   return terminalByKind[item.kind ?? "code"] ?? "passing";
 }
 
-/** @param {any} list @param {string} id */
+/** @param {FeatureList} list @param {string} id @returns {QueueItem | undefined} */
 export function findItem(list, id) {
   const item = list.items.find((i) => i.id === id);
   if (!item) throw new HarnessError(`no item "${id}"`, "run `harnessimo queue status` to see the queue");
   return item;
 }
 
-/** Human-readable queue state, grouped by state with the limits spelled out. */
+/**
+ * Human-readable queue state, grouped by state with the limits spelled out.
+ * @param {FeatureList} list
+ * @returns {string}
+ */
 export function formatStatus(list) {
   const order = ["active", "blocked", "awaiting_gates", "not_started", "passing", "done"];
   const byState = new Map();
@@ -64,6 +80,10 @@ export function formatStatus(list) {
 /**
  * Claims an item. Enforces work-in-progress = 1 (split attention produces work
  * started everywhere and finished nowhere) and the Definition of Ready.
+ *
+ * @param {FeatureList} list
+ * @param {string} id
+ * @returns {QueueItem}
  */
 export function activate(list, id) {
   const wipLimit = list.wip_limit ?? 1;
@@ -99,7 +119,7 @@ export function activate(list, id) {
  * way in when the limits allow: making the caller run two commands to do one
  * thing is ceremony, and ceremony gets skipped rather than followed.
  *
- * @param {any} list
+ * @param {FeatureList} list
  * @param {string} id
  * @param {(command: string) => { ok: boolean, output: string }} runner
  * @param {{ terminalByKind?: Record<string,string> }} options
@@ -137,7 +157,7 @@ export function verifyItem(list, id, runner, options = {}) {
  * Invariants, plus optional re-verification of every claim. Run in CI: a
  * hand-edited "passing" is only accepted if the command still passes here.
  *
- * @param {any} list
+ * @param {FeatureList} list
  * @param {{ reverify?: boolean, runner?: (command: string) => { ok: boolean, output: string } }} options
  * @returns {string[]} problems, each already formatted as what / why / fix
  */

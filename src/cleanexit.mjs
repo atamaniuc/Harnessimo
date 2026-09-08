@@ -84,7 +84,7 @@ export function debrisProblems(files, options = {}) {
  * code around it is worse than none, because the next session reads it and
  * believes it. A documentation-only change does not need one.
  *
- * @param {{ changed: string[], progressFile: string, codePrefixes?: string[],
+ * @param {{ changed: string[], progressFile: string | null, codePrefixes?: string[],
  *           changedLines?: Record<string, number> | null, threshold?: number }} input
  *   changedLines maps a path to the number of lines it changed, and together
  *   with threshold is how a one-line fix escapes the rule: below the threshold

@@ -79,6 +79,11 @@ export function briefText({ tracksText, handoffs = [], queue, progressText, enab
 }
 
 /** The section under a `## <name>` heading, up to the next heading of the same level. */
+/**
+ * @param {string} markdown
+ * @param {string} name
+ * @returns {string | null}
+ */
 export function sectionOf(markdown, name) {
   const lines = markdown.split("\n");
   const start = lines.findIndex((l) => l.trim().toLowerCase() === `## ${name.toLowerCase()}`);
@@ -88,12 +93,19 @@ export function sectionOf(markdown, name) {
   return (end === -1 ? rest : rest.slice(0, end)).join("\n").trim() || null;
 }
 
-/** The shape Claude Code's SessionStart hook reads from stdout. */
+/**
+ * The shape Claude Code's SessionStart hook reads from stdout.
+ * @param {string} text
+ */
 export function briefJson(text) {
   return { hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: text } };
 }
 
 /** Handoff paths named by the track index, in order, deduplicated. */
+/**
+ * @param {string} tracksText
+ * @returns {string[]}
+ */
 export function handoffPaths(tracksText) {
   const found = [...tracksText.matchAll(/[\w./-]+\/handoff\.md/g)].map((m) => m[0]);
   return [...new Set(found)].filter((p) => !/[<>]|\.\.\./.test(p));

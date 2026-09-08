@@ -62,7 +62,7 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "check": "node --test test/*.test.mjs && node bin/harnessimo.mjs check",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && node scripts/declarations-carry-types.mjs"
   },
   "homepage": "https://atamaniuc.github.io/Harnessimo/",
   "bugs": {
