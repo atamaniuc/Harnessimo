@@ -1,134 +1,31 @@
-# Use cases
+# Reference
 
-**Who is this for?** Someone asking what this would actually catch in their repository.
-**When should I read it?** While evaluating — every example is real output, not a mock-up.
-Convinced? The [guide](GUIDE.md) starts the clock.
-
----
-
-Seven situations this was built for, and what actually happens in each. If you only read one
-section, read the first — it is the whole point: **you configure it once, and after that
-nobody has to remember it exists.**
-
-## Set it up once, then forget it
-
-Three commands, run a single time in a repository:
-
-=== "pnpm"
-
-    ```bash
-    pnpm exec harnessimo init                    # writes harnessimo.config.json from what you already have
-    pnpm exec harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
-    pnpm exec harnessimo hooks install           # the fast checks run before every commit
-    ```
-
-=== "npm"
-
-    ```bash
-    npx harnessimo init                    # writes harnessimo.config.json from what you already have
-    npx harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
-    npx harnessimo hooks install           # the fast checks run before every commit
-    ```
-
-=== "yarn"
-
-    ```bash
-    yarn harnessimo init                    # writes harnessimo.config.json from what you already have
-    yarn harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
-    yarn harnessimo hooks install           # the fast checks run before every commit
-    ```
-
-=== "bun"
-
-    ```bash
-    bunx harnessimo init                    # writes harnessimo.config.json from what you already have
-    bunx harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
-    bunx harnessimo hooks install           # the fast checks run before every commit
-    ```
-
-Plus ten lines in CI:
-
-```yaml
-- uses: actions/checkout@v5
-  with: { fetch-depth: 0 }          # locked and clean-exit read a commit range
-- uses: actions/setup-node@v5
-  with: { node-version: 22 }
-- run: npx harnessimo check --reverify
-```
-
-After that the harness fires at three moments on its own, with nobody in the loop:
-
-```mermaid
-flowchart LR
-    S["Session starts"] -->|"SessionStart hook<br/>harnessimo brief"| A["Agent knows the tracks,<br/>the handoffs, what is in flight"]
-    A --> W["It works"]
-    W -->|"pre-commit hook<br/>harnessimo check"| C["Commit — or a red gate<br/>naming the file and the fix"]
-    C -->|"push"| CI["CI: harnessimo check --reverify<br/>every passing claim re-run"]
-    CI -->|"merge"| S
-
-    style A stroke-width:3px
-    style CI stroke-width:3px
-```
-
-This is the difference between a rule and a harness. A rule in `AGENTS.md` — *"verify before
-you claim done"* — is obeyed on the runs you are watching. A hook is obeyed on the run at
-3am that nobody sees. <!-- proof: src/hooks.ts:hookScript -->
-
-**Autonomy is the payoff.** An agent can only be left alone as far as something other than
-the agent decides when the work is finished. Once these three touchpoints exist, a long
-unattended run either produces work that passes them or stops with a specific, actionable
-failure — instead of a cheerful summary of things that did not happen.
+**Who is this for?** Someone asking what a check catches, what it prints, and why it
+exists at all.
+**When should I read it?** When choosing a check, or when one just fired. To turn one on,
+the [guide's table](GUIDE.md#turn-on); for every config key, [configuration](CONFIGURATION.md).
 
 ---
 
-## Two ways to run it
+One section per situation, with the output the tool really prints — none of it is a
+mock-up. Each names the check to turn on and where the rule came from; the reasoning
+behind the model as a whole is [the standard](STANDARD.md).
 
-The checks do not care who is working. What differs is how they reach you.
-
-### By hand
-
-```bash
-harnessimo check        # everything this repository asked for; the CI command
-harnessimo doctor       # what is enforced here, and what is not
-harnessimo proof docs/  # one check, one directory, while you edit
-```
-
-The pre-commit hook runs the fast ones, so the loop is the one you already have: write,
-commit, and find out in a second rather than in CI. Nothing here needs an agent, an editor
-integration or a subscription — a repository with no AI in it gets the same value from
-`proof` and `cold-start`.
-
-### By agent
-
-An agent gets three things it cannot get from a line in `AGENTS.md`.
-
-**At the start of a session** the SessionStart hook prints the state instead of hoping the
-agent asks for it: live tracks, the head of each handoff, what is in flight, and which checks
-this repository enforces. That is `harnessimo brief`, wired up by
-`harnessimo hooks install --agent`.
-
-**During the work** the queue takes one decision away from it: `harnessimo queue verify <id>`
-runs the item's own command and records the outcome. The agent cannot write `passing`, and
-`check --reverify` re-runs every claim in CI, so editing the state file by hand is caught
-rather than trusted.
-
-**At commit** it hits the same gate a person does — and `locked` additionally refuses a
-commit carrying the agent trailer that touches the files defining success.
-
-Put the three rules an agent must follow in your instruction file, where they are short
-enough to survive:
-
-```markdown
-- Run `harnessimo check` before saying anything is done.
-- Never edit state in the queue file; use `harnessimo queue verify <id>`.
-- Starting a track means reading its handoff first — `harnessimo brief` prints them.
-```
-
-The rest is enforcement, and enforcement is not an instruction.
-
----
+| Check | It fails when |
+|---|---|
+| `proof` | a documented claim's file, test or command is gone |
+| `tracks` | a work track links a handoff that was deleted |
+| `tasks` | a ticked checkbox names no check |
+| `queue` | a task claiming to pass fails when re-run |
+| `locked` | an agent commit touched the files that grade it |
+| `cold-start` | a fresh clone cannot install and verify itself |
+| `clean-exit` | a session left debris, or wrote nothing down |
+| `instructions` | the instruction file grew past its line limit |
+| `release` | the manifest, the changelog and the tags disagree |
 
 ## 1. The README describes software that does not exist
+
+*Comes from: Lecture 03 — the repository is the source of truth. Not from the course: the marker syntax itself, which came out of production repositories.*
 
 *Brownfield, inherited repo, or an agent that documented its intentions.*
 
@@ -157,6 +54,8 @@ must carry at least one marker, so a rewrite cannot quietly drop the evidence.
 
 ## 2. "Works on my machine" — and only there
 
+*Comes from: Lectures 03 and 10 — the repository is the source of truth, and the real run is the proof.*
+
 *Onboarding, a new agent session, a fresh CI runner.*
 
 `cold-start` clones your repository into an empty directory and runs the commands your own
@@ -173,6 +72,8 @@ FAIL  cold start
 runs. <!-- proof: src/coldstart.ts:coldStartProblems -->
 
 ## 3. A feature that takes four sessions
+
+*Comes from: Lecture 05 — continuity between sessions. The handoff shape is not from the course.*
 
 *Context dies at the end of every session; the next one re-derives it, or re-decides a
 question that was already settled.*
@@ -195,6 +96,8 @@ with no status, or a link to a handoff someone deleted, fails the gate.
 
 ## 4. "Done" that stopped being true
 
+*Comes from: Lectures 08 and 09 — feature lists as primitives, and declaring victory too early.*
+
 *The task was genuinely finished in March. Something unrelated broke it in May, and the
 board still says done.*
 
@@ -213,6 +116,8 @@ Editing `state` by hand is not a shortcut; it is the thing this check catches.
 **Turn on:** `queue`. <!-- proof: src/queue.ts:checkQueue -->
 
 ## 5. An agent that edits its own exam
+
+*Comes from: Not from the course. Locked surfaces came out of production, where an agent edited the script that graded it.*
 
 *The fastest way to make a red build green is to change what "green" means.*
 
@@ -233,6 +138,8 @@ common one.
 
 ## 6. The long unattended run
 
+*Comes from: Lecture 12 — a clean state at session end.*
+
 *You start it and go to bed.*
 
 `clean-exit` reads what the session actually changed and refuses the two ways a run ends
@@ -252,6 +159,8 @@ FAIL  clean exit
 
 ## 7. "What does this repo actually enforce?"
 
+*Comes from: Lecture 04 — one giant instruction file fails; the honesty of `doctor` is this project's own rule.*
+
 *A new contributor, a code review, or you six months later.*
 
 ```
@@ -266,6 +175,8 @@ same weight. A harness that overstates its own coverage is the failure it exists
 <!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
 
 ## 8. The version means different things in different places
+
+*Comes from: Not from the course, and not from anywhere else: this repository published three versions past its own last tag.*
 
 *The badge says one thing, the registry serves another, and both are right about themselves.*
 

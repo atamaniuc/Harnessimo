@@ -242,7 +242,7 @@ harnessimo hooks install --agent   # брифинг на старте сесси
 harnessimo hooks install           # быстрые проверки перед каждым коммитом
 ```
 
-Оба сценария подробно: [Сценарии](https://atamaniuc.github.io/Harnessimo/ru/USE-CASES/).
+Оба сценария подробно: [Сценарии](https://atamaniuc.github.io/Harnessimo/ru/REFERENCE/).
 
 ## Почему этому можно доверять
 
@@ -297,7 +297,7 @@ harnessimo hooks install           # быстрые проверки перед 
 | Я хочу… | Читать |
 | --- | --- |
 | понять, стоит ли это внедрять | [Зачем это](https://atamaniuc.github.io/Harnessimo/ru/WHY/) |
-| увидеть, что оно реально поймает в моём репозитории | [Сценарии](https://atamaniuc.github.io/Harnessimo/ru/USE-CASES/) |
+| увидеть, что проверка ловит и что печатает | [Справочник](https://atamaniuc.github.io/Harnessimo/ru/REFERENCE/) |
 | дойти до первой зелёной проверки | [Гайд](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/) |
 | включить ещё одну проверку или выключить лишнюю | [Гайд → включайте то, что болит](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#turn-on) |
 | посмотреть ключ конфига | [Конфигурация](https://atamaniuc.github.io/Harnessimo/ru/CONFIGURATION/) |

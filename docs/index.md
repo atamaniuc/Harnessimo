@@ -252,7 +252,7 @@ harnessimo hooks install --agent   # SessionStart briefing, merged into .claude/
 harnessimo hooks install           # the fast gates, before every commit
 ```
 
-Both flows in detail: [Use cases](USE-CASES.md).
+Both flows in detail: [Use cases](REFERENCE.md).
 
 ## Why you can trust it
 
@@ -308,7 +308,7 @@ Every page answers one question. Find yours:
 | I want to… | Read |
 | --- | --- |
 | decide whether this is worth adopting | [Why this exists](WHY.md) |
-| see what it would actually catch in my repo | [Use cases](USE-CASES.md) |
+| see what a check catches, and what it prints | [Reference](REFERENCE.md) |
 | get to a first green check | [Guide](GUIDE.md) |
 | turn on one more check, or turn one off | [Guide → turn on what hurts](GUIDE.md#turn-on) |
 | look up a config key | [Configuration](CONFIGURATION.md) |

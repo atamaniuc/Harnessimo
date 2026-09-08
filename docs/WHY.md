@@ -35,6 +35,31 @@ time.
 
 Harnessimo is only the right-hand box, and only the parts a command can settle.
 
+## Configure it once, and it runs without you
+
+Three hooks and one CI line, set up a single time:
+
+```mermaid
+flowchart LR
+    S["Session starts"] -->|"SessionStart hook<br/>harnessimo brief"| A["Agent knows the tracks,<br/>the handoffs, what is in flight"]
+    A --> W["It works"]
+    W -->|"pre-commit hook<br/>harnessimo check"| C["Commit — or a red gate<br/>naming the file and the fix"]
+    C -->|"push"| CI["CI: harnessimo check --reverify<br/>every passing claim re-run"]
+    CI -->|"merge"| S
+
+    style A stroke-width:3px
+    style CI stroke-width:3px
+```
+
+This is the difference between a rule and a harness. A rule in `AGENTS.md` — *"verify before
+you claim done"* — is obeyed on the runs you are watching. A hook is obeyed on the run at
+3am that nobody sees. <!-- proof: src/hooks.ts:hookScript -->
+
+**Autonomy is the payoff.** An agent can only be left alone as far as something other than
+the agent decides when the work is finished. Once these three touchpoints exist, a long
+unattended run either produces work that passes them or stops with a specific, actionable
+failure — instead of a cheerful summary of things that did not happen.
+
 ## Where it sits next to the tools you know
 
 | | What it is strongest at | What it does not do | What this adds |
@@ -151,5 +176,5 @@ is the point. It reviews nothing, and it knows nothing about your code's correct
 
 ---
 
-Next: [the 15-minute guide](GUIDE.md) · [what it looks like in practice](USE-CASES.md) ·
+Next: [the 15-minute guide](GUIDE.md) · [what it looks like in practice](REFERENCE.md) ·
 [what was taken from each system](SDD.md)

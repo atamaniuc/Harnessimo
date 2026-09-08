@@ -236,7 +236,7 @@ harnessimo hooks install --agent   # SessionStart briefing, merged into .claude/
 harnessimo hooks install           # the fast gates, before every commit
 ```
 
-Both flows in detail: [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/).
+Both flows in detail: [Use cases](https://atamaniuc.github.io/Harnessimo/REFERENCE/).
 
 ## Why you can trust it
 
@@ -292,7 +292,7 @@ Every page answers one question. Find yours:
 | I want to… | Read |
 | --- | --- |
 | decide whether this is worth adopting | [Why this exists](https://atamaniuc.github.io/Harnessimo/WHY/) |
-| see what it would actually catch in my repo | [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/) |
+| see what a check catches, and what it prints | [Reference](https://atamaniuc.github.io/Harnessimo/REFERENCE/) |
 | get to a first green check | [Guide](https://atamaniuc.github.io/Harnessimo/GUIDE/) |
 | turn on one more check, or turn one off | [Guide → turn on what hurts](https://atamaniuc.github.io/Harnessimo/GUIDE/#turn-on) |
 | look up a config key | [Configuration](https://atamaniuc.github.io/Harnessimo/CONFIGURATION/) |

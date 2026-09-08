@@ -4,6 +4,12 @@ Newest first. One or two sentences per track: what came out of it. Lasting decis
 [`.harness/4-state/DECISIONS.md`](../.harness/4-state/DECISIONS.md), not here; git carries
 the rest.
 
+- **Docs consolidation (spec 0002)** — seven nav entries became eight pages with distinct
+  jobs and no duplicated tables: the adoption page merged into the guide, and the situations
+  page merged with the standard's origin table into one `REFERENCE` (233 lines, under the
+  spec's own page-size rule — the straight 600-line merge it was blocked on was avoided by
+  moving the setup argument to `WHY` and the reasoning to `STANDARD`). Every retired URL
+  redirects in both languages, including through a hook the redirect plugin cannot see.
 - **A contract per document (spec 0003)** — every page now declares, in
   `docs/contracts.json`, the one question it answers, its reader, and what it must *not*
   carry; the last field turns overlap from a matter of taste into a failing test. Shipped

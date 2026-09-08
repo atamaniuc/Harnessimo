@@ -33,7 +33,7 @@ const ORDER = [
   "WHY.md",
   "GUIDE.md",
   "CONFIGURATION.md",
-  "USE-CASES.md",
+  "REFERENCE.md",
   "STANDARD.md",
   "FAQ.md",
   "TROUBLESHOOTING.md",

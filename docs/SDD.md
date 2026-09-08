@@ -376,5 +376,5 @@ it afterwards.
 
 ---
 
-Next: [use cases and what it looks like in practice](USE-CASES.md) ·
+Next: [use cases and what it looks like in practice](REFERENCE.md) ·
 [why each rule exists](STANDARD.md) · [adopting it in an existing repo](GUIDE.md#adopting)

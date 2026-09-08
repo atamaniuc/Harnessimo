@@ -34,19 +34,9 @@ something that exits non-zero.** Lecture 09 calls this *«экстернализ
 
 ## Where each check comes from
 
-| Lecture | Idea | Implemented as |
-|---|---|---|
-| 02 · what a harness is | five subsystems, kitchen metaphor | the `.harness/` layout |
-| 03 · repository as source of truth | nothing outside the repo exists | `harnessimo proof`, `harnessimo cold-start` |
-| 04 · one giant instruction file fails | instructions are a router | `harnessimo instructions` |
-| 05 · continuity between sessions | PROGRESS, DECISIONS, session protocol | `.harness/4-state/`, `harnessimo tracks` |
-| 06 · initialization as its own phase | a scaffolded start | `harnessimo init` |
-| 05 · continuity between sessions | state handed over, not looked up | `harnessimo brief`, the SessionStart hook |
-| 07 · overreach and under-finishing | WIP = 1, scope belongs to the human | `harnessimo queue activate` |
-| 08 · feature lists as primitives | behaviour + verification + state | `harnessimo queue` |
-| 09 · declaring victory too early | the passing-state gate, evidence | `harnessimo queue verify`, `--reverify` |
-| 10 · end-to-end as ground truth | the real run is the proof | `harnessimo cold-start` |
-| 12 · clean state at session end | no debris, progress written down | `harnessimo clean-exit` |
+Beside the check itself, in the [reference](REFERENCE.md) — a reader asking where a rule
+came from is usually already looking that rule up. What follows here is the model the
+lectures describe, which is the thing the checks enforce.
 
 Three things here are **not** from the course: proof markers, handoff-driven development,
 and the release check. The first two came out of production repositories and are described

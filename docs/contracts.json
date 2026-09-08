@@ -32,6 +32,7 @@
       "answers": "Why this, rather than what I already have?",
       "profile": "evaluator",
       "owns": [
+        "configure it once, and it runs without you",
         "where it sits next to the tools you know",
         "who it is for",
         "when it is not worth it",
@@ -69,32 +70,14 @@
         }
       ]
     },
-    "USE-CASES.md": {
-      "answers": "What will this actually catch for me?",
-      "profile": "evaluator",
-      "owns": [
-        "one situation per check, with the output it really prints",
-        "a full session end to end"
-      ],
-      "excludes": [
-        {
-          "heading": "Three minutes to a green check",
-          "belongs": "GUIDE.md"
-        },
-        {
-          "heading": "Who it is for",
-          "belongs": "WHY.md"
-        }
-      ]
-    },
     "STANDARD.md": {
       "answers": "Why does each rule exist, and where does it come from?",
       "profile": "evaluator",
       "owns": [
         "the five subsystems",
-        "which lecture each check comes from",
         "handoff-driven development",
-        "what is deliberately not here"
+        "what is deliberately not here",
+        "provenance"
       ],
       "excludes": [
         {
@@ -180,6 +163,25 @@
         }
       ],
       "generated_from": "schema/harnessimo.config.schema.json"
+    },
+    "REFERENCE.md": {
+      "answers": "What does each check catch, what does it print, and why does it exist?",
+      "profile": "user",
+      "owns": [
+        "one section per situation, with the output it really prints",
+        "which check to turn on, and where that rule came from",
+        "a full session end to end"
+      ],
+      "excludes": [
+        {
+          "heading": "Three minutes to a green check",
+          "belongs": "GUIDE.md"
+        },
+        {
+          "heading": "Who it is for",
+          "belongs": "WHY.md"
+        }
+      ]
     }
   }
 }

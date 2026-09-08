@@ -13,7 +13,7 @@ nav:
   - Why this exists: WHY.md
   - Guide (15 min): GUIDE.md
   - Configuration: CONFIGURATION.md
-  - Use cases: USE-CASES.md
+  - Reference: REFERENCE.md
   - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
   - The standard: STANDARD.md
   - FAQ: FAQ.md
@@ -69,7 +69,7 @@ plugins:
             Why this exists: Зачем это
             Guide (15 min): Гайд (15 минут)
             Configuration: Конфигурация
-            Use cases: Сценарии
+            Reference: Справочник
             SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD — что взято из OpenSpec, Spec Kit, BMAD
             The standard: Стандарт
             FAQ: FAQ
@@ -85,6 +85,8 @@ plugins:
       redirect_maps:
         ADOPTING.md: GUIDE.md
         ADOPTING.ru.md: GUIDE.ru.md
+        USE-CASES.md: REFERENCE.md
+        USE-CASES.ru.md: REFERENCE.ru.md
 
 hooks:
   # mkdocs-redirects builds for one page tree; the site has one per language.
