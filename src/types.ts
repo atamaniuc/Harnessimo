@@ -153,6 +153,12 @@ export interface InstructionsConfig {
   limits: Record<string, number>;
 }
 
+/** The supervision floor a repository declares. */
+export interface AutonomyConfig {
+  /** `watched` | `reviewed` | `unattended` — `check` never runs below this. */
+  level: string;
+}
+
 export interface HooksConfig {
   /** Project commands the pre-commit hook runs before the gates. */
   before: string[];
@@ -172,6 +178,7 @@ export interface LoadedConfig {
   instructions?: InstructionsConfig;
   release?: ReleaseConfig;
   tokens?: TokensConfig;
+  autonomy?: AutonomyConfig;
   hooks?: HooksConfig;
 }
 
@@ -226,6 +233,8 @@ export interface BriefInput {
   focus?: string;
   /** What each live lane declares it is working on. */
   fences?: { lane: string; paths: string[] }[];
+  /** How much this repository's work is watched, and what that means. */
+  supervision?: { level: string; meaning: string };
 }
 
 /** One entry in Claude Code's SessionStart hook array. */

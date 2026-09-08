@@ -1,6 +1,6 @@
 {
   "name": "harnessimo",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Eight checks that stop an AI coding agent from calling unfinished work done: proof markers over documentation, a re-verified work queue, work tracks and handoffs, locked scoring surfaces and a cold-start test. Zero dependencies, no build step, any language.",
   "keywords": [
     "harness",

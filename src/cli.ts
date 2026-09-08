@@ -34,6 +34,8 @@ import { coldStartProblems } from "./coldstart.ts";
 import { debrisProblems, instructionProblems, progressProblems } from "./cleanexit.ts";
 import { releaseProblems } from "./release.ts";
 import { detectConfig } from "./detect.ts";
+import { DEFAULT_LEVEL, MEANING, addedBy, effectiveLevel, levelProblem, required, unbacked } from "./autonomy.ts";
+import type { Level } from "./autonomy.ts";
 import { AGENT_GATE_PATH, HOOKS_DIR, HOOK_PATH, agentGateScript, hookScript, hookStatus } from "./hooks.ts";
 import { agentContract, briefJson, briefText, handoffPaths, mergeHook, mergeSessionStartHook } from "./brief.ts";
 import { DEFAULT_WINDOW_MINUTES, decideRead, emptyState, ledger, ledgerReport } from "./tokens.ts";
@@ -51,6 +53,7 @@ import {
 import type {
   ReadState,
   AgentSettings,
+  EnabledChecks,
   DocsConfig,
   FeatureList,
   LoadedConfig,
@@ -73,7 +76,25 @@ const ROOT = process.cwd();
 const args = process.argv.slice(2);
 const command = args[0] ?? "help";
 const flags = new Set(args.filter((a) => a.startsWith("--")));
-const positional = args.slice(1).filter((a) => !a.startsWith("--"));
+
+/**
+ * Flags that take a value, so the value is not mistaken for a positional.
+ * `check --autonomy reviewed` read "reviewed" as a filename before this
+ * existed, and tried to open it.
+ */
+const VALUED = new Set(["--autonomy", "--range", "--title", "--outcome", "--track"]);
+const positional = (() => {
+  const rest: string[] = [];
+  for (let i = 1; i < args.length; i++) {
+    const arg = args[i]!;
+    if (arg.startsWith("--")) {
+      if (VALUED.has(arg)) i++;
+      continue;
+    }
+    rest.push(arg);
+  }
+  return rest;
+})();
 
 const ok = (message: string): void => console.log(message);
 // Annotated rather than inferred on purpose: TypeScript only treats a call as
@@ -397,6 +418,35 @@ function runRelease(): CheckResult {
 
 // ---------------------------------------------------------------- commands
 
+/**
+ * The supervision level in force, and where it came from.
+ *
+ * The repository declares a floor; `--autonomy` and `HARNESSIMO_AUTONOMY` can
+ * raise it and cannot lower it. A bar that an unattended run could argue its
+ * way under is not a bar.
+ */
+function resolveLevel(cfg: LoadedConfig): { level: Level; from: string } {
+  const declared = cfg.autonomy?.level ?? DEFAULT_LEVEL;
+  const badFloor = levelProblem(declared);
+  if (badFloor) die(`harnessimo: ${CONFIG_FILE} — ${badFloor}`);
+
+  const fromFlag = flagValue("--autonomy");
+  const asked = fromFlag ?? process.env.HARNESSIMO_AUTONOMY;
+  if (asked !== undefined) {
+    const bad = levelProblem(asked);
+    if (bad) die(`harnessimo: ${bad}`);
+  }
+
+  const level = effectiveLevel(declared as Level, asked as Level | undefined);
+  if (asked && level !== asked) {
+    // Said out loud rather than silently ignored: a run that asked for less
+    // than the repository allows should know it did not get it.
+    ok(`harnessimo: "${asked}" is below this repository's floor of "${declared}" — running at "${level}"`);
+  }
+  const from = level !== declared ? (fromFlag ? "--autonomy" : "HARNESSIMO_AUTONOMY") : cfg.autonomy ? CONFIG_FILE : "the default";
+  return { level, from };
+}
+
 function cmdCheck() {
   const cfg = config();
   if (!cfg.path) {
@@ -406,13 +456,37 @@ function cmdCheck() {
     );
   }
   const enabled = enabledChecks(cfg);
+  const { level, from } = resolveLevel(cfg);
+
+  // Spec 0007. A run that says nobody watched it, in a repository that cannot
+  // run the checks that claim depends on, is an unsupervised run with nothing
+  // behind the claim — and a green report there means less than it looks like.
+  const gaps = unbacked(level, enabled);
+  if (gaps.length > 0) {
+    ok(`  FAIL  supervision level "${level}" (from ${from})`);
+    ok(formatProblems(gaps).replace(/^/gm, "    "));
+    ok(`\nharnessimo: ${gaps.length} problem(s).`);
+    process.exit(1);
+  }
+
+  // What the level requires, minus what this repository has not configured.
+  // Leaving a section out is still a check that does not run — `doctor` says
+  // so, and the level does not quietly turn it into an error.
+  const { checks, reverify } = required(level);
+  const runs = new Set(checks.filter((name) => enabled[name]));
+  const [base, head] = (flagValue("--range") ?? "HEAD~1..HEAD").split("..");
+
+  ok(`harnessimo: ${level} — ${MEANING[level]}\n`);
   const results: [string, CheckResult][] = [];
-  if (enabled.proof) results.push(["proof markers", runProof({ strict: true })]);
-  if (enabled.tracks) results.push(["work tracks", runTracks()]);
-  if (enabled.tasks) results.push(["task gate", runTasks()]);
-  if (enabled.queue) results.push(["queue", runQueueCheck({ reverify: flags.has("--reverify") })]);
-  if (enabled.instructions) results.push(["instructions", runInstructions()]);
-  if (enabled.release) results.push(["release", runRelease()]);
+  if (runs.has("proof")) results.push(["proof markers", runProof({ strict: true })]);
+  if (runs.has("tracks")) results.push(["work tracks", runTracks()]);
+  if (runs.has("tasks")) results.push(["task gate", runTasks()]);
+  if (runs.has("queue")) results.push(["queue", runQueueCheck({ reverify: reverify || flags.has("--reverify") })]);
+  if (runs.has("instructions")) results.push(["instructions", runInstructions()]);
+  if (runs.has("release")) results.push(["release", runRelease()]);
+  if (runs.has("locked")) results.push(["locked surfaces", runLocked(base || "HEAD~1", head || "HEAD")]);
+  if (runs.has("cleanExit")) results.push(["clean state", runCleanExit(base || "HEAD~1", head || "HEAD")]);
+  if (runs.has("coldStart")) results.push(["cold start", runColdStart()]);
 
   let failed = 0;
   for (const [name, result] of results) {
@@ -432,7 +506,7 @@ function cmdCheck() {
     ok(`\nharnessimo: ${failed} problem(s).`);
     process.exit(1);
   }
-  ok("\nharnessimo: every configured check passes.");
+  ok(`\nharnessimo: every check required at "${level}" passes.`);
 }
 
 function cmdDoctor() {
@@ -440,6 +514,7 @@ function cmdDoctor() {
   if (!cfg.path) die("harnessimo: no harnessimo.config.json here.\n  fix:  run `harnessimo init`");
   const enabled = enabledChecks(cfg);
   const version = /"version":\s*"([^"]+)"/.exec(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8"))?.[1] ?? "unknown";
+  const { from } = resolveLevel(cfg);
   ok(`harnessimo ${version} — ${cfg.path}\n`);
   ok("what this repository has asked to be enforced:\n");
   const rows: [string, boolean, string][] = [
@@ -453,9 +528,29 @@ function cmdDoctor() {
     ["instructions", enabled.instructions, "the instruction file stays a router, not a manual"],
     ["release", enabled.release, "the version agrees across the manifest, the changelog and the tags"],
   ];
+  // Spec 0007. "Enforced" alone was half the answer: a check can be configured
+  // and still not run, because the level this repository declares does not ask
+  // for it yet. Saying which is the same honesty the rest of this command is for.
+  const { level } = resolveLevel(cfg);
+  const { checks: at } = required(level);
+  const running = new Set(at);
+  const key = new Map<string, keyof EnabledChecks>([
+    ["proof markers", "proof"], ["work tracks", "tracks"], ["task gate", "tasks"], ["queue", "queue"],
+    ["locked surfaces", "locked"], ["cold start", "coldStart"], ["clean exit", "cleanExit"],
+    ["instructions", "instructions"], ["release", "release"],
+  ]);
   for (const [name, on, what] of rows) {
-    ok(`  ${on ? "enforced " : "not set  "} ${name.padEnd(16)} ${what}`);
+    const check = key.get(name)!;
+    const state = !on ? "not set  " : running.has(check) ? "enforced " : "above    ";
+    ok(`  ${state} ${name.padEnd(16)} ${what}`);
   }
+  ok(
+    `\n  supervision: "${level}" (from ${from}) — ${MEANING[level]}.` +
+      (level === "unattended"
+        ? "\n  Everything this repository configures runs at this level."
+        : `\n  "above" means configured, and asked for only at a higher level;` +
+          ` \`check --autonomy\` raises the bar, never lowers it.`),
+  );
   // Listed apart, and after a blank line, because it is not a tenth check: the
   // nine answer "is this finished", and this one fires while the work happens.
   // Printing it in the same list would be the overstatement `doctor` exists to
@@ -517,17 +612,15 @@ function cmdQueue() {
   }
 }
 
-function cmdLocked() {
+function runLocked(base: string, head: string): CheckResult {
   const cfg = config();
   const locked = requireSection(cfg, "locked", 'add a "locked" section listing the paths that define success');
-  if (!locked.paths.length) return ok("harnessimo: no locked paths configured, nothing to protect");
-  const base = positional[0] || "HEAD~1";
-  const head = positional[1] || "HEAD";
-  let shas = [];
+  if (!locked.paths.length) return { problems: [], summary: "no locked paths configured, nothing to protect" };
+  let shas: string[] = [];
   try {
     shas = git("rev-list", `${base}..${head}`).split("\n").filter(Boolean);
   } catch {
-    return ok(`harnessimo: cannot list commits ${base}..${head} (shallow clone?), skipping the locked-surface check`);
+    return { problems: [], summary: `cannot list commits ${base}..${head} (shallow clone?); skipped` };
   }
   const exempt = new Set<string>();
   const baselinePath = join(ROOT, locked.baseline);
@@ -557,14 +650,19 @@ function cmdLocked() {
     agentTrailer: locked.agentTrailer,
     exempt,
   });
-  if (violations.length > 0) die(formatLockedViolations(violations));
-  ok(`harnessimo: locked surfaces intact across ${commits.length} commit(s)`);
+  const problems = violations.map((violation) => ({
+    file: violation.hits[0] ?? locked.paths[0]!,
+    line: 1,
+    target: violation.sha.slice(0, 8),
+    reason: formatLockedViolations([violation]),
+  }));
+  return { problems, summary: `locked surfaces intact across ${commits.length} commit(s)` };
 }
 
-function cmdColdStart() {
+function runColdStart(): CheckResult {
   const cfg = config();
   const cold = requireSection(cfg, "coldStart", 'add a "coldStart" section listing the commands a newcomer runs');
-  if (!cold.commands.length) return ok("harnessimo: no cold-start commands configured");
+  if (!cold.commands.length) return { problems: [], summary: "no cold-start commands configured" };
   const work = mkdtempSync(join(tmpdir(), "harness-cold-"));
   const clone = join(work, "clone");
   try {
@@ -580,21 +678,35 @@ function cmdColdStart() {
       (p) => existsSync(join(clone, p)),
     );
     if (problems.length > 0) {
-      die(
-        "cold start FAILED\n" +
-          problems.map((p) => `  ${p}`).join("\n") +
-          "\n\n  why:  every session after the first arrives fresh, and this is what it sees",
-      );
+      return {
+        problems: problems.map((problem) => ({
+          file: cold.requiredFiles[0] ?? "the repository",
+          line: 1,
+          target: "(cold start)",
+          reason: `${problem}\n    why:  every session after the first arrives fresh, and this is what it sees`,
+        })),
+        summary: "",
+      };
     }
     for (const cmd of cold.commands) {
       ok(`cold start: ${cmd}`);
       execSync(cmd, { cwd: clone, stdio: ["ignore", "ignore", "inherit"] });
     }
-    ok("cold start PASSED: a fresh clone installs and verifies from the repository alone");
+    return { problems: [], summary: "a fresh clone installs and verifies from the repository alone" };
   } catch (caught) {
     const error = caught as { status?: number };
-    if (error?.status !== undefined) die(`cold start FAILED: a documented command exited ${error.status}`);
-    throw caught;
+    if (error?.status === undefined) throw caught;
+    return {
+      problems: [
+        {
+          file: "harnessimo.config.json",
+          line: 1,
+          target: "coldStart.commands",
+          reason: `a documented command exited ${error.status} in a fresh clone of this repository`,
+        },
+      ],
+      summary: "",
+    };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -714,6 +826,8 @@ function cmdBrief() {
     paths: parseClaims(read(`${lane}/handoff.md`) ?? "").map((claim) => claim.path),
   }));
 
+  const briefLevel = cfg.path ? resolveLevel(cfg).level : "watched";
+
   // `--track` narrows the brief to one lane: the unit handed to a second agent.
   let focus: string | undefined;
   const wanted = flagValue("--track");
@@ -740,6 +854,7 @@ function cmdBrief() {
     tracksPath,
     focus,
     fences,
+    supervision: cfg.path ? { level: briefLevel, meaning: MEANING[briefLevel] } : undefined,
   });
 
   if (flags.has("--json")) {
@@ -887,7 +1002,8 @@ function cmdHelp() {
 
 usage: harnessimo <command> [options]
 
-  check [--reverify]     run every configured check; the one command for CI
+  check [--autonomy <level>] [--range a..b]  the one command for CI; the level decides
+                         how much is re-checked — watched | reviewed | unattended
   doctor                 what this repository actually enforces, honestly
   proof [--strict] [f…]  documentation claims resolve to real evidence
   tracks                 the work-track index resolves and carries statuses
@@ -1148,11 +1264,13 @@ switch (command) {
     cmdQueue();
     break;
   case "locked":
-    cmdLocked();
+    single("locked surfaces", runLocked(positional[0] || "HEAD~1", positional[1] || "HEAD"));
     break;
+
   case "cold-start":
-    cmdColdStart();
+    single("cold start", runColdStart());
     break;
+
   case "clean-exit":
     single("clean state", runCleanExit(positional[0] || "HEAD~1", positional[1] || "HEAD"));
     break;

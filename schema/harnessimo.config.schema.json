@@ -263,6 +263,25 @@
           "description": "Where the per-session state is kept. It describes one run, so it belongs outside git."
         }
       }
+    },
+    "autonomy": {
+      "type": "object",
+      "description": "How much of this repository's work is watched while it happens. A floor, not a setting: `harnessimo check` runs at this level or higher, and `--autonomy` can only raise it. Each level adds the checks that supervision at the level below could no longer catch.",
+      "additionalProperties": false,
+      "properties": {
+        "$comment": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "watched",
+            "reviewed",
+            "unattended"
+          ],
+          "description": "`watched` \u2014 a person is reading each step; the fast checks. `reviewed` \u2014 nobody watched the steps but a person will read the diff; adds re-verification and the locked-surface check. `unattended` \u2014 nobody looked at all; adds clean exit and cold start."
+        }
+      }
     }
   }
 }

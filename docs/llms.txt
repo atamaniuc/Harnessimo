@@ -1,6 +1,6 @@
 # Harnessimo — full documentation for machine readers
 
-Version 0.8.0. Generated from docs/ by scripts/llms-txt.ts; do not edit.
+Version 0.9.0. Generated from docs/ by scripts/llms-txt.ts; do not edit.
 Published at https://atamaniuc.github.io/Harnessimo/llms.txt — the same pages, in the order a person would meet them.
 
 Every section below is one page of the site. The heading names the page and the
@@ -806,7 +806,18 @@ gap to argue about:
 `--reverify` re-runs every item claiming to pass. That is the line that makes the queue's
 evidence *evidence* rather than a string someone typed.
 
-Two checks need a commit range and get their own step:
+Or say what CI is instead, and let the level decide:
+
+```yaml
+- run: npx harnessimo check --autonomy unattended --range "${{ github.event.pull_request.base.sha }}..HEAD"
+```
+
+`unattended` means nobody looked at all, so it runs everything: re-verification, the
+locked-surface check, clean exit and cold start. Declare the floor for everyday work in
+`harnessimo.config.json` — `{ "autonomy": { "level": "reviewed" } }` — and let CI raise it.
+It can only ever be raised. [Why the levels are what they are](STANDARD.md#supervision).
+
+Two checks need a commit range and can also have their own step:
 
 ```yaml
 - run: npx harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
@@ -919,7 +930,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.8.0` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.9.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one
@@ -1063,6 +1074,14 @@ The read guard: a re-read of a file that has not changed is refused, and what a 
 |---|---|---|
 | `windowMinutes` | integer | How long a read is remembered. Past this, the same file may be read again — a session that ran longer is not one piece of work. Defaults to 20. |
 | `statePath` | string | Where the per-session state is kept. It describes one run, so it belongs outside git. |
+
+## `autonomy`
+
+How much of this repository's work is watched while it happens. A floor, not a setting: `harnessimo check` runs at this level or higher, and `--autonomy` can only raise it. Each level adds the checks that supervision at the level below could no longer catch.
+
+| Key | Type | What it does |
+|---|---|---|
+| `level` | `"watched"` \| `"reviewed"` \| `"unattended"` | `watched` — a person is reading each step; the fast checks. `reviewed` — nobody watched the steps but a person will read the diff; adds re-verification and the locked-surface check. `unattended` — nobody looked at all; adds clean exit and cold start. |
 
 ==============================================================================
 FILE: docs/REFERENCE.md
@@ -1630,6 +1649,40 @@ It is also the honest test of the documentation, which is
 [lecture 03](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-03-why-the-repository-must-become-the-system-of-record/)'s
 point: what is not written down does not exist for someone arriving fresh — and every
 session after the first arrives fresh.
+
+## How much to re-check { #supervision }
+
+Every check above answers one question: is this finished. None of them ask how the answer
+was arrived at — and the same green report means two different things depending on who was
+watching. A person who read every step and then ran `check` has two independent judgements
+agreeing. An overnight run that ends green has one, and it is the run's own.
+
+So a repository declares how closely its work is watched, and the level decides how much is
+re-checked.
+
+| Level | What it means | What it adds |
+| --- | --- | --- |
+| `watched` | a person is reading each step as it happens | the fast checks — proof, tracks, tasks, queue, instructions, release |
+| `reviewed` | nobody watched the steps; a person will read the diff | re-verification, and the locked-surface check |
+| `unattended` | nobody looked at all | clean exit, and cold start |
+
+The ladder is the argument. A person reading each step still misses a documented claim that
+quietly stopped being true. A person reading only the diff cannot re-run every `passing`
+claim, and will not notice an agent editing the file that grades it. Nobody at all means
+nobody notices debris, and nobody notices that the repository stopped running from a clean
+clone.
+
+**The level is declared, never inferred.** The tool could look at `CI`, at whether stdin is
+a terminal, at the shape of the commit history — and each of those is a guess about a
+person's attention wearing the clothes of a fact. What is enforced instead is that the
+declaration is backed: claiming `unattended` in a repository with no cold-start check is an
+unsupervised run with nothing behind the claim, and `check` says so rather than printing a
+green that means less than it looks like.
+<!-- proof: src/autonomy.ts:unbacked -->
+
+It is a floor, not a setting. `--autonomy` raises it and cannot lower it; a bar an
+unattended run can argue its way under is not a bar.
+<!-- proof: test/autonomy.test.ts#a declared floor cannot be argued down at the command line -->
 
 ## Leaving a clean state
 

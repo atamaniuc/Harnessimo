@@ -47,7 +47,8 @@ test("a repository whose claims hold passes", () => {
   const dir = fixture(BASE);
   const { status, out } = run(dir, "check");
   assert.equal(status, 0, out);
-  assert.match(out, /every configured check passes/);
+  assert.match(out, /every check required at "watched" passes/);
+  assert.match(out, /a person is reading each step/, "the report says what the green means");
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -201,5 +202,59 @@ test("two lane directories sharing a number fail, which is how the merge is caug
   const { status, out } = run(dir, "check");
   assert.equal(status, 1);
   assert.match(out, /0001-search and 0001-totals share one number/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+// ---- spec 0007: how much was this run watched
+
+test("the report says which level it ran at, and green means that level", () => {
+  const dir = fixture(BASE);
+  const { status, out } = run(dir, "check");
+  assert.equal(status, 0, out);
+  assert.match(out, /watched — a person is reading each step/);
+  assert.match(out, /every check required at "watched" passes/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a level the repository cannot back is refused, and names the section to add", () => {
+  const dir = fixture(BASE);
+  const { status, out } = run(dir, "check", "--autonomy", "unattended");
+
+  assert.equal(status, 1);
+  assert.match(out, /supervision level "unattended"/);
+  assert.match(out, /nobody looked at all/, "the failure says what the claim meant");
+  for (const missing of ["locked", "cleanExit", "coldStart"]) {
+    assert.match(out, new RegExp(`no "${missing}" section`), `${missing} is what this level adds`);
+  }
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("the same repository passes at the level it does back", () => {
+  // The proportionality, end to end: nothing about the repository changed.
+  const dir = fixture(BASE);
+  assert.equal(run(dir, "check", "--autonomy", "watched").status, 0);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a declared floor cannot be argued down from the command line", () => {
+  const dir = fixture({
+    ...BASE,
+    "harnessimo.config.json": JSON.stringify({
+      ...JSON.parse(CONFIG),
+      autonomy: { level: "unattended" },
+    }),
+  });
+  const { status, out } = run(dir, "check", "--autonomy", "watched");
+
+  assert.equal(status, 1, "asking for less must not get less");
+  assert.match(out, /below this repository's floor of "unattended"/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a level that is not a level is refused with the ones that are", () => {
+  const dir = fixture(BASE);
+  const { status, out } = run(dir, "check", "--autonomy", "yolo");
+  assert.equal(status, 1);
+  assert.match(out, /watched, reviewed, unattended/);
   rmSync(dir, { recursive: true, force: true });
 });

@@ -171,3 +171,12 @@ test("hooks for other events are added without disturbing the ones already there
   assert.equal(settings.hooks!.Stop![0]!.hooks![0]!.timeout, 120);
   assert.equal(mergeHook(settings, "Stop", "./gate.sh").added, false, "installing twice adds it once");
 });
+
+test("a session is told how closely it is being watched", () => {
+  const text = briefText({
+    tracksText: null,
+    enabled: { proof: true, coldStart: false },
+    supervision: { level: "reviewed", meaning: "nobody watched the steps; a person will read the diff" },
+  });
+  assert.match(text, /supervision: reviewed — nobody watched the steps/);
+});

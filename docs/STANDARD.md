@@ -191,6 +191,40 @@ It is also the honest test of the documentation, which is
 point: what is not written down does not exist for someone arriving fresh — and every
 session after the first arrives fresh.
 
+## How much to re-check { #supervision }
+
+Every check above answers one question: is this finished. None of them ask how the answer
+was arrived at — and the same green report means two different things depending on who was
+watching. A person who read every step and then ran `check` has two independent judgements
+agreeing. An overnight run that ends green has one, and it is the run's own.
+
+So a repository declares how closely its work is watched, and the level decides how much is
+re-checked.
+
+| Level | What it means | What it adds |
+| --- | --- | --- |
+| `watched` | a person is reading each step as it happens | the fast checks — proof, tracks, tasks, queue, instructions, release |
+| `reviewed` | nobody watched the steps; a person will read the diff | re-verification, and the locked-surface check |
+| `unattended` | nobody looked at all | clean exit, and cold start |
+
+The ladder is the argument. A person reading each step still misses a documented claim that
+quietly stopped being true. A person reading only the diff cannot re-run every `passing`
+claim, and will not notice an agent editing the file that grades it. Nobody at all means
+nobody notices debris, and nobody notices that the repository stopped running from a clean
+clone.
+
+**The level is declared, never inferred.** The tool could look at `CI`, at whether stdin is
+a terminal, at the shape of the commit history — and each of those is a guess about a
+person's attention wearing the clothes of a fact. What is enforced instead is that the
+declaration is backed: claiming `unattended` in a repository with no cold-start check is an
+unsupervised run with nothing behind the claim, and `check` says so rather than printing a
+green that means less than it looks like.
+<!-- proof: src/autonomy.ts:unbacked -->
+
+It is a floor, not a setting. `--autonomy` raises it and cannot lower it; a bar an
+unattended run can argue its way under is not a bar.
+<!-- proof: test/autonomy.test.ts#a declared floor cannot be argued down at the command line -->
+
 ## Leaving a clean state
 
 [Lecture 12](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-12-why-every-session-must-leave-a-clean-state/)

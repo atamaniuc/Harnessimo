@@ -246,7 +246,18 @@ gap to argue about:
 `--reverify` re-runs every item claiming to pass. That is the line that makes the queue's
 evidence *evidence* rather than a string someone typed.
 
-Two checks need a commit range and get their own step:
+Or say what CI is instead, and let the level decide:
+
+```yaml
+- run: npx harnessimo check --autonomy unattended --range "${{ github.event.pull_request.base.sha }}..HEAD"
+```
+
+`unattended` means nobody looked at all, so it runs everything: re-verification, the
+locked-surface check, clean exit and cold start. Declare the floor for everyday work in
+`harnessimo.config.json` — `{ "autonomy": { "level": "reviewed" } }` — and let CI raise it.
+It can only ever be raised. [Why the levels are what they are](STANDARD.md#supervision).
+
+Two checks need a commit range and can also have their own step:
 
 ```yaml
 - run: npx harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
@@ -359,7 +370,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.8.0` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.9.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

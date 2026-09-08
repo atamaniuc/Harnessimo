@@ -41,6 +41,9 @@ const SECTION_DEFAULTS = {
   // The read guard (spec 0004). Not a check: it fires while the work happens,
   // and `doctor` lists it apart from the nine for exactly that reason.
   tokens: { windowMinutes: 20, statePath: ".harness/3-environment/.reads.json" },
+  // How much a run was watched (spec 0007). A floor, not a setting: `check`
+  // runs at this level or higher, and --autonomy can only raise it.
+  autonomy: { level: "watched" },
   hooks: { before: [] }, // project commands the pre-commit hook runs before the gates
 };
 

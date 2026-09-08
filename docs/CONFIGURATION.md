@@ -125,3 +125,11 @@ The read guard: a re-read of a file that has not changed is refused, and what a 
 |---|---|---|
 | `windowMinutes` | integer | How long a read is remembered. Past this, the same file may be read again — a session that ran longer is not one piece of work. Defaults to 20. |
 | `statePath` | string | Where the per-session state is kept. It describes one run, so it belongs outside git. |
+
+## `autonomy`
+
+How much of this repository's work is watched while it happens. A floor, not a setting: `harnessimo check` runs at this level or higher, and `--autonomy` can only raise it. Each level adds the checks that supervision at the level below could no longer catch.
+
+| Key | Type | What it does |
+|---|---|---|
+| `level` | `"watched"` \| `"reviewed"` \| `"unattended"` | `watched` — a person is reading each step; the fast checks. `reviewed` — nobody watched the steps but a person will read the diff; adds re-verification and the locked-surface check. `unattended` — nobody looked at all; adds clean exit and cold start. |

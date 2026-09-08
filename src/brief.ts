@@ -29,6 +29,7 @@ export function briefText({
   tracksPath = "specs/TRACKS.md",
   focus,
   fences = [],
+  supervision,
 }: BriefInput): string {
   const out: string[] = [];
 
@@ -107,6 +108,9 @@ export function briefText({
     // Naming what is off matters as much as naming what is on: a session that
     // assumes a check exists stops looking for the missing one.
     if (off.length) out.push(`not enforced: ${off.join(", ")}`);
+    // An agent that does not know how closely it is being watched cannot know
+    // what it will be held to at the end of the turn.
+    if (supervision) out.push(`supervision: ${supervision.level} — ${supervision.meaning}`);
   }
 
   return out.join("\n").trim();

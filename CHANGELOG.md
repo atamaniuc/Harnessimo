@@ -7,6 +7,45 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.9.0] — 2026-09-08
+
+### Added
+
+- **A run declares how closely it was watched, and the level decides how much is
+  re-checked.** Every check answers "is this finished"; none of them asked how the answer
+  was arrived at, so the same green report meant two different things depending on whether
+  a person read every step or nobody looked. Three levels, each adding what supervision at
+  the level below could no longer catch: `watched` runs the fast checks, `reviewed` adds
+  re-verification and the locked-surface check, `unattended` adds clean exit and cold start.
+- `harnessimo check --autonomy <level>` and `HARNESSIMO_AUTONOMY`, over a floor declared as
+  `{ "autonomy": { "level": "reviewed" } }`. The floor can be raised and never lowered — a
+  bar an unattended run can argue its way under is not a bar — and an attempt to lower it
+  says so instead of silently getting what it asked for.
+- **A level the repository cannot back is refused.** Claiming `unattended` where no
+  cold-start check is configured is an unsupervised run with nothing behind the claim, and
+  a green report there would mean less than it looks like. The refusal names the section to
+  add. `watched` demands nothing extra: a section left out is still a check that does not
+  run, which this tool has said out loud since its first version.
+- `check --range <base>..<head>`, for the two checks that read a commit range, so CI can be
+  one command.
+
+### Changed
+
+- `check` prints the level and what it means before the report, and ends with "every check
+  required at `<level>` passes" rather than a green that does not say what it covers.
+- `doctor` marks a configured check the current level does not ask for as `above` rather
+  than `enforced` — configured and not running is exactly the overstatement `doctor` exists
+  to avoid — and reports the level and where it came from.
+- `brief` tells a session its supervision level. An agent that does not know how closely it
+  is watched cannot know what it will be held to at the end of the turn.
+- The level is **declared, never inferred.** Reading `CI`, a TTY or the commit history
+  would be a guess about a person's attention dressed as a fact.
+
+### Fixed
+
+- A flag's value could be read as a positional argument: `check --autonomy reviewed` tried
+  to open a file called `reviewed`.
+
 ## [0.8.0] — 2026-09-08
 
 ### Added
@@ -284,6 +323,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.9.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.0
 [0.8.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.8.0
 [0.7.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.7.0
 [0.6.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.6.0
