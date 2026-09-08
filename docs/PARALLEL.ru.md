@@ -95,6 +95,21 @@ harnessimo brief --track checkout-totals
 
 <!-- proof: test/brief.test.ts#a scoped brief carries one lane, whole, and the fence around every other -->
 
+## Worktree
+
+`claude --worktree` даёт каждой сессии свой checkout в `.claude/worktrees/` — ровно та форма
+работы, о которой вся эта страница. Проверки внутри worktree работают так же, как в основном
+checkout, а основной checkout копию worktree не видит.
+
+И это не везение: каталог, внутри которого лежит свой `.git` — worktree, сабмодуль,
+вендоренный клон, — это другой репозиторий, и его файлы не наши. Зайти в него означало бы
+сканировать каждый документ дважды, а worktree, стоящий на старом коммите, ронял бы проверку
+на утверждениях, которые здесь уже исправлены.
+<!-- proof: test/resolver.test.ts#a repository nested inside this one is not scanned as part of it -->
+
+Гонка за номером полосы выше — это ровно случай worktree: две сессии, два checkout, один и
+тот же следующий номер.
+
 ## Чего здесь сознательно нет
 
 Ничего здесь не блокирует, не ждёт и не планирует. Инструмент, которому принадлежит порядок

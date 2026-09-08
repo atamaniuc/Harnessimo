@@ -95,6 +95,21 @@ for an agent given a single lane.
 
 <!-- proof: test/brief.test.ts#a scoped brief carries one lane, whole, and the fence around every other -->
 
+## Worktrees
+
+`claude --worktree` gives each session its own checkout under `.claude/worktrees/`, which is
+the shape this whole page is about. The checks run inside a worktree exactly as they do in
+the main checkout, and the main checkout does not see the worktree's copy of the repository.
+
+That last part is not luck: a directory holding its own `.git` — a worktree, a submodule, a
+vendored clone — is another repository, and its files are not this one's. Walking into it
+would scan every document twice, and a worktree sitting on an older commit would then fail
+on claims this repository has already fixed.
+<!-- proof: test/resolver.test.ts#a repository nested inside this one is not scanned as part of it -->
+
+The lane-number race above is the worktree case exactly: two sessions, two checkouts, the
+same next number.
+
 ## What this deliberately does not do
 
 Nothing here locks, waits or schedules. A tool that owns the order of work is a tool a

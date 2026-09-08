@@ -15,6 +15,9 @@ decides how much of the nine a given run is held to (spec 0007).
 - `harnessimo check` runs at the level this repository declares — `watched` here, because
   the Stop hook runs it at the end of every turn and a floor that re-verified the whole
   queue would make that gate slow enough to be removed. CI is honestly `unattended`.
+- Verified inside real `git worktree` checkouts, not by argument: the checks pass in a
+  worktree, the main checkout does not scan the worktree's copy, and the lane-number race
+  spec 0006 describes reproduces exactly — two checkouts, one number, caught on the merge.
 
 - Zero runtime dependencies. Written in TypeScript (strict); Node runs the sources
   directly through type stripping, so tests and the CLI need no install, while

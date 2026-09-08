@@ -7,6 +7,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.9.1] — 2026-09-08
+
+### Fixed
+
+- **A repository nested inside this one is no longer scanned as part of it.** A git worktree
+  under a configured docs root — `git worktree add specs/wt`, or any submodule or vendored
+  clone — doubled the scan: 45 documents became 88 in this repository's own tree, and a
+  worktree sitting on an older commit would fail on claims already fixed here. A directory
+  holding its own `.git` is another repository, and its files are not this one's. Found by
+  running the checks inside real worktrees rather than reasoning about them; `claude
+  --worktree` puts them under `.claude/`, where the scanner never went, so this needed
+  looking for.
+
 ## [0.9.0] — 2026-09-08
 
 ### Added
@@ -323,6 +336,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.9.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.1
 [0.9.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.0
 [0.8.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.8.0
 [0.7.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.7.0

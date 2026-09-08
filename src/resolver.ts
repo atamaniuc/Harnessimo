@@ -55,6 +55,19 @@ export function createResolver(
 }
 
 /**
+ * Whether a directory is a repository of its own — a git worktree, a submodule
+ * or a vendored clone.
+ *
+ * Its files belong to that repository, not to this one. Walking into it scans
+ * every document twice, and when the worktree sits on an older commit the
+ * second copy fails on claims this repository already fixed. `.git` is a
+ * directory in a clone and a file in a worktree, so existence is the test.
+ */
+function isOwnRepository(dir: string): boolean {
+  return existsSync(join(dir, ".git"));
+}
+
+/**
  * Every Markdown document the gate should read, from the configured roots.
  *
  * Returns repo-relative paths, sorted.
@@ -67,8 +80,10 @@ export function collectDocs(root: string, docs: { roots: string[], skip: string[
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.name.startsWith(".") || skip.has(entry.name)) continue;
       const full = join(dir, entry.name);
-      if (entry.isDirectory()) walk(full, depth + 1);
-      else if (entry.name.endsWith(".md")) out.push(relative(root, full));
+      if (entry.isDirectory()) {
+        if (isOwnRepository(full)) continue;
+        walk(full, depth + 1);
+      } else if (entry.name.endsWith(".md")) out.push(relative(root, full));
     }
   };
   for (const sub of docs.roots ?? ["."]) {
@@ -99,8 +114,10 @@ export function collectFiles(root: string, { scan, skip = [], maxDepth = 8 }: { 
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.name.startsWith(".") || skipped.has(entry.name)) continue;
       const full = join(dir, entry.name);
-      if (entry.isDirectory()) walk(full, depth + 1);
-      else out.push(relative(root, full));
+      if (entry.isDirectory()) {
+        if (isOwnRepository(full)) continue;
+        walk(full, depth + 1);
+      } else out.push(relative(root, full));
     }
   };
   for (const sub of scan) {
