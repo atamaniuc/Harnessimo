@@ -1,5 +1,11 @@
 # The standard
 
+**Who is this for?** Someone who wants the reasoning, not the instructions.
+**When should I read it?** When a rule looks arbitrary and you want to know where it came
+from. For how to switch one on, see the [guide](GUIDE.md).
+
+---
+
 What a harness is, what the parts are for, and why each rule here exists. The tool is the
 enforcement; this is the thing being enforced.
 

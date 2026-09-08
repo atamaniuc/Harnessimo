@@ -1,5 +1,12 @@
 # SDD
 
+**Who is this for?** Someone who knows OpenSpec, Spec Kit, BMAD or Agent OS and wants to know
+how this relates to them.
+**When should I read it?** When comparing, or when you already use one of them and wonder what
+this adds.
+
+---
+
 **Spec-driven development, and what was taken from each system built around it.**
 
 Six systems were read before any of this was written: OpenSpec, Agent OS, Spec Kit and BMAD

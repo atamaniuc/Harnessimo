@@ -287,12 +287,20 @@ This repo runs all nine checks on itself, including from a fresh clone.
 [по-русски](https://atamaniuc.github.io/Harnessimo/ru/), or the language switcher in the
 header.
 
-- [Why this exists](https://atamaniuc.github.io/Harnessimo/WHY/) — who it is for, when it is worth it, and how it sits next to Kiro, Spec Kit, Copilot and the agent CLIs
-- [15-minute guide](https://atamaniuc.github.io/Harnessimo/GUIDE/)
-- [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/) — seven situations, and how it runs itself once installed
-- [SDD](https://atamaniuc.github.io/Harnessimo/SDD/) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: what was taken from each, what was left, where every piece is implemented and how to use it
-- [Why each rule exists](https://atamaniuc.github.io/Harnessimo/STANDARD/)
-- [Contributing](CONTRIBUTING.md)
+Every page answers one question. Find yours:
+
+| I want to… | Read |
+| --- | --- |
+| decide whether this is worth adopting | [Why this exists](https://atamaniuc.github.io/Harnessimo/WHY/) |
+| see what it would actually catch in my repo | [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/) |
+| get to a first green check | [Guide](https://atamaniuc.github.io/Harnessimo/GUIDE/) |
+| turn on one more check, or turn one off | [Guide → turn on what hurts](https://atamaniuc.github.io/Harnessimo/GUIDE/#turn-on) |
+| put this into a repo that already has its own scripts | [Guide → adopting](https://atamaniuc.github.io/Harnessimo/GUIDE/#adopting) |
+| understand why a rule exists at all | [The standard](https://atamaniuc.github.io/Harnessimo/STANDARD/) |
+| ask something short that is not a bug | [FAQ](https://atamaniuc.github.io/Harnessimo/FAQ/) |
+| fix a run that just went red | [Troubleshooting](https://atamaniuc.github.io/Harnessimo/TROUBLESHOOTING/) |
+| know what was taken from OpenSpec, Spec Kit, BMAD and the rest | [SDD](https://atamaniuc.github.io/Harnessimo/SDD/) |
+| contribute a change | [Contributing](CONTRIBUTING.md) |
 
 ## Development
 

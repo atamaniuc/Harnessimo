@@ -1,5 +1,11 @@
 # The 15-minute guide
 
+**Who is this for?** Someone who has decided to try it.
+**When should I read it?** Now, top to bottom, in one sitting. Still deciding? Read
+[why this exists](WHY.md). Something already broke? See [troubleshooting](TROUBLESHOOTING.md).
+
+---
+
 What this is, why you would want it, and how to get a green check in your own repository.
 Read top to bottom; it is meant to be finished in one sitting.
 
@@ -104,7 +110,7 @@ It prints what is enforced and what is not. **A section you leave out of the con
 check that does not run, and `doctor` says so.** That honesty is the point: a team that
 believes a check exists stops looking for the missing one.
 
-## 4. Turn on what hurts
+## 4. Turn on what hurts { #turn-on }
 
 Do not switch on all nine at once. Pick the one matching a problem you actually have,
 make it green, commit, then take the next.
@@ -326,31 +332,10 @@ configuration. It gains locked surfaces and cold start, which it never had.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one
   answer to "what does this repository actually guarantee".
 
-## 9. Questions people actually ask
+## 9. Questions
 
-**Do I have to adopt all of it?** No. One check is a real improvement, and `doctor` will
-keep telling you the truth about the other seven.
-
-**Does this replace my tests?** No. It checks that your claims point at things that exist
-and still pass. A test that asserts nothing satisfies every rule here.
-
-**My repository is not JavaScript.** Fine — the checks read files, run your commands and
-walk git. Point `docs.commands` at your `Makefile` and carry on. Node is needed to run the
-tool, nothing else.
-
-**Isn't this a lot of ceremony?** The queue is for work worth a session; small fixes go
-straight in. Ceremony that costs more than the error it prevents is not discipline, it is
-overhead — and a gate people bypass enforces nothing.
-
-**Should I also run a code-graph / codebase-memory tool?** Yes, and separately. Those index
-your repository and serve it to the agent over MCP — they answer "what do I need to read".
-This answers "is it finished". They meet the same friction from opposite ends: a handoff's
-*what NOT to load* and a code graph both stop a session rediscovering the repository. Keep
-them as separate installs; the README's "What pairs with it" says why bundling them would
-cost more than it gives.
-
-**What happens when a rule is wrong?** Open an issue or a PR. A rule that exists twice,
-once here and once forked into your repository, is the problem this was built to remove.
+Moved, so they can be found by someone who is not reading a guide top to bottom:
+the [FAQ](FAQ.md) for questions, [troubleshooting](TROUBLESHOOTING.md) for a run that went red.
 
 ## 10. Where to go next
 

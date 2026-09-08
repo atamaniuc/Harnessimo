@@ -99,15 +99,14 @@ export function siteHome(readme: string, locale = "en"): string {
   }
   text = text.slice(0, start) + INSTALL_TABS + text.slice(end + "<!-- install:end -->".length);
 
-  // Site pages link to each other, not out to the published site. Named
-  // explicitly so a language root like /ru/ is left alone — that is a site, not
-  // a page, and rewriting it produces a link to nothing.
+  // Site pages link to each other, not out to the published site. Page names
+  // are upper-case by convention, which is what separates them from a language
+  // root like /ru/ — that is a site, not a page, and rewriting it produces a
+  // link to nothing. Matched by shape rather than by a list: a list of pages
+  // kept in a generator is one more thing that silently falls behind the pages.
   // Both languages: a Russian page links to Russian pages, and the plugin
   // resolves the plain name inside the language it is building.
-  text = text.replace(
-    new RegExp(`${SITE}(?:[a-z]{2}/)?(WHY|GUIDE|USE-CASES|SDD|STANDARD|ADOPTING)/`, "g"),
-    "$1.md",
-  );
+  text = text.replace(new RegExp(`${SITE}(?:[a-z]{2}/)?([A-Z][A-Z0-9-]*)/`, "g"), "$1.md");
   text = text.replace(`(${SITE})`, "(index.md)");
   // The image lives under docs/, so its path loses that prefix.
   text = text.replace(/src="docs\/assets\//g, 'src="assets/');

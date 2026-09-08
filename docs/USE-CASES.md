@@ -1,5 +1,11 @@
 # Use cases
 
+**Who is this for?** Someone asking what this would actually catch in their repository.
+**When should I read it?** While evaluating — every example is real output, not a mock-up.
+Convinced? The [guide](GUIDE.md) starts the clock.
+
+---
+
 Seven situations this was built for, and what actually happens in each. If you only read one
 section, read the first — it is the whole point: **you configure it once, and after that
 nobody has to remember it exists.**

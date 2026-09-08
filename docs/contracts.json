@@ -1,0 +1,167 @@
+{
+  "$comment": "One question, one reader, one moment — per document, as data rather than as a habit. `excludes` is the load-bearing field: it names what a page must NOT hold and where that belongs instead, which is what makes overlap a failing test instead of a matter of taste. Spec 0003. Checked by test/doc-contracts.test.ts.",
+  "profiles": {
+    "evaluator": "Deciding whether this is worth adopting, before touching a terminal.",
+    "user": "Has decided; installing, configuring, running it.",
+    "agent": "A coding agent reading this repository to learn what the tool expects."
+  },
+  "pages": {
+    "index.md": {
+      "answers": "What is this, and where do I go next?",
+      "profile": "evaluator",
+      "owns": [
+        "one-paragraph what-it-is",
+        "the recorded demo",
+        "install",
+        "the table of every check",
+        "the routing table"
+      ],
+      "excludes": [
+        {
+          "heading": "Turn on what hurts",
+          "belongs": "GUIDE.md"
+        },
+        {
+          "heading": "Troubleshooting",
+          "belongs": "TROUBLESHOOTING.md"
+        }
+      ],
+      "generated_from": "README.md"
+    },
+    "WHY.md": {
+      "answers": "Why this, rather than what I already have?",
+      "profile": "evaluator",
+      "owns": [
+        "where it sits next to the tools you know",
+        "who it is for",
+        "when it is not worth it",
+        "why you can trust it"
+      ],
+      "excludes": [
+        {
+          "heading": "Three minutes to a green check",
+          "belongs": "GUIDE.md"
+        },
+        {
+          "heading": "Where each check comes from",
+          "belongs": "STANDARD.md"
+        }
+      ]
+    },
+    "GUIDE.md": {
+      "answers": "How do I work with this day to day?",
+      "profile": "user",
+      "owns": [
+        "the first green check",
+        "turning checks on one at a time",
+        "what a session looks like",
+        "commit and CI wiring",
+        "adopting a repository that already has its own checks"
+      ],
+      "excludes": [
+        {
+          "heading": "Where it sits next to the tools you know",
+          "belongs": "WHY.md"
+        },
+        {
+          "heading": "Where each check comes from",
+          "belongs": "STANDARD.md"
+        }
+      ]
+    },
+    "USE-CASES.md": {
+      "answers": "What will this actually catch for me?",
+      "profile": "evaluator",
+      "owns": [
+        "one situation per check, with the output it really prints",
+        "a full session end to end"
+      ],
+      "excludes": [
+        {
+          "heading": "Three minutes to a green check",
+          "belongs": "GUIDE.md"
+        },
+        {
+          "heading": "Who it is for",
+          "belongs": "WHY.md"
+        }
+      ]
+    },
+    "STANDARD.md": {
+      "answers": "Why does each rule exist, and where does it come from?",
+      "profile": "evaluator",
+      "owns": [
+        "the five subsystems",
+        "which lecture each check comes from",
+        "handoff-driven development",
+        "what is deliberately not here"
+      ],
+      "excludes": [
+        {
+          "heading": "Turn on what hurts",
+          "belongs": "GUIDE.md"
+        },
+        {
+          "heading": "Questions people actually ask",
+          "belongs": "FAQ.md"
+        }
+      ]
+    },
+    "SDD.md": {
+      "answers": "Where did these ideas come from, and what was left behind?",
+      "profile": "evaluator",
+      "owns": [
+        "one section per system that was read",
+        "what was taken and what was not",
+        "where each borrowed idea is implemented here"
+      ],
+      "excludes": [
+        {
+          "heading": "Who it is for",
+          "belongs": "WHY.md"
+        },
+        {
+          "heading": "Turn on what hurts",
+          "belongs": "GUIDE.md"
+        }
+      ]
+    },
+    "FAQ.md": {
+      "answers": "A short question that is not a bug and not a setup problem",
+      "profile": "evaluator",
+      "owns": [
+        "deciding questions",
+        "running questions",
+        "trust questions",
+        "when the answer is no"
+      ],
+      "excludes": [
+        {
+          "heading": "Still stuck",
+          "belongs": "TROUBLESHOOTING.md"
+        },
+        {
+          "heading": "Turn on what hurts",
+          "belongs": "GUIDE.md"
+        }
+      ]
+    },
+    "TROUBLESHOOTING.md": {
+      "answers": "It is broken — what now?",
+      "profile": "user",
+      "owns": [
+        "one entry per failure that actually happened, with the fix that worked"
+      ],
+      "excludes": [
+        {
+          "heading": "Deciding",
+          "belongs": "FAQ.md"
+        },
+        {
+          "heading": "Three minutes to a green check",
+          "belongs": "GUIDE.md"
+        }
+      ]
+    }
+  }
+}

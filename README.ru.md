@@ -292,12 +292,20 @@ harnessimo hooks install           # быстрые проверки перед 
 **<https://atamaniuc.github.io/Harnessimo/ru/>** — каждая страница есть и на английском:
 [in English](https://atamaniuc.github.io/Harnessimo/), либо переключатель языка в шапке.
 
-- [Зачем это](https://atamaniuc.github.io/Harnessimo/ru/WHY/) — кому нужно, когда окупается и как соотносится с Kiro, Spec Kit, Copilot и агентными CLI
-- [Гайд за 15 минут](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/)
-- [Сценарии](https://atamaniuc.github.io/Harnessimo/ru/USE-CASES/) — семь ситуаций и то, как он работает сам после установки
-- [SDD](https://atamaniuc.github.io/Harnessimo/ru/SDD/) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: что взято, что оставлено, где реализовано и как пользоваться
-- [Стандарт](https://atamaniuc.github.io/Harnessimo/ru/STANDARD/) — почему существует каждое правило
-- [Как участвовать](CONTRIBUTING.md)
+Каждая страница отвечает на один вопрос. Найдите свой:
+
+| Я хочу… | Читать |
+| --- | --- |
+| понять, стоит ли это внедрять | [Зачем это](https://atamaniuc.github.io/Harnessimo/ru/WHY/) |
+| увидеть, что оно реально поймает в моём репозитории | [Сценарии](https://atamaniuc.github.io/Harnessimo/ru/USE-CASES/) |
+| дойти до первой зелёной проверки | [Гайд](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/) |
+| включить ещё одну проверку или выключить лишнюю | [Гайд → включайте то, что болит](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#turn-on) |
+| внедрить в репозиторий, где уже есть свои скрипты | [Гайд → внедрение](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#adopting) |
+| понять, почему правило вообще существует | [Стандарт](https://atamaniuc.github.io/Harnessimo/ru/STANDARD/) |
+| задать короткий вопрос, который не баг | [FAQ](https://atamaniuc.github.io/Harnessimo/ru/FAQ/) |
+| починить прогон, который только что стал красным | [Что делать](https://atamaniuc.github.io/Harnessimo/ru/TROUBLESHOOTING/) |
+| узнать, что взято из OpenSpec, Spec Kit, BMAD и остальных | [SDD](https://atamaniuc.github.io/Harnessimo/ru/SDD/) |
+| внести изменение | [Как участвовать](CONTRIBUTING.md) |
 
 ## Разработка
 

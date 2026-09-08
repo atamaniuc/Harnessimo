@@ -303,12 +303,20 @@ This repo runs all nine checks on itself, including from a fresh clone.
 [по-русски](https://atamaniuc.github.io/Harnessimo/ru/), or the language switcher in the
 header.
 
-- [Why this exists](WHY.md) — who it is for, when it is worth it, and how it sits next to Kiro, Spec Kit, Copilot and the agent CLIs
-- [15-minute guide](GUIDE.md)
-- [Use cases](USE-CASES.md) — seven situations, and how it runs itself once installed
-- [SDD](SDD.md) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: what was taken from each, what was left, where every piece is implemented and how to use it
-- [Why each rule exists](STANDARD.md)
-- [Contributing](https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md)
+Every page answers one question. Find yours:
+
+| I want to… | Read |
+| --- | --- |
+| decide whether this is worth adopting | [Why this exists](WHY.md) |
+| see what it would actually catch in my repo | [Use cases](USE-CASES.md) |
+| get to a first green check | [Guide](GUIDE.md) |
+| turn on one more check, or turn one off | [Guide → turn on what hurts](GUIDE.md#turn-on) |
+| put this into a repo that already has its own scripts | [Guide → adopting](GUIDE.md#adopting) |
+| understand why a rule exists at all | [The standard](STANDARD.md) |
+| ask something short that is not a bug | [FAQ](FAQ.md) |
+| fix a run that just went red | [Troubleshooting](TROUBLESHOOTING.md) |
+| know what was taken from OpenSpec, Spec Kit, BMAD and the rest | [SDD](SDD.md) |
+| contribute a change | [Contributing](https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md) |
 
 ## Development
 

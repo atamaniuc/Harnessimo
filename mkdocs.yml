@@ -15,6 +15,8 @@ nav:
   - Use cases: USE-CASES.md
   - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
   - The standard: STANDARD.md
+  - FAQ: FAQ.md
+  - Troubleshooting: TROUBLESHOOTING.md
   - Contributing: https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md
 
 theme:
@@ -68,6 +70,8 @@ plugins:
             Use cases: Сценарии
             SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD — что взято из OpenSpec, Spec Kit, BMAD
             The standard: Стандарт
+            FAQ: FAQ
+            Troubleshooting: Что делать, когда сломалось
             Contributing: Как участвовать
   - search
   - mermaid2

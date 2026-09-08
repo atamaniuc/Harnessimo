@@ -1,5 +1,11 @@
 # Why this exists
 
+**Who is this for?** Someone deciding whether to adopt this, before touching a terminal.
+**When should I read it?** Before installing anything — it argues the case, and says when the
+answer is no. Already decided? Go to the [guide](GUIDE.md).
+
+---
+
 **The honest question first: why would you add anything, when Kiro, Spec Kit, Copilot's
 coding agent and three agent CLIs are mature, free and already in your editor?**
 
