@@ -6,5 +6,7 @@
 # TypeScript migration, which changes how every job runs the tool and adds a
 # build the release must verify. Widening what an agent may change is a
 # decision, and this line is where the decision is recorded. The fifth move
-# adds publish.yml and changes how the release ships the package.
-3d54e0719708b8506eb0d08f89b0969256a4712f
+# decision, and this line is where the decision is recorded. The fifth move
+# adds publish.yml and changes how the release ships the package; the sixth
+# prepares publishing to authenticate by OIDC instead of a stored secret.
+a93053c16841210d73d23bd41681e0befeb2e91a
