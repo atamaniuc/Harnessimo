@@ -10,4 +10,3 @@ session would trust.
 
 - **Metric thresholds as a check** — [handoff](specs/0001-metric-thresholds/handoff.md) — paused (finding, not a design), 2026-09-08, next: write `spec.md` and answer whether this is a tenth check or a documented use of `queue`
 - **Docs consolidation (spec 0002)** — [handoff](specs/0002-docs-consolidation/handoff.md) — active, 2026-09-08, next: decide whether STANDARD and USE-CASES merge into one reference, given that a straight merge is ~600 lines and breaks the page-size criterion in the spec
-- **Doc contracts (spec 0003)** — [handoff](specs/0003-docs-contracts/handoff.md) — active, 2026-09-08, next: close the track — all three phases shipped; distil into TRACKS-LOG.md

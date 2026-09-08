@@ -51,26 +51,17 @@ against this repository by `npm run check`.
 
 0. Nothing blocking. Registry, releases, tags, changelog and the docs site all agree.
 
-1. **Spec 0003, doc contracts — all three phases shipped.** Every page now
-   carries a contract in `docs/contracts.json` — the question it answers, its reader, and
-   the `excludes` list that makes overlap a failing test rather than a matter of taste.
-   Pages open with who they are for; the README routes by question instead of listing page
-   names; `FAQ.md` and `TROUBLESHOOTING.md` exist, in both languages, built from failures
-   this repository actually had. Phase 3 closed the last two gaps: `CONFIGURATION.md`,
-   generated from the JSON schema in both languages, and `llms.txt` — every page as one
-   file for the reader profile that is not a person. Both are generated and drift-checked;
-   six schema keys had no description at all and now do.
-2. **Spec 0002, docs consolidation — half shipped, one decision open.** `ADOPTING.md` is
+1. **Spec 0002, docs consolidation — half shipped, one decision open.** `ADOPTING.md` is
    now `GUIDE.md` §8 in both languages, retired URLs redirect in both locales, and
    `test/docs-structure.test.ts` holds nav, redirects and page length. Whether `STANDARD`
    and `USE-CASES` become one reference is left to the human on purpose: a straight merge
    is ~600 lines and breaks the page-size criterion in the same spec, and raising a limit
    to fit the work is the move this tool exists to catch. Three options are in the handoff.
-3. **Spec 0001, metric thresholds — a finding, not a design.** Both source repositories
+2. **Spec 0001, metric thresholds — a finding, not a design.** Both source repositories
    invented the same rule independently (a scored metric with a declared floor, in a file
    the agent may not edit) and this package cannot express it. Open question in the
    handoff: a tenth check, or a documented use of the queue.
-4. Watch whether the release check earns its place in a repository that is not this one —
+3. Watch whether the release check earns its place in a repository that is not this one —
    it is the only check born from this project's own failure rather than from the lectures.
 
 ## Settled recently
