@@ -14,14 +14,26 @@ name: Repository operations
 #   * branch cleanup and tag repair are dispatchable, with a fixed list of what
 #     they may touch.
 #
-# It needs a secret named SUDO_TOKEN: a fine-grained personal access
-# token scoped to THIS REPOSITORY ONLY, with Administration: write (About) and
-# Contents: write (refs). Nothing else — not organisation access, not other
-# repositories. Until that secret exists every job here skips itself and says
-# what is missing, exactly like publishing did before its token arrived.
+# It needs a secret named SUDO_TOKEN: a fine-grained personal access token with
+# Administration: write (the About panel) and Contents: write (refs). Until that
+# secret exists every job here skips itself and says what is missing, exactly
+# like publishing did before its token arrived.
 #
 # The token never reaches a session's context: it is read here, used here, and
 # every use is a run in the Actions log with an author, a time and its inputs.
+#
+# ## Why this reaches other repositories
+#
+# The same wall — a session may not delete a ref — stands in every repository,
+# and a personal account cannot share a secret across repositories the way an
+# organisation can. That leaves two options: copy the credential into each
+# repository, or keep one copy here and let this workflow reach the others.
+#
+# This is the second. One copy is one thing to rotate, one thing to leak and one
+# audit log to read. The cost is stated rather than discovered later: anyone who
+# can dispatch this workflow can act on every repository the token reaches. So
+# *which* repositories those are is not a free-text input — it is
+# .github/ops-repos.json, a file reviewed in a pull request like any other.
 
 on:
   push:
@@ -46,6 +58,10 @@ on:
         description: "retag: the commit it should point at"
         required: false
         type: string
+      repository:
+        description: "owner/repo to act on. Defaults to this one; must be listed in .github/ops-repos.json."
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -66,14 +82,41 @@ jobs:
               echo
               echo "No \`SUDO_TOKEN\` secret, so this did nothing."
               echo
-              echo "To arm it: a fine-grained personal access token, scoped to this repository"
-              echo "only, with **Administration: write** and **Contents: write**, saved as the"
-              echo "repository secret \`SUDO_TOKEN\`."
+              echo "To arm it: a fine-grained personal access token with **Administration:"
+              echo "write** and **Contents: write** over the repositories listed in"
+              echo "\`.github/ops-repos.json\`, saved as the repository secret \`SUDO_TOKEN\`."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - if: steps.armed.outputs.armed == 'true'
         uses: actions/checkout@v5
+
+      # Which repository the operations below act on. Defaulting to this one
+      # keeps every existing dispatch working; naming another is allowed only
+      # if a reviewed file says so, because the token reaches more than one and
+      # a dispatch form is not a review.
+      - name: Which repository is this acting on?
+        id: target
+        if: steps.armed.outputs.armed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const asked = (context.payload.inputs?.repository || "").trim();
+            const here = `${context.repo.owner}/${context.repo.repo}`;
+            const target = asked || here;
+            const allowed = JSON.parse(
+              require("fs").readFileSync(".github/ops-repos.json", "utf8"),
+            ).repositories;
+            if (!allowed.includes(target)) {
+              core.setFailed(
+                `refusing to act on "${target}": add it to .github/ops-repos.json first`,
+              );
+              return;
+            }
+            const [owner, repo] = target.split("/");
+            core.setOutput("owner", owner);
+            core.setOutput("repo", repo);
+            core.info(`acting on ${target}`);
 
       - name: Apply the About panel
         if: steps.armed.outputs.armed == 'true' && (github.event_name == 'push' || inputs.operation == 'apply-about')
@@ -81,6 +124,13 @@ jobs:
         with:
           github-token: ${{ secrets.SUDO_TOKEN }}
           script: |
+            // Deliberately not cross-repo: the About panel is applied FROM a
+            // file, and the only one checked out here is this repository's.
+            // Another repository's sidebar is described by its own file, in it.
+            if ((context.payload.inputs?.repository || "").trim()) {
+              core.setFailed("apply-about reads this repository's .github/repo-about.json; run it there");
+              return;
+            }
             const about = JSON.parse(require("fs").readFileSync(".github/repo-about.json", "utf8"));
             await github.rest.repos.update({
               ...context.repo,
@@ -97,16 +147,34 @@ jobs:
         with:
           github-token: ${{ secrets.SUDO_TOKEN }}
           script: |
+            const owner = "${{ steps.target.outputs.owner }}";
+            const repo = "${{ steps.target.outputs.repo }}";
             const branch = (context.payload.inputs.branch || "").trim();
             // A token that may delete refs should not be pointed at a branch by
-            // free text. Only the shapes this repository creates as scaffolding.
+            // free text. Only the shapes these repositories create as scaffolding.
             const temporary = /^(tag|release|claude)[/-]/.test(branch);
             if (!temporary || ["main", "gh-pages"].includes(branch)) {
               core.setFailed(`refusing to delete "${branch}": only tag-*, release-* and claude/* are temporary here`);
               return;
             }
-            await github.rest.git.deleteRef({ ...context.repo, ref: `heads/${branch}` });
-            core.info(`deleted ${branch}`);
+            // A branch nobody merged is somebody's unfinished work. Deleting it
+            // because its name matches a pattern would lose it, so the ref has
+            // to be reachable from the default branch before it goes.
+            const { data: target } = await github.rest.repos.get({ owner, repo });
+            const merged = await github.rest.repos.compareCommitsWithBasehead({
+              owner,
+              repo,
+              basehead: `${branch}...${target.default_branch}`,
+            });
+            if (merged.data.status === "diverged" || merged.data.behind_by > 0) {
+              core.setFailed(
+                `refusing to delete ${owner}/${repo}#${branch}: it carries ${merged.data.behind_by} commit(s) ` +
+                  `not on ${target.default_branch}`,
+              );
+              return;
+            }
+            await github.rest.git.deleteRef({ owner, repo, ref: `heads/${branch}` });
+            core.info(`deleted ${owner}/${repo}#${branch}`);
 
       - name: Move a tag to the commit it should have
         if: steps.armed.outputs.armed == 'true' && inputs.operation == 'retag'
@@ -120,10 +188,12 @@ jobs:
               core.setFailed("retag needs a vX.Y.Z tag and a full commit sha");
               return;
             }
+            const owner = "${{ steps.target.outputs.owner }}";
+            const repo = "${{ steps.target.outputs.repo }}";
             try {
-              await github.rest.git.updateRef({ ...context.repo, ref: `tags/${tag}`, sha, force: true });
+              await github.rest.git.updateRef({ owner, repo, ref: `tags/${tag}`, sha, force: true });
             } catch (error) {
               if (error.status !== 422) throw error;
-              await github.rest.git.createRef({ ...context.repo, ref: `refs/tags/${tag}`, sha });
+              await github.rest.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha });
             }
-            core.info(`${tag} now points at ${sha}`);
+            core.info(`${owner}/${repo}: ${tag} now points at ${sha}`);

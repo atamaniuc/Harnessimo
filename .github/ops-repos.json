@@ -1,0 +1,8 @@
+{
+  "$comment": "Repositories .github/workflows/ops.yml may act on. The SUDO_TOKEN behind it reaches more than one repository, so the list of what it MAY be pointed at is a reviewed file rather than a free-text dispatch input. Adding a line here is a pull request; typing a repository name into a form is not.",
+  "repositories": [
+    "atamaniuc/Harnessimo",
+    "atamaniuc/ledger-lens",
+    "atamaniuc/code-knowledge-base"
+  ]
+}
