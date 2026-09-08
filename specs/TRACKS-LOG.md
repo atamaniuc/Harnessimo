@@ -4,6 +4,8 @@ Newest first. One or two sentences per track: what came out of it. Lasting decis
 [`.harness/4-state/DECISIONS.md`](../.harness/4-state/DECISIONS.md), not here; git carries
 the rest.
 
+- **More than one agent (spec 0006)** — A lane declares the paths it owns and `tracks` fails when two live lanes collide; two lane directories can no longer share a number; `hooks install --agent` installs Stop and SubagentStop so a turn cannot end while `check` is red; `brief --track` hands one lane to one agent. Declaration and detection only — no locking, and stale claims and lane dependencies stay specified and unbuilt.
+
 - **Docs consolidation (spec 0002)** — seven nav entries became eight pages with distinct
   jobs and no duplicated tables: the adoption page merged into the guide, and the situations
   page merged with the standard's origin table into one `REFERENCE` (233 lines, under the
