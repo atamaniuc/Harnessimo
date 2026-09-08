@@ -14,7 +14,7 @@ name: Repository operations
 #   * branch cleanup and tag repair are dispatchable, with a fixed list of what
 #     they may touch.
 #
-# It needs a secret named REPO_ADMIN_TOKEN: a fine-grained personal access
+# It needs a secret named SUDO_TOKEN: a fine-grained personal access
 # token scoped to THIS REPOSITORY ONLY, with Administration: write (About) and
 # Contents: write (refs). Nothing else — not organisation access, not other
 # repositories. Until that secret exists every job here skips itself and says
@@ -57,18 +57,18 @@ jobs:
       - name: Is this armed?
         id: armed
         run: |
-          if [ -n "${{ secrets.REPO_ADMIN_TOKEN }}" ]; then
+          if [ -n "${{ secrets.SUDO_TOKEN }}" ]; then
             echo "armed=true" >> "$GITHUB_OUTPUT"
           else
             echo "armed=false" >> "$GITHUB_OUTPUT"
             {
               echo "### Not armed"
               echo
-              echo "No \`REPO_ADMIN_TOKEN\` secret, so this did nothing."
+              echo "No \`SUDO_TOKEN\` secret, so this did nothing."
               echo
               echo "To arm it: a fine-grained personal access token, scoped to this repository"
               echo "only, with **Administration: write** and **Contents: write**, saved as the"
-              echo "repository secret \`REPO_ADMIN_TOKEN\`."
+              echo "repository secret \`SUDO_TOKEN\`."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
@@ -79,7 +79,7 @@ jobs:
         if: steps.armed.outputs.armed == 'true' && (github.event_name == 'push' || inputs.operation == 'apply-about')
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.REPO_ADMIN_TOKEN }}
+          github-token: ${{ secrets.SUDO_TOKEN }}
           script: |
             const about = JSON.parse(require("fs").readFileSync(".github/repo-about.json", "utf8"));
             await github.rest.repos.update({
@@ -95,7 +95,7 @@ jobs:
         if: steps.armed.outputs.armed == 'true' && inputs.operation == 'delete-branch'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.REPO_ADMIN_TOKEN }}
+          github-token: ${{ secrets.SUDO_TOKEN }}
           script: |
             const branch = (context.payload.inputs.branch || "").trim();
             // A token that may delete refs should not be pointed at a branch by
@@ -112,7 +112,7 @@ jobs:
         if: steps.armed.outputs.armed == 'true' && inputs.operation == 'retag'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.REPO_ADMIN_TOKEN }}
+          github-token: ${{ secrets.SUDO_TOKEN }}
           script: |
             const tag = (context.payload.inputs.tag || "").trim();
             const sha = (context.payload.inputs.sha || "").trim();

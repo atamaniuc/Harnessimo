@@ -69,7 +69,7 @@ Administration rights at all — no `permissions:` block grants them.
 
 `.github/workflows/ops.yml` holds that half. The About panel is a file
 (`.github/repo-about.json`) applied when it changes; branch cleanup and tag repair are
-dispatchable with a fixed list of what they may touch. It needs a `REPO_ADMIN_TOKEN`
+dispatchable with a fixed list of what they may touch. It needs a `SUDO_TOKEN`
 secret — a fine-grained token scoped to this repository only, with Administration: write
 and Contents: write — and skips itself, saying so, until that exists.
 
