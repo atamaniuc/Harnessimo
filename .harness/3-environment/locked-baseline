@@ -15,5 +15,10 @@
 # adds publish.yml and changes how the release ships the package; the sixth
 # prepares publishing to authenticate by OIDC; the seventh removes the stored
 # token; the eighth makes publishing release-only and idempotent, after three
-# versions reached the registry without a tag.
-f8575548b2225431a2a3fabe69adf5c3f32061b4
+# decision, and this line is where the decision is recorded. The fifth move
+# adds publish.yml and changes how the release ships the package; the sixth
+# prepares publishing to authenticate by OIDC; the seventh removes the stored
+# token; the eighth makes publishing release-only and idempotent; the ninth
+# adds ops.yml, which does what a session may not — tags, refs, repository
+# settings — under a token that never enters a session's context.
+a0b5ad015e3dc2ca985b9fc9a207cffcdccd3f64
