@@ -17,8 +17,8 @@ node src/cli.ts doctor    # what is enforced here
 node src/cli.ts help      # every command
 ```
 
-Nine checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clean-exit`,
-`instructions`, `release`. What each is for, and which lecture of
+Eleven checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clean-exit`,
+`instructions`, `boundaries`, `thresholds`, `release`. What each is for, and which lecture of
 [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/) it
 comes from: `docs/STANDARD.md`. The fastest way in for a newcomer: `docs/GUIDE.md`.
 Published, with the diagrams rendered: <https://atamaniuc.github.io/Harnessimo/>.
@@ -52,7 +52,8 @@ starts in minutes.
 
 - **WIP = 1.** One queue item active at a time. Enforced.
 - **Working beside another agent?** Declare the paths under `## Owns` in this lane's
-  handoff. Two live lanes claiming one path fails `tracks`. See `docs/PARALLEL.md`.
+  handoff, and what it waits on under `## Depends on`. Two live lanes claiming one path
+  fails `tracks`, and so does a cycle. See `docs/PARALLEL.md`.
 - **Never edit `state` or `evidence` by hand.** Run `node src/cli.ts queue verify <id>`;
   CI re-runs every passing claim, so a hand-written state is detected rather than trusted.
 - **Never add a runtime dependency.** See `.harness/1-instructions/CONSTRAINTS.md` #1.

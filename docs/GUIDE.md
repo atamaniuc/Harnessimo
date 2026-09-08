@@ -112,7 +112,7 @@ believes a check exists stops looking for the missing one.
 
 ## 4. Turn on what hurts { #turn-on }
 
-Do not switch on all nine at once. Pick the one matching a problem you actually have,
+Do not switch on all eleven at once. Pick the one matching a problem you actually have,
 make it green, commit, then take the next.
 
 | The problem you have | Turn on | It fails when |
@@ -125,6 +125,8 @@ make it green, commit, then take the next.
 | Debug leftovers, stale progress notes | `cleanExit` | a session left debris or wrote nothing down |
 | The agent file has become a 600-line manual | `instructions` | it is over its line limit |
 | An agent editing what grades it | `locked` | an agent commit touched those paths |
+| A key, a colour or an import that belongs elsewhere | `boundaries` | that pattern appears where you banned it |
+| A quality number that quietly slipped | `thresholds` | a scored metric is below its declared floor |
 | npm, the tags and the changelog telling different stories | `release` | a released version has no tag, or the changelog's top entry is not what ships |
 
 ## 4b. Opening and closing a lane { #lanes }
@@ -370,7 +372,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.9.1` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.10.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

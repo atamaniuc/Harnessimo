@@ -4,9 +4,10 @@ State carried between sessions. Read this first; update it before you stop.
 
 ## Now
 
-**The tool is complete, self-hosting, and published.** Nine checks — proof markers, work
+**The tool is complete, self-hosting, and published.** Eleven checks — proof markers, work
 tracks, the task gate, the queue, locked surfaces, cold start, clean exit, the
-instruction-file limit and the release check — all implemented, tested, and enforced
+instruction-file limit, boundaries, metric thresholds and the release check — all implemented,
+tested, and enforced
 against this repository by `npm run check`. Beside them: a read guard that fires while the
 work happens, a lane lifecycle (`track new` / `track close`), the rules that only matter
 once more than one agent is working (spec 0006), and a declared supervision level that
@@ -41,8 +42,9 @@ decides how much of the nine a given run is held to (spec 0007).
   repositories too — a personal account cannot share a secret between repositories, so one
   copy of the token acts on the repositories named in `.github/ops-repos.json`, and a
   branch carrying unmerged commits is refused whatever its name looks like.
-- Open: spec 0001 (metric thresholds) is a finding, not a design. Spec 0006 names two
-  things specified and not built — stale claims, and declared dependencies between lanes.
+- Every track opened in this repository is closed; `specs/TRACKS.md` is empty of live work.
+  Ten of the eleven checks run here — `thresholds` needs a scored metric and this package
+  has none, which `doctor` reports rather than glossing.
 
 ## Done
 

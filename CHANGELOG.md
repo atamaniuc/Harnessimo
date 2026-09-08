@@ -7,6 +7,58 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.10.0] — 2026-09-08
+
+Two checks, both of them rules that existed already — in scripts, in review habits, in
+somebody's memory — in the two repositories this package was extracted from. Neither was
+designed here; both were found by asking which generic rule those repositories had written
+by hand because the tool could not say it.
+
+### Added
+
+- **`boundaries` — a pattern that must not appear in a named part of the tree.** One
+  repository forbids the service-role key under `app/` (it bypasses row-level security, so a
+  client-side use is a data leak wearing an ordinary import) and hard-coded colours in
+  components; the other forbids placeholder markers in published content. Three rules, one
+  shape: *this pattern, not in these files, for this reason*. `reason` is required and is
+  what the failure prints — a boundary that says "matched /service_role/" reports what
+  happened rather than what to do. `allow` names the one legitimate place; a pattern that
+  does not compile is reported rather than thrown; beyond ten hits per rule the report says
+  how many are left. This repository now runs one on itself: an import in `src/` that is
+  neither a `node:` builtin nor relative is the runtime dependency its constraints forbid,
+  which until now was prose a reviewer had to remember.
+- **`thresholds` — a scored metric stays at or above its declared floor.** This closes the
+  oldest open track: both source repositories invented the rule independently, and the
+  question it left open was whether it earned a check or was configuration of the queue. A
+  check — the queue believes an exit code, so expressing a threshold there means every
+  project writes the same comparison script, which is exactly what both of them did. It does
+  not run your scoring: your command writes the results file and this reads and compares. A
+  metric with a floor that nobody measured fails too, because a scoring step that did not run
+  is not a scoring step that passed. Floors only; a metric where lower is better is the same
+  rule mirrored, and inventing a direction on zero real cases would be a guess. Where a
+  repository already declares `locked.paths` and the floors are not among them, the check
+  says so: an agent that can lower its own pass mark grades itself.
+- **A lane declares what it waits on.** `## Depends on` in a handoff, by slug. `tracks`
+  refuses a slug naming no lane, a lane waiting on itself, and a cycle; `track close` refuses
+  while something the lane was built on is still open; `brief --track` carries what it waits
+  on, as heads. Collision was half of working in parallel — this is the other half, and it
+  costs rework rather than a merge conflict, which is why nothing was catching it.
+- **`tracks.staleAfterDays`.** A live track line nobody has refreshed is reported with its
+  age, and named as holding its fence when the lane declares paths. Spec 0006 deferred this
+  for want of a clock; the date the index line already carries turned out to be one. `0` (the
+  default) turns it off.
+
+### Changed
+
+- Eleven checks, and this repository runs ten of them on itself — it has no scored metric to
+  hold to a floor, and `doctor` says so rather than implying otherwise. A test now holds the
+  README to that count, because "all of them" while one is switched off is the drift this
+  whole tool is about.
+- `docs/STANDARD.md` no longer says this tool "says nothing yet about running many" agents,
+  which stopped being true in 0.8.0, and records why skill and prompt hygiene is still not
+  here: every rule in this package came from watching two independent repositories write the
+  same thing by hand, and one vendor's documentation is not that.
+
 ## [0.9.1] — 2026-09-08
 
 ### Fixed
@@ -336,6 +388,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.10.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.0
 [0.9.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.1
 [0.9.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.0
 [0.8.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.8.0

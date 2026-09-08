@@ -258,3 +258,90 @@ test("a level that is not a level is refused with the ones that are", () => {
   assert.match(out, /watched, reviewed, unattended/);
   rmSync(dir, { recursive: true, force: true });
 });
+
+// ---- spec 0008: one lane built on another
+
+const DEPENDENT = {
+  ...TWO_LANES,
+  "specs/0001-search/handoff.md": "# Handoff — search\n\n## Owns\n\n- src/search/\n",
+  "specs/0002-totals/handoff.md":
+    "# Handoff — totals\n\n## Owns\n\n- src/totals.ts\n\n## Depends on\n\n- search\n",
+};
+
+test("a lane may declare what it is built on", () => {
+  const dir = fixture(DEPENDENT);
+  const { status, out } = run(dir, "check");
+  assert.equal(status, 0, out);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a dependency naming no lane fails, and says which lanes exist", () => {
+  const dir = fixture({
+    ...DEPENDENT,
+    "specs/0002-totals/handoff.md": "# Handoff\n\n## Depends on\n\n- pricing\n",
+  });
+  const { status, out } = run(dir, "check");
+  assert.equal(status, 1);
+  assert.match(out, /no lane with this slug/);
+  assert.match(out, /name one of search, totals/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a lane cannot be closed while what it was built on is still open", () => {
+  const dir = fixture(DEPENDENT);
+  const blocked = run(dir, "track", "close", "totals", "--outcome", "Totals round per currency.");
+  assert.equal(blocked.status, 1);
+  assert.match(blocked.out, /still waits on search/);
+
+  // Close the foundation, and the lane built on it may close.
+  assert.equal(run(dir, "track", "close", "search", "--outcome", "Search returns ranked chunks.").status, 0);
+  const now = run(dir, "track", "close", "totals", "--outcome", "Totals round per currency.");
+  assert.equal(now.status, 0, now.out);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a scoped brief carries the lanes this one waits on, as heads", () => {
+  const dir = fixture(DEPENDENT);
+  const { status, out } = run(dir, "brief", "--track", "totals");
+  assert.equal(status, 0, out);
+  assert.match(out, /specs\/0001-search\/handoff\.md.*this lane waits on it/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+// ---- spec 0010: a line the code may not cross
+
+const BOUNDED = {
+  ...BASE,
+  "harnessimo.config.json": JSON.stringify({
+    ...JSON.parse(CONFIG),
+    boundaries: {
+      scan: ["app"],
+      rules: [
+        {
+          pattern: "service_role",
+          paths: ["app/"],
+          reason: "the service-role key bypasses row-level security; it belongs on the server",
+        },
+      ],
+    },
+  }),
+  "app/page.ts": "export const ok = 1;\n",
+};
+
+test("a boundary that holds is reported as holding", () => {
+  const dir = fixture(BOUNDED);
+  const { status, out } = run(dir, "check");
+  assert.equal(status, 0, out);
+  assert.match(out, /1 boundary\(ies\) hold across 1 file\(s\)/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a line that crosses a boundary fails, with the reason and not the pattern", () => {
+  const dir = fixture({ ...BOUNDED, "app/page.ts": "const k = process.env.service_role;\n" });
+  const { status, out } = run(dir, "check");
+
+  assert.equal(status, 1);
+  assert.match(out, /app\/page\.ts:1/);
+  assert.match(out, /bypasses row-level security/);
+  rmSync(dir, { recursive: true, force: true });
+});

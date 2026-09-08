@@ -299,8 +299,15 @@ gate that agrees with itself and disagrees with reality.
   deciding to abandon a direction. Models trained on successful outcomes are badly
   calibrated about when to stop.
 - **Observability and loop/graph engineering** (lectures 11, 13, 14). They are the layer
-  above this one: this tool bounds a single agent's work, and says nothing yet about running
-  many of them. Naming the gap is better than implying it is covered.
+  above this one. Several agents on one repository are now handled — a lane declares what it
+  owns and what it waits on, and a turn does not end while a check is red — but nothing here
+  schedules, routes or supervises a running loop. Naming the gap is better than implying it
+  is covered.
+- **Skill and prompt hygiene.** A skill whose description never fires is a real failure, and
+  it is not one this package has seen twice. Every rule here came from watching two
+  independent repositories write the same thing by hand; a rule built on one vendor's
+  documentation and no observed duplication is a guess, and guesses are what the checks are
+  for.
 - **Any judgement of whether a check is good.** A test that asserts nothing satisfies every
   rule here. This makes claims falsifiable; it does not make them true.
 

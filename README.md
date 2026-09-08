@@ -16,7 +16,7 @@
 **Spec-driven development, and the harness that makes it stick.**
 
 Two halves that need each other. **SDD**: work is a lane — a numbered spec whose acceptance
-criteria can actually run. **The harness**: nine checks that refuse to call that lane
+criteria can actually run. **The harness**: eleven checks that refuse to call that lane
 finished until they do. Specs without enforcement are a filing system; enforcement without
 specs has nothing to check against.
 
@@ -145,7 +145,7 @@ not enforced: locked, instructions
 One command wires that into your agent: `harnessimo hooks install --agent`.
 <!-- proof: src/brief.ts:briefText -->
 
-## All nine checks
+## All eleven checks
 
 | Command | Fails when |
 |---|---|
@@ -157,6 +157,8 @@ One command wires that into your agent: `harnessimo hooks install --agent`.
 | `harnessimo cold-start` | a fresh clone can't install and verify itself |
 | `harnessimo clean-exit` | a session left `TODO`, `debugger`, `.only(` behind |
 | `harnessimo instructions` | your AGENTS.md grew past the line limit you set |
+| `harnessimo boundaries` | a pattern you banned appears where you banned it |
+| `harnessimo thresholds` | a scored metric fell below the floor you declared |
 | `harnessimo release` | the version in the manifest, the changelog and the tags disagree |
 
 `harnessimo doctor` prints which of these are on — and which are off. Nothing is switched on
@@ -190,6 +192,8 @@ Turn on one check, make it green, commit. Then the next one.
 | Debug leftovers, stale notes | `cleanExit` |
 | The agent file is a 600-line manual | `instructions` |
 | An agent editing what grades it | `locked` |
+| A key, a colour or an import that belongs elsewhere | `boundaries` |
+| A quality number that quietly slipped | `thresholds` |
 
 Details: [Adopting an existing repo](https://atamaniuc.github.io/Harnessimo/GUIDE/#adopting).
 
@@ -255,7 +259,7 @@ entitled to make:
   produced it; `npm audit signatures` verifies it.
 - **Zero runtime dependencies**, by a rule its own CI enforces. Nothing it pulls in can break
   the project it is guarding, and there is no supply chain under it to audit but this one.
-- **It is held to its own standard.** All nine checks run against this repository, including
+- **It is held to its own standard.** Ten of the eleven run against this repository, including
   a cold start that clones it into an empty directory and runs the documented commands, and
   a re-verification of every passing claim. The badge above is that.
 - **Every rule has a test that proves it fires on bad input** — a rule that has only ever
@@ -275,7 +279,9 @@ Two production repos, both of which deleted their own versions of these checks:
 - [`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) — dropped four
   local scripts, picked up proof markers, work tracks and the task gate.
 
-This repo runs all nine checks on itself, including from a fresh clone.
+This repo runs ten of its eleven checks on itself, from a fresh clone. The eleventh,
+`thresholds`, needs a scored metric, and a tool with no metrics to score has nothing to hold
+to a floor — `harnessimo doctor` says so rather than implying otherwise.
 <!-- proof: npm run check -->
 
 ## What it isn't

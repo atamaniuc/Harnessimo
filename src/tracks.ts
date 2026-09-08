@@ -118,3 +118,57 @@ export function liveTrackSpecDirs(tracksText: string, specsDir: string = "specs"
   const pattern = new RegExp(`\\((${specsDir}\\/[A-Za-z0-9_.-]+)\\/handoff\\.md\\)`, "g");
   return [...new Set([...tracksText.matchAll(pattern)].map((m) => m[1]!))];
 }
+
+/**
+ * Track lines nobody has refreshed.
+ *
+ * A lane abandoned mid-flight keeps its status, its next step and — once lanes
+ * declare what they own — its fence around files nobody is working in. None of
+ * that decays on its own: the index says `active` until a person says
+ * otherwise, and the longer it lies the more it is believed.
+ *
+ * The date is already in the line the tool writes, so this needs no new
+ * bookkeeping. `today` is passed in rather than read: a rule that consults the
+ * clock is a rule whose test depends on the day it runs.
+ */
+export function staleProblems(
+  text: string,
+  {
+    today,
+    afterDays,
+    filePath = "specs/TRACKS.md",
+    claimed = new Set<string>(),
+  }: { today: string; afterDays: number; filePath?: string; claimed?: Set<string> },
+): Problem[] {
+  if (!afterDays || afterDays <= 0) return []; // not asked for
+  const problems: Problem[] = [];
+
+  for (const { line, text: lineText } of trackLines(text)) {
+    const stamp = /\b(\d{4}-\d{2}-\d{2})\b/.exec(lineText)?.[1];
+    if (!stamp) continue; // a line with no date is the tracks check's business, not this one
+    const age = daysBetween(stamp, today);
+    if (age === null || age <= afterDays) continue;
+
+    const lane = /\(([\w./-]+)\/handoff\.md\)/.exec(lineText)?.[1];
+    const fences = lane && claimed.has(lane);
+    problems.push({
+      file: filePath,
+      line,
+      target: stamp,
+      reason:
+        `last moved ${age} days ago, and still says it is live` +
+        (fences ? " while holding the paths it declared" : "") +
+        `\n    fix:  update the line, mark it paused with what it is waiting on, or close the track`,
+    });
+  }
+
+  return problems;
+}
+
+/** Whole days between two ISO dates, or null when either is not one. */
+function daysBetween(from: string, to: string): number | null {
+  const a = Date.parse(`${from}T00:00:00Z`);
+  const b = Date.parse(`${to}T00:00:00Z`);
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  return Math.round((b - a) / 86_400_000);
+}

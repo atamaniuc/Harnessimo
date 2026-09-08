@@ -100,6 +100,8 @@ export interface TracksConfig {
   specsDir: string;
   taskFile: string;
   gateTasks: boolean;
+  /** Days after which a live track line nobody has refreshed is a problem. 0 turns it off. */
+  staleAfterDays?: number;
 }
 
 export interface QueueConfig {
@@ -148,6 +150,23 @@ export interface TokensConfig {
   statePath?: string;
 }
 
+/** Lines the code may not cross, and why. */
+export interface BoundariesConfig {
+  rules: import("./boundaries.ts").BoundaryRule[];
+  /** Where to look. Defaults to the docs roots' skip list for what to ignore. */
+  scan: string[];
+}
+
+/** A scored metric, its declared floor, and where both live. */
+export interface ThresholdsConfig {
+  /** The file the project's scoring command writes: `{ metric: number }`. */
+  results: string;
+  /** The file declaring the lowest acceptable score for each metric. */
+  floors: string;
+  /** Named in the failure when results are missing. Never run from here. */
+  command?: string;
+}
+
 export interface InstructionsConfig {
   /** Path -> maximum lines. */
   limits: Record<string, number>;
@@ -176,6 +195,8 @@ export interface LoadedConfig {
   coldStart?: ColdStartConfig;
   cleanExit?: CleanExitConfig;
   instructions?: InstructionsConfig;
+  boundaries?: BoundariesConfig;
+  thresholds?: ThresholdsConfig;
   release?: ReleaseConfig;
   tokens?: TokensConfig;
   autonomy?: AutonomyConfig;
@@ -192,6 +213,8 @@ export type EnabledChecks = Record<
   | "coldStart"
   | "cleanExit"
   | "instructions"
+  | "boundaries"
+  | "thresholds"
   | "release",
   boolean
 >;
@@ -202,6 +225,8 @@ export type EnabledChecks = Record<
 export interface Handoff {
   path: string;
   text: string;
+  /** A lane the focused one waits on: carried as a head, not whole. */
+  head?: boolean;
 }
 
 /**

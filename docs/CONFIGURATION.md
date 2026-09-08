@@ -42,6 +42,7 @@ Handoff-driven development: the index of live work tracks and the handoffs it po
 | `specsDir` | string | Where a lane's spec, tasks and handoff live, one directory per lane. |
 | `taskFile` | string | The file inside a lane holding its task list, whose checked boxes the task gate reads. |
 | `gateTasks` | boolean | Require a checked box in a live lane's task list to carry a proof marker. |
+| `staleAfterDays` | integer | Days after which a live track line that nobody has refreshed is reported. A lane abandoned mid-flight keeps its status, its next step and the paths it declared, and none of that decays on its own. `0` (the default) turns the rule off. |
 
 ## `queue`
 
@@ -104,6 +105,25 @@ The instruction file kept a router rather than a manual (lecture 04).
 | Key | Type | What it does |
 |---|---|---|
 | `limits` | object | Path to maximum line count. |
+
+## `boundaries`
+
+Lines the code may not cross: a pattern that must not appear in a particular part of the tree, and the reason it must not. Both repositories this package came from wrote this rule by hand, differently, because there was no way to declare it.
+
+| Key | Type | What it does |
+|---|---|---|
+| `scan` | array of string | Directories to read. Everything under them is checked against the rules whose paths cover it. |
+| `rules` | array of object | The boundaries themselves. An empty list is a check that finds nothing. |
+
+## `thresholds`
+
+A scored metric has a declared floor, and a run below it is not finished. This check does not run the scoring: the project's own command writes a results file, and this reads it and compares. Floors only — a metric where lower is better is the same rule mirrored, and inventing a direction on zero real cases would be a guess.
+
+| Key | Type | What it does |
+|---|---|---|
+| `results` | string | The file the scoring command writes: JSON of `{ metric: number }`. |
+| `floors` | string | The file declaring the lowest acceptable score for each metric. Put it in `locked.paths`: an agent that can lower its own pass mark grades itself. |
+| `command` | string | The command that produces the results file. Named in the failure when the file is missing, and never run from here — the project owns its commands. |
 
 ## `release`
 

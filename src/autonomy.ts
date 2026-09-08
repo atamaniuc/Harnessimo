@@ -43,7 +43,7 @@ export const MEANING: Record<Level, string> = {
  * behind, and a repository that no longer runs from a clean clone.
  */
 const ADDS: Record<Level, { checks: (keyof EnabledChecks)[]; reverify?: boolean }> = {
-  watched: { checks: ["proof", "tracks", "tasks", "queue", "instructions", "release"] },
+  watched: { checks: ["proof", "tracks", "tasks", "queue", "instructions", "boundaries", "thresholds", "release"] },
   reviewed: { checks: ["locked"], reverify: true },
   unattended: { checks: ["cleanExit", "coldStart"] },
 };

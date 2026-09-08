@@ -23,7 +23,15 @@ const SECTION_DEFAULTS = {
     commands: {},
     migrations: null,
   },
-  tracks: { file: "specs/TRACKS.md", log: "specs/TRACKS-LOG.md", specsDir: "specs", taskFile: "tasks.md", gateTasks: true },
+  tracks: {
+    file: "specs/TRACKS.md",
+    log: "specs/TRACKS-LOG.md",
+    specsDir: "specs",
+    taskFile: "tasks.md",
+    gateTasks: true,
+    // Spec 0009. 0 means the rule is not asked for.
+    staleAfterDays: 0,
+  },
   queue: { file: ".harness/4-state/feature_list.json", timeoutMinutes: 10, terminalByKind: { content: "awaiting_gates" } },
   locked: { paths: [], baseline: ".harness/3-environment/locked-baseline", agentTrailer: "Co-Authored-By: Claude" },
   coldStart: { requiredFiles: [], entryDocs: [], commands: [] },
@@ -37,6 +45,10 @@ const SECTION_DEFAULTS = {
     requireCleanTree: false,
   },
   instructions: { limits: {} },
+  // Spec 0010. No rules means nothing to cross.
+  boundaries: { rules: [], scan: ["."] },
+  // Track 0001. Both source repositories invented this rule by hand.
+  thresholds: { results: "", floors: "", command: "" },
   release: { manifest: "package.json", changelog: "CHANGELOG.md", tagPrefix: "v" },
   // The read guard (spec 0004). Not a check: it fires while the work happens,
   // and `doctor` lists it apart from the nine for exactly that reason.
@@ -112,6 +124,8 @@ export function enabledChecks(config: LoadedConfig): EnabledChecks {
     coldStart: Boolean(config.coldStart?.commands?.length),
     cleanExit: Boolean(config.cleanExit?.scan?.length),
     instructions: Boolean(Object.keys(config.instructions?.limits ?? {}).length),
+    boundaries: Boolean(config.boundaries?.rules?.length),
+    thresholds: Boolean(config.thresholds?.floors),
     release: Boolean(config.release),
   };
 }

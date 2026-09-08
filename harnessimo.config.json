@@ -28,7 +28,9 @@
     "log": "specs/TRACKS-LOG.md",
     "specsDir": "specs",
     "taskFile": "tasks.md",
-    "gateTasks": true
+    "gateTasks": true,
+    "staleAfterDays": 21,
+    "$comment": "Spec 0009. Three weeks: long enough that a lane paused over a holiday is not nagged, short enough that an abandoned one does not keep its fence for a quarter."
   },
   "queue": {
     "file": ".harness/4-state/feature_list.json",
@@ -91,6 +93,21 @@
       "AGENTS.md": 120,
       ".harness/1-instructions/CONSTRAINTS.md": 90
     }
+  },
+  "boundaries": {
+    "$comment": "Spec 0010. CONSTRAINTS #1 says this package never takes a runtime dependency, and until now that was a sentence a reviewer had to remember. An import in src/ that is neither a node: builtin nor relative is exactly that dependency, so the rule is now a line that fails.",
+    "scan": [
+      "src"
+    ],
+    "rules": [
+      {
+        "pattern": "from \"(?!node:|\\.)",
+        "paths": [
+          "src/"
+        ],
+        "reason": "a runtime dependency — CONSTRAINTS #1: this package installs nothing, so `npx harnessimo` is one download and a supply chain of one\n      fix:  use a node: builtin, or write the twenty lines"
+      }
+    ]
   },
   "release": {
     "$comment": "This repository published three versions to npm through a manual workflow run while its own tags stopped at v0.4.1. The check exists because of that, and it is on here first.",

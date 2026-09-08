@@ -49,10 +49,13 @@ export function briefText({
   for (const handoff of handoffs) {
     // The whole handoff when it is the one lane being worked on; the head of
     // each when the brief is the index of everything in flight.
-    const body = focus
-      ? handoff.text.trimEnd()
-      : handoff.text.split("\n").slice(0, HANDOFF_LINES).join("\n").trimEnd();
-    out.push(`\n== ${handoff.path}${focus ? "" : ` (first ${HANDOFF_LINES} lines)`} ==`);
+    // The lane being worked on comes whole; a lane it merely waits on comes as
+    // a head, which is enough to know what is being built on and no more.
+    const head = !focus || handoff.head;
+    const body = head
+      ? handoff.text.split("\n").slice(0, HANDOFF_LINES).join("\n").trimEnd()
+      : handoff.text.trimEnd();
+    out.push(`\n== ${handoff.path}${head ? ` (first ${HANDOFF_LINES} lines)` : ""}${handoff.head ? " — this lane waits on it" : ""} ==`);
     out.push(body);
   }
 

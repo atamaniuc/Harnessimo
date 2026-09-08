@@ -1,6 +1,6 @@
 # Harnessimo — full documentation for machine readers
 
-Version 0.9.1. Generated from docs/ by scripts/llms-txt.ts; do not edit.
+Version 0.10.0. Generated from docs/ by scripts/llms-txt.ts; do not edit.
 Published at https://atamaniuc.github.io/Harnessimo/llms.txt — the same pages, in the order a person would meet them.
 
 Every section below is one page of the site. The heading names the page and the
@@ -44,7 +44,7 @@ URL: https://atamaniuc.github.io/Harnessimo/
 **Spec-driven development, and the harness that makes it stick.**
 
 Two halves that need each other. **SDD**: work is a lane — a numbered spec whose acceptance
-criteria can actually run. **The harness**: nine checks that refuse to call that lane
+criteria can actually run. **The harness**: eleven checks that refuse to call that lane
 finished until they do. Specs without enforcement are a filing system; enforcement without
 specs has nothing to check against.
 
@@ -184,7 +184,7 @@ not enforced: locked, instructions
 One command wires that into your agent: `harnessimo hooks install --agent`.
 <!-- proof: src/brief.ts:briefText -->
 
-## All nine checks
+## All eleven checks
 
 | Command | Fails when |
 |---|---|
@@ -196,6 +196,8 @@ One command wires that into your agent: `harnessimo hooks install --agent`.
 | `harnessimo cold-start` | a fresh clone can't install and verify itself |
 | `harnessimo clean-exit` | a session left `TODO`, `debugger`, `.only(` behind |
 | `harnessimo instructions` | your AGENTS.md grew past the line limit you set |
+| `harnessimo boundaries` | a pattern you banned appears where you banned it |
+| `harnessimo thresholds` | a scored metric fell below the floor you declared |
 | `harnessimo release` | the version in the manifest, the changelog and the tags disagree |
 
 `harnessimo doctor` prints which of these are on — and which are off. Nothing is switched on
@@ -229,6 +231,8 @@ Turn on one check, make it green, commit. Then the next one.
 | Debug leftovers, stale notes | `cleanExit` |
 | The agent file is a 600-line manual | `instructions` |
 | An agent editing what grades it | `locked` |
+| A key, a colour or an import that belongs elsewhere | `boundaries` |
+| A quality number that quietly slipped | `thresholds` |
 
 Details: [Adopting an existing repo](GUIDE.md#adopting).
 
@@ -294,7 +298,7 @@ entitled to make:
   produced it; `npm audit signatures` verifies it.
 - **Zero runtime dependencies**, by a rule its own CI enforces. Nothing it pulls in can break
   the project it is guarding, and there is no supply chain under it to audit but this one.
-- **It is held to its own standard.** All nine checks run against this repository, including
+- **It is held to its own standard.** Ten of the eleven run against this repository, including
   a cold start that clones it into an empty directory and runs the documented commands, and
   a re-verification of every passing claim. The badge above is that.
 - **Every rule has a test that proves it fires on bad input** — a rule that has only ever
@@ -314,7 +318,9 @@ Two production repos, both of which deleted their own versions of these checks:
 - [`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) — dropped four
   local scripts, picked up proof markers, work tracks and the task gate.
 
-This repo runs all nine checks on itself, including from a fresh clone.
+This repo runs ten of its eleven checks on itself, from a fresh clone. The eleventh,
+`thresholds`, needs a scored metric, and a tool with no metrics to score has nothing to hold
+to a floor — `harnessimo doctor` says so rather than implying otherwise.
 <!-- proof: npm run check -->
 
 ## What it isn't
@@ -447,7 +453,7 @@ failure — instead of a cheerful summary of things that did not happen.
 | **[Spec Kit](https://github.com/github/spec-kit)** (GitHub) | turning an intent into a spec, a plan and a task list | nothing re-runs the acceptance criteria; the task list is prose | a ticked box has to name a check, and the check has to pass |
 | **[BMAD](https://github.com/bmad-code-org/BMAD-METHOD)** | the whole delivery loop with specialised perspectives | "verify" is a phase an agent performs and reports on | the queue: only a passing command writes `passing`, and CI re-runs them |
 | **Copilot coding agent, Devin, Jules** | autonomy at scale, real sandboxes, PR-shaped output | verification is your existing CI plus human review | the checks that CI does not have because nobody writes them |
-| **Claude Code, Codex, Cursor, Gemini CLI** | the harness *mechanism* — hooks, instruction files, tool access | they supply the mechanism, not the rules; what to enforce is your problem | nine rules worth enforcing, and the wiring to run them |
+| **Claude Code, Codex, Cursor, Gemini CLI** | the harness *mechanism* — hooks, instruction files, tool access | they supply the mechanism, not the rules; what to enforce is your problem | eleven rules worth enforcing, and the wiring to run them |
 | **Danger JS, custom CI scripts** | arbitrary rules at PR time, if you write them | you write and maintain them, per repository, forever | the same rules, written once, tested, versioned, shared |
 
 Two things follow from that table.
@@ -523,7 +529,7 @@ carries a provenance statement naming the commit and workflow that produced it �
 installs can break the project it guards, and there is no supply chain under it to audit but
 this one.
 
-**It is held to its own standard.** All nine checks run against this repository, including
+**It is held to its own standard.** Ten of the eleven run against this repository, including
 `--reverify`, which re-runs every claim that says it passes, and a cold start that clones the
 repository into an empty directory and runs the commands the documentation gives a newcomer.
 
@@ -672,7 +678,7 @@ believes a check exists stops looking for the missing one.
 
 ## 4. Turn on what hurts { #turn-on }
 
-Do not switch on all nine at once. Pick the one matching a problem you actually have,
+Do not switch on all eleven at once. Pick the one matching a problem you actually have,
 make it green, commit, then take the next.
 
 | The problem you have | Turn on | It fails when |
@@ -685,6 +691,8 @@ make it green, commit, then take the next.
 | Debug leftovers, stale progress notes | `cleanExit` | a session left debris or wrote nothing down |
 | The agent file has become a 600-line manual | `instructions` | it is over its line limit |
 | An agent editing what grades it | `locked` | an agent commit touched those paths |
+| A key, a colour or an import that belongs elsewhere | `boundaries` | that pattern appears where you banned it |
+| A quality number that quietly slipped | `thresholds` | a scored metric is below its declared floor |
 | npm, the tags and the changelog telling different stories | `release` | a released version has no tag, or the changelog's top entry is not what ships |
 
 ## 4b. Opening and closing a lane { #lanes }
@@ -930,7 +938,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.9.1` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.10.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one
@@ -991,6 +999,7 @@ Handoff-driven development: the index of live work tracks and the handoffs it po
 | `specsDir` | string | Where a lane's spec, tasks and handoff live, one directory per lane. |
 | `taskFile` | string | The file inside a lane holding its task list, whose checked boxes the task gate reads. |
 | `gateTasks` | boolean | Require a checked box in a live lane's task list to carry a proof marker. |
+| `staleAfterDays` | integer | Days after which a live track line that nobody has refreshed is reported. A lane abandoned mid-flight keeps its status, its next step and the paths it declared, and none of that decays on its own. `0` (the default) turns the rule off. |
 
 ## `queue`
 
@@ -1053,6 +1062,25 @@ The instruction file kept a router rather than a manual (lecture 04).
 | Key | Type | What it does |
 |---|---|---|
 | `limits` | object | Path to maximum line count. |
+
+## `boundaries`
+
+Lines the code may not cross: a pattern that must not appear in a particular part of the tree, and the reason it must not. Both repositories this package came from wrote this rule by hand, differently, because there was no way to declare it.
+
+| Key | Type | What it does |
+|---|---|---|
+| `scan` | array of string | Directories to read. Everything under them is checked against the rules whose paths cover it. |
+| `rules` | array of object | The boundaries themselves. An empty list is a check that finds nothing. |
+
+## `thresholds`
+
+A scored metric has a declared floor, and a run below it is not finished. This check does not run the scoring: the project's own command writes a results file, and this reads it and compares. Floors only — a metric where lower is better is the same rule mirrored, and inventing a direction on zero real cases would be a guess.
+
+| Key | Type | What it does |
+|---|---|---|
+| `results` | string | The file the scoring command writes: JSON of `{ metric: number }`. |
+| `floors` | string | The file declaring the lowest acceptable score for each metric. Put it in `locked.paths`: an agent that can lower its own pass mark grades itself. |
+| `command` | string | The command that produces the results file. Named in the failure when the file is missing, and never run from here — the project owns its commands. |
 
 ## `release`
 
@@ -1154,6 +1182,36 @@ FAIL  cold start
 
 **Turn on:** `coldStart`, listing `requiredFiles`, `entryDocs` and the `commands` a newcomer
 runs. <!-- proof: src/coldstart.ts:coldStartProblems -->
+
+## 11. A quality number that quietly slipped
+
+*Comes from: Not from the course. Both repositories this package was extracted from invented this rule independently and wired it by hand.*
+
+*The evals still run. The number is a little lower every month, and no single month is the one anybody notices.*
+
+One repository keeps `evals/thresholds.json` — recall, groundedness, citation validity, each
+with a floor — and fails CI when a score drops below one. The other has a grounding gate with
+a pass mark. Both put the floors file out of the agent's reach, and that is the load-bearing
+half: a loop that can lower its own pass mark grades itself.
+
+```
+FAIL  thresholds
+  evals/results.json:1  recall_at_5
+      0.71 is below the floor of 0.8 declared in evals/thresholds.json
+    fix:  raise the score. Lowering the floor to pass is the move this check exists to catch
+```
+
+It does not run your scoring. Your command writes the results file; this reads it and
+compares. A metric with a floor that nobody measured fails too — a scoring step that did not
+run is not a scoring step that passed.
+
+**Turn on:** `thresholds`, naming `results`, `floors` and the `command` that produces the
+results. If the repository already declares `locked.paths` and the floors file is not among
+them, the check says so. Floors only: a metric where lower is better is the same rule
+mirrored, and inventing a direction on zero real cases would be a guess.
+<!-- proof: src/thresholds.ts:thresholdProblems -->
+
+---
 
 ## 3. A feature that takes four sessions
 
@@ -1313,6 +1371,35 @@ finished", and this one fires while the work happens. `doctor` lists it apart fo
 reason, and `check` does not run it — a completion gate that depended on session state
 would be a gate nobody could reproduce.
 <!-- proof: src/tokens.ts:decideRead -->
+
+---
+
+## 10. A key, a colour or an import that belongs somewhere else
+
+*Comes from: Not from the course. Both repositories this package was extracted from wrote this rule by hand, differently, because there was nowhere to declare it.*
+
+*The rule is in someone's head, or in a script, or in a review comment nobody made this time.*
+
+One repository forbids the service-role key anywhere under `app/` — it bypasses row-level
+security, so a client-side use is a data leak wearing an ordinary import. It also forbids
+hard-coded colours in components, because design tokens live in one file. The other forbids
+placeholder markers in published content. Three rules, one shape: *this pattern, not in these
+files, for this reason.*
+
+```
+FAIL  boundaries
+  app/dashboard/page.tsx:14  service_role
+      the service-role key bypasses row-level security; it belongs on the server
+```
+
+The reason is required, and it is the whole point. A boundary that prints "matched
+/service_role/" says what happened; the next person needs to know what to do instead.
+
+**Turn on:** `boundaries`, listing rules of `pattern`, `paths` and `reason` (plus `allow` for
+the one legitimate place). This repository runs one on itself: an import in `src/` that is
+neither a `node:` builtin nor relative is a runtime dependency, which its constraints forbid
+— a rule that was prose a reviewer had to remember, and is now a line that fails.
+<!-- proof: src/boundaries.ts:boundaryProblems -->
 
 ---
 
@@ -1773,8 +1860,15 @@ gate that agrees with itself and disagrees with reality.
   deciding to abandon a direction. Models trained on successful outcomes are badly
   calibrated about when to stop.
 - **Observability and loop/graph engineering** (lectures 11, 13, 14). They are the layer
-  above this one: this tool bounds a single agent's work, and says nothing yet about running
-  many of them. Naming the gap is better than implying it is covered.
+  above this one. Several agents on one repository are now handled — a lane declares what it
+  owns and what it waits on, and a turn does not end while a check is red — but nothing here
+  schedules, routes or supervises a running loop. Naming the gap is better than implying it
+  is covered.
+- **Skill and prompt hygiene.** A skill whose description never fires is a real failure, and
+  it is not one this package has seen twice. Every rule here came from watching two
+  independent repositories write the same thing by hand; a rule built on one vendor's
+  documentation and no observed duplication is a guess, and guesses are what the checks are
+  for.
 - **Any judgement of whether a check is good.** A test that asserts nothing satisfies every
   rule here. This makes claims falsifiable; it does not make them true.
 

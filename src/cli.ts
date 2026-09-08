@@ -17,8 +17,15 @@ import { fileURLToPath } from "node:url";
 import { loadConfig, enabledChecks, ConfigError, CONFIG_FILE } from "./config.ts";
 import { collectDocs, collectFiles, createResolver, readAll } from "./resolver.ts";
 import { findMarkers, verifyProofs } from "./proof.ts";
-import { checkHandoffRefs, checkTracks, trackLines } from "./tracks.ts";
-import { checkClaims, duplicateNumbers, parseClaims } from "./claims.ts";
+import { checkHandoffRefs, checkTracks, staleProblems, trackLines } from "./tracks.ts";
+import {
+  checkClaims,
+  checkDependencies,
+  closingProblem,
+  duplicateNumbers,
+  parseClaims,
+  parseDependencies,
+} from "./claims.ts";
 import { verifyTaskGates } from "./tasks.ts";
 import { liveTrackSpecDirs } from "./tracks.ts";
 import {
@@ -33,6 +40,8 @@ import { formatLockedViolations, lockedViolations } from "./locked.ts";
 import { coldStartProblems } from "./coldstart.ts";
 import { debrisProblems, instructionProblems, progressProblems } from "./cleanexit.ts";
 import { releaseProblems } from "./release.ts";
+import { boundaryProblems } from "./boundaries.ts";
+import { thresholdProblems, unprotectedFloors } from "./thresholds.ts";
 import { detectConfig } from "./detect.ts";
 import { DEFAULT_LEVEL, MEANING, addedBy, effectiveLevel, levelProblem, required, unbacked } from "./autonomy.ts";
 import type { Level } from "./autonomy.ts";
@@ -222,9 +231,32 @@ function runTracks() {
   problems.push(...duplicateNumbers(laneNames(tracks.specsDir), tracks.specsDir));
   const lanes = liveTrackSpecDirs(text, tracks.specsDir).map((lane) => {
     const file = `${lane}/handoff.md`;
-    return { lane, file, claims: resolver.fileExists(file) ? parseClaims(resolver.readFile(file)) : [] };
+    const handoff = resolver.fileExists(file) ? resolver.readFile(file) : "";
+    return {
+      lane,
+      file,
+      slug: lane.slice(tracks.specsDir.length + 6),
+      claims: parseClaims(handoff),
+      deps: parseDependencies(handoff),
+    };
   });
   problems.push(...checkClaims(lanes));
+
+  // Spec 0008. Collision is one half of working in parallel; ordering is the
+  // other, and it costs rework rather than a merge conflict, which is why
+  // nothing was catching it.
+  problems.push(...checkDependencies(lanes, laneNames(tracks.specsDir).map((name) => name.slice(5))));
+
+  // Spec 0009. A lane abandoned mid-flight keeps its status and its fence, and
+  // neither decays on its own.
+  problems.push(
+    ...staleProblems(text, {
+      today: new Date().toISOString().slice(0, 10),
+      afterDays: tracks.staleAfterDays ?? 0,
+      filePath: tracks.file,
+      claimed: new Set(lanes.filter((lane) => lane.claims.length > 0).map((lane) => lane.lane)),
+    }),
+  );
 
   const lines = trackLines(text).length;
   const claimed = lanes.reduce((n, lane) => n + lane.claims.length, 0);
@@ -241,6 +273,48 @@ function laneNames(specsDir: string): string[] {
   } catch {
     return [];
   }
+}
+
+function runBoundaries(): CheckResult {
+  const cfg = config();
+  const bounds = requireSection(cfg, "boundaries", 'add a "boundaries" section listing the lines the code may not cross');
+  if (!bounds.rules.length) return { problems: [], summary: "no boundaries declared, nothing to cross" };
+  const paths = collectFiles(ROOT, { scan: bounds.scan ?? ["."], skip: cfg.docs?.skip ?? [] });
+  const files = readAll(ROOT, paths);
+  const problems = boundaryProblems(files, bounds.rules);
+  return {
+    problems,
+    summary: `${bounds.rules.length} boundary(ies) hold across ${files.length} file(s)`,
+  };
+}
+
+function runThresholds(): CheckResult {
+  const cfg = config();
+  const t = requireSection(cfg, "thresholds", 'add a "thresholds" section naming the results and floors files');
+  if (!t.floors) return { problems: [], summary: "no floors declared, nothing to hold a score to" };
+
+  const readJson = (path: string): Record<string, unknown> | null => {
+    if (!path || !existsSync(join(ROOT, path))) return null;
+    try {
+      return JSON.parse(readFileSync(join(ROOT, path), "utf8")) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  };
+
+  const floors = readJson(t.floors);
+  const problems = thresholdProblems({
+    results: readJson(t.results),
+    floors,
+    resultsPath: t.results,
+    floorsPath: t.floors,
+    command: t.command || undefined,
+  });
+  const reachable = unprotectedFloors(t.floors, cfg.locked?.paths ?? []);
+  if (reachable) problems.push(reachable);
+
+  const measured = Object.keys(floors ?? {}).filter((k) => !k.startsWith("$")).length;
+  return { problems, summary: `${measured} metric(s) at or above the floors in ${t.floors}` };
 }
 
 function runTasks() {
@@ -483,6 +557,8 @@ function cmdCheck() {
   if (runs.has("tasks")) results.push(["task gate", runTasks()]);
   if (runs.has("queue")) results.push(["queue", runQueueCheck({ reverify: reverify || flags.has("--reverify") })]);
   if (runs.has("instructions")) results.push(["instructions", runInstructions()]);
+  if (runs.has("boundaries")) results.push(["boundaries", runBoundaries()]);
+  if (runs.has("thresholds")) results.push(["thresholds", runThresholds()]);
   if (runs.has("release")) results.push(["release", runRelease()]);
   if (runs.has("locked")) results.push(["locked surfaces", runLocked(base || "HEAD~1", head || "HEAD")]);
   if (runs.has("cleanExit")) results.push(["clean state", runCleanExit(base || "HEAD~1", head || "HEAD")]);
@@ -526,6 +602,8 @@ function cmdDoctor() {
     ["cold start", enabled.coldStart, "a fresh clone runs from the repository alone"],
     ["clean exit", enabled.cleanExit, "a session leaves no debris and writes down where it got to"],
     ["instructions", enabled.instructions, "the instruction file stays a router, not a manual"],
+    ["boundaries", enabled.boundaries, "a pattern the code may not use lives nowhere it is banned from"],
+    ["thresholds", enabled.thresholds, "a scored metric stays at or above the floor declared for it"],
     ["release", enabled.release, "the version agrees across the manifest, the changelog and the tags"],
   ];
   // Spec 0007. "Enforced" alone was half the answer: a check can be configured
@@ -537,7 +615,7 @@ function cmdDoctor() {
   const key = new Map<string, keyof EnabledChecks>([
     ["proof markers", "proof"], ["work tracks", "tracks"], ["task gate", "tasks"], ["queue", "queue"],
     ["locked surfaces", "locked"], ["cold start", "coldStart"], ["clean exit", "cleanExit"],
-    ["instructions", "instructions"], ["release", "release"],
+    ["instructions", "instructions"], ["boundaries", "boundaries"], ["release", "release"],
   ]);
   for (const [name, on, what] of rows) {
     const check = key.get(name)!;
@@ -845,9 +923,23 @@ function cmdBrief() {
     }
   }
 
+  // A scoped brief carries the lanes this one is built on, as heads: an agent
+  // writing against a moving interface is the cost ordering exists to avoid.
+  let scoped = handoffs;
+  if (focus) {
+    const mine = handoffs.filter((h) => h.path.startsWith(`${focus}/`));
+    const waits = new Set(mine.flatMap((h) => parseDependencies(h.text).map((d) => d.path)));
+    scoped = [
+      ...mine,
+      ...handoffs
+        .filter((h) => !h.path.startsWith(`${focus}/`) && waits.has(h.path.split("/")[1]?.slice(5) ?? ""))
+        .map((h) => ({ ...h, head: true })),
+    ];
+  }
+
   const text = briefText({
     tracksText,
-    handoffs: focus ? handoffs.filter((h) => h.path.startsWith(`${focus}/`)) : handoffs,
+    handoffs: scoped,
     queue,
     progressText: cfg.cleanExit?.progressFile ? read(cfg.cleanExit.progressFile) : null,
     enabled: cfg.path ? enabledChecks(cfg) : {},
@@ -1218,6 +1310,16 @@ function closeTrack({
     );
   }
 
+  // Closing is a claim that the work stands. A lane whose foundation is still
+  // being poured is a claim about somebody else's unfinished work.
+  const handoffPath = join(ROOT, specsDir, lane, "handoff.md");
+  if (existsSync(handoffPath)) {
+    const indexText = existsSync(join(ROOT, index)) ? readFileSync(join(ROOT, index), "utf8") : "";
+    const live = liveTrackSpecDirs(indexText, specsDir).map((dir) => dir.slice(specsDir.length + 6));
+    const waiting = closingProblem(slug, parseDependencies(readFileSync(handoffPath, "utf8")), live);
+    if (waiting) die(`harnessimo: ${waiting}`);
+  }
+
   const number = lane.slice(0, 4);
   const title = /^#\s+\d{4}\s+—\s+(.+)$/m.exec(
     existsSync(join(ROOT, specsDir, lane, "spec.md"))
@@ -1273,6 +1375,12 @@ switch (command) {
 
   case "clean-exit":
     single("clean state", runCleanExit(positional[0] || "HEAD~1", positional[1] || "HEAD"));
+    break;
+  case "boundaries":
+    single("boundaries", runBoundaries());
+    break;
+  case "thresholds":
+    single("thresholds", runThresholds());
     break;
   case "instructions":
     single("the instruction files", runInstructions());

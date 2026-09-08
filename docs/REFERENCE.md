@@ -71,6 +71,36 @@ FAIL  cold start
 **Turn on:** `coldStart`, listing `requiredFiles`, `entryDocs` and the `commands` a newcomer
 runs. <!-- proof: src/coldstart.ts:coldStartProblems -->
 
+## 11. A quality number that quietly slipped
+
+*Comes from: Not from the course. Both repositories this package was extracted from invented this rule independently and wired it by hand.*
+
+*The evals still run. The number is a little lower every month, and no single month is the one anybody notices.*
+
+One repository keeps `evals/thresholds.json` — recall, groundedness, citation validity, each
+with a floor — and fails CI when a score drops below one. The other has a grounding gate with
+a pass mark. Both put the floors file out of the agent's reach, and that is the load-bearing
+half: a loop that can lower its own pass mark grades itself.
+
+```
+FAIL  thresholds
+  evals/results.json:1  recall_at_5
+      0.71 is below the floor of 0.8 declared in evals/thresholds.json
+    fix:  raise the score. Lowering the floor to pass is the move this check exists to catch
+```
+
+It does not run your scoring. Your command writes the results file; this reads it and
+compares. A metric with a floor that nobody measured fails too — a scoring step that did not
+run is not a scoring step that passed.
+
+**Turn on:** `thresholds`, naming `results`, `floors` and the `command` that produces the
+results. If the repository already declares `locked.paths` and the floors file is not among
+them, the check says so. Floors only: a metric where lower is better is the same rule
+mirrored, and inventing a direction on zero real cases would be a guess.
+<!-- proof: src/thresholds.ts:thresholdProblems -->
+
+---
+
 ## 3. A feature that takes four sessions
 
 *Comes from: Lecture 05 — continuity between sessions. The handoff shape is not from the course.*
@@ -229,6 +259,35 @@ finished", and this one fires while the work happens. `doctor` lists it apart fo
 reason, and `check` does not run it — a completion gate that depended on session state
 would be a gate nobody could reproduce.
 <!-- proof: src/tokens.ts:decideRead -->
+
+---
+
+## 10. A key, a colour or an import that belongs somewhere else
+
+*Comes from: Not from the course. Both repositories this package was extracted from wrote this rule by hand, differently, because there was nowhere to declare it.*
+
+*The rule is in someone's head, or in a script, or in a review comment nobody made this time.*
+
+One repository forbids the service-role key anywhere under `app/` — it bypasses row-level
+security, so a client-side use is a data leak wearing an ordinary import. It also forbids
+hard-coded colours in components, because design tokens live in one file. The other forbids
+placeholder markers in published content. Three rules, one shape: *this pattern, not in these
+files, for this reason.*
+
+```
+FAIL  boundaries
+  app/dashboard/page.tsx:14  service_role
+      the service-role key bypasses row-level security; it belongs on the server
+```
+
+The reason is required, and it is the whole point. A boundary that prints "matched
+/service_role/" says what happened; the next person needs to know what to do instead.
+
+**Turn on:** `boundaries`, listing rules of `pattern`, `paths` and `reason` (plus `allow` for
+the one legitimate place). This repository runs one on itself: an import in `src/` that is
+neither a `node:` builtin nor relative is a runtime dependency, which its constraints forbid
+— a rule that was prose a reviewer had to remember, and is now a line that fails.
+<!-- proof: src/boundaries.ts:boundaryProblems -->
 
 ---
 

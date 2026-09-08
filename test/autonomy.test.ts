@@ -7,7 +7,7 @@ import { LEVELS, addedBy, effectiveLevel, levelProblem, required, unbacked } fro
 
 const ALL = {
   proof: true, tracks: true, tasks: true, queue: true, locked: true,
-  coldStart: true, cleanExit: true, instructions: true, release: true,
+  coldStart: true, cleanExit: true, instructions: true, boundaries: true, thresholds: true, release: true,
 };
 
 test("each level requires everything the level below it does, and more", () => {

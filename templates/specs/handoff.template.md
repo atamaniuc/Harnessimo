@@ -26,6 +26,14 @@ Leave the list as it is when nobody else is working here. Declaring nothing is
 not an error; two lanes declaring the same path is, and `harnessimo tracks`
 says so.
 
+## Depends on
+
+The lanes this one is built on, by slug — leave it empty when it stands alone.
+`harnessimo tracks` refuses a slug that names no lane and refuses a cycle, and
+this lane cannot be closed while one it waits on is still open.
+
+- <the lanes this one waits on>
+
 ## State
 
 What is built and proven, what is written but unproven, what has not been started. Name

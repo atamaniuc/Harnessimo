@@ -68,7 +68,7 @@ failure — instead of a cheerful summary of things that did not happen.
 | **[Spec Kit](https://github.com/github/spec-kit)** (GitHub) | turning an intent into a spec, a plan and a task list | nothing re-runs the acceptance criteria; the task list is prose | a ticked box has to name a check, and the check has to pass |
 | **[BMAD](https://github.com/bmad-code-org/BMAD-METHOD)** | the whole delivery loop with specialised perspectives | "verify" is a phase an agent performs and reports on | the queue: only a passing command writes `passing`, and CI re-runs them |
 | **Copilot coding agent, Devin, Jules** | autonomy at scale, real sandboxes, PR-shaped output | verification is your existing CI plus human review | the checks that CI does not have because nobody writes them |
-| **Claude Code, Codex, Cursor, Gemini CLI** | the harness *mechanism* — hooks, instruction files, tool access | they supply the mechanism, not the rules; what to enforce is your problem | nine rules worth enforcing, and the wiring to run them |
+| **Claude Code, Codex, Cursor, Gemini CLI** | the harness *mechanism* — hooks, instruction files, tool access | they supply the mechanism, not the rules; what to enforce is your problem | eleven rules worth enforcing, and the wiring to run them |
 | **Danger JS, custom CI scripts** | arbitrary rules at PR time, if you write them | you write and maintain them, per repository, forever | the same rules, written once, tested, versioned, shared |
 
 Two things follow from that table.
@@ -144,7 +144,7 @@ carries a provenance statement naming the commit and workflow that produced it �
 installs can break the project it guards, and there is no supply chain under it to audit but
 this one.
 
-**It is held to its own standard.** All nine checks run against this repository, including
+**It is held to its own standard.** Ten of the eleven run against this repository, including
 `--reverify`, which re-runs every claim that says it passes, and a cold start that clones the
 repository into an empty directory and runs the commands the documentation gives a newcomer.
 

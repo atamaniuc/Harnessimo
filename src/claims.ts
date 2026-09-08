@@ -18,6 +18,7 @@ import { laneDirectories } from "./track.ts";
 
 /** The heading a lane declares under, and the shapes a declaration may take. */
 const OWNS_HEADING = /^#{2,6}\s+owns\s*$/i;
+const DEPENDS_HEADING = /^#{2,6}\s+depends\s+on\s*$/i;
 const HEADING = /^#{1,6}\s/;
 const LIST_ITEM = /^\s*[-*]\s+(.*)$/;
 
@@ -44,18 +45,23 @@ export interface LaneClaims {
  * templates can show the shape without declaring anything.
  */
 export function parseClaims(handoffText: string): Claim[] {
-  const claims: Claim[] = [];
+  return parseSection(handoffText, OWNS_HEADING);
+}
+
+/** The list items under one heading, minus the template placeholders. */
+function parseSection(text: string, heading: RegExp): Claim[] {
+  const found: Claim[] = [];
   let inSection = false;
   let inFence = false;
 
-  handoffText.split("\n").forEach((raw, index) => {
+  text.split("\n").forEach((raw, index) => {
     if (raw.trimStart().startsWith("```")) {
       inFence = !inFence;
       return;
     }
     if (inFence) return;
     if (HEADING.test(raw)) {
-      inSection = OWNS_HEADING.test(raw.trim());
+      inSection = heading.test(raw.trim());
       return;
     }
     if (!inSection) return;
@@ -64,10 +70,10 @@ export function parseClaims(handoffText: string): Claim[] {
     if (!item) return;
     const path = item[1]!.replace(/`/g, "").trim();
     if (!path || /[<>]/.test(path)) return; // a placeholder declares nothing
-    claims.push({ path, line: index + 1 });
+    found.push({ path, line: index + 1 });
   });
 
-  return claims;
+  return found;
 }
 
 /**
@@ -188,4 +194,122 @@ export function duplicateNumbers(names: string[], specsDir: string): Problem[] {
     });
   }
   return problems;
+}
+
+/**
+ * The lanes a lane is waiting on, declared beside its claims.
+ *
+ * Collision is one half of working in parallel; ordering is the other. When
+ * one lane builds on another's interface, the second agent is writing against
+ * ground that is still moving, and the cost lands as rework rather than as a
+ * merge conflict — which is why nothing catches it today.
+ *
+ * Slugs, not numbers: a number is an allocation detail, and a dependency
+ * written as `0006` says nothing to the person reading it.
+ */
+export function parseDependencies(handoffText: string): Claim[] {
+  return parseSection(handoffText, DEPENDS_HEADING);
+}
+
+/** A lane as the dependency rules see it: its slug, where it was declared, what it waits on. */
+export interface LaneDeps {
+  slug: string;
+  file: string;
+  deps: Claim[];
+}
+
+/**
+ * Dependencies that cannot be satisfied: a lane that does not exist, a lane
+ * depending on itself, or a cycle.
+ *
+ * A dependency naming nothing is the same failure as a handoff link that no
+ * longer resolves — a marker the next session trusts. A cycle is worse: every
+ * lane in it is waiting for another, and nobody can honestly start.
+ */
+export function checkDependencies(lanes: LaneDeps[], known: string[]): Problem[] {
+  const exists = new Set(known);
+  const problems: Problem[] = [];
+  const graph = new Map<string, string[]>();
+
+  for (const lane of [...lanes].sort((a, b) => a.slug.localeCompare(b.slug))) {
+    const edges: string[] = [];
+    for (const dep of lane.deps) {
+      if (dep.path === lane.slug) {
+        problems.push({
+          file: lane.file,
+          line: dep.line,
+          target: dep.path,
+          reason: "a lane cannot wait on itself",
+        });
+        continue;
+      }
+      if (!exists.has(dep.path)) {
+        problems.push({
+          file: lane.file,
+          line: dep.line,
+          target: dep.path,
+          reason:
+            `no lane with this slug — a dependency naming nothing is a marker the next session ` +
+            `trusts\n    fix:  name one of ${known.join(", ") || "(no other lanes)"}, or drop the line`,
+        });
+        continue;
+      }
+      edges.push(dep.path);
+    }
+    graph.set(lane.slug, edges);
+  }
+
+  for (const cycle of cycles(graph)) {
+    const lane = lanes.find((l) => l.slug === cycle[0]);
+    problems.push({
+      file: lane?.file ?? "specs",
+      line: lane?.deps.find((d) => d.path === cycle[1])?.line ?? 1,
+      target: cycle[0]!,
+      reason:
+        `waits on ${cycle.slice(1).join(", which waits on ")}, which waits on ${cycle[0]} — ` +
+        "every lane in the cycle is waiting for another and none of them can honestly start",
+    });
+  }
+
+  return problems;
+}
+
+/** Each dependency cycle once, starting from its alphabetically first lane. */
+function cycles(graph: Map<string, string[]>): string[][] {
+  const found: string[][] = [];
+  const seen = new Set<string>();
+
+  const walk = (node: string, path: string[]): void => {
+    const at = path.indexOf(node);
+    if (at !== -1) {
+      const cycle = path.slice(at);
+      const key = [...cycle].sort().join(">");
+      if (!seen.has(key)) {
+        seen.add(key);
+        found.push(cycle);
+      }
+      return;
+    }
+    for (const next of graph.get(node) ?? []) walk(next, [...path, node]);
+  };
+
+  for (const node of [...graph.keys()].sort()) walk(node, []);
+  return found;
+}
+
+/**
+ * Why this lane cannot be closed yet: it was built on lanes that are not
+ * finished.
+ *
+ * Closing is a claim that the work stands. A lane whose foundation is still
+ * being poured is a claim about somebody else's unfinished work.
+ */
+export function closingProblem(slug: string, deps: Claim[], liveSlugs: string[]): string | null {
+  const live = new Set(liveSlugs.filter((other) => other !== slug));
+  const waiting = deps.map((d) => d.path).filter((dep) => live.has(dep));
+  if (waiting.length === 0) return null;
+  return (
+    `${slug} still waits on ${waiting.join(", ")}, which ${waiting.length === 1 ? "is" : "are"} still open\n` +
+    `  fix:  close ${waiting.join(" and ")} first, or drop the dependency if it stopped being one`
+  );
 }
