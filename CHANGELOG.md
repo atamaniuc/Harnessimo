@@ -7,6 +7,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.5.2] — 2026-09-08
+
+### Fixed
+
+- The `check` report printed its failures on stderr and its passes on stdout. Under a log
+  collector the two buffers interleave, so a problem appeared under a different check's
+  name — a report that misattributes a failure is worse than no report. One stream now;
+  the exit code still carries the verdict.
+- The CI job that runs the compiled CLI checked out shallowly, so the release check
+  correctly reported that it could not see any tags, and the build went red for a repository
+  that was fine. The job fetches tags.
+
+### Added
+
+- `test/workflows.test.ts`: every job that runs `check` must check out with `fetch-depth: 0`.
+  Twice now a workflow has starved a check of the evidence it reads, and a requirement that
+  lives in each job's memory is a requirement that gets missed.
+
 ## [0.5.1] — 2026-09-08
 
 ### Fixed
@@ -148,6 +166,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.5.2]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.2
 [0.5.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.1
 [0.5.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.0
 [0.4.4]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.4.4

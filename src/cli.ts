@@ -382,11 +382,18 @@ function cmdCheck() {
       ok(`  ok    ${name.padEnd(14)} ${result.summary}`);
     } else {
       failed += result.problems.length;
-      console.error(`  FAIL  ${name}`);
-      console.error(formatProblems(result.problems).replace(/^/gm, "    "));
+      // One stream for the whole report. Split across stdout and stderr, the
+      // two buffers interleave under a log collector and a problem prints
+      // under a different check's name — a report that lies about which rule
+      // failed is worse than no report. The exit code carries the failure.
+      ok(`  FAIL  ${name}`);
+      ok(formatProblems(result.problems).replace(/^/gm, "    "));
     }
   }
-  if (failed > 0) die(`\nharnessimo: ${failed} problem(s).`);
+  if (failed > 0) {
+    ok(`\nharnessimo: ${failed} problem(s).`);
+    process.exit(1);
+  }
   ok("\nharnessimo: every configured check passes.");
 }
 

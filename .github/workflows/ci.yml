@@ -65,6 +65,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # This job runs `check`, and the release check reads git tags: a
+          # shallow checkout has none, so it would report that it cannot see
+          # them rather than pass on a guess.
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: 22
