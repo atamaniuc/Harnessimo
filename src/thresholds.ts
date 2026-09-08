@@ -62,12 +62,20 @@ export function thresholdProblems({
   for (const [metric, floor] of Object.entries(floors)) {
     if (metric.startsWith("$")) continue; // a comment key, as the config files use
     if (typeof floor !== "number") {
-      problems.push({
-        file: floorsPath,
-        line: 1,
-        target: metric,
-        reason: `a floor is a number, and this one is ${describe(floor)}`,
-      });
+      // A real floors file carries metadata beside its floors — the first one
+      // this was pointed at has a `version` string. A non-number is not a
+      // floor, so it is skipped; unless the same key was *scored*, which makes
+      // it demonstrably a metric whose floor is broken rather than absent.
+      if (typeof results[metric] === "number") {
+        problems.push({
+          file: floorsPath,
+          line: 1,
+          target: metric,
+          reason:
+            `was scored as a number and its floor is ${describe(floor)} — a floor that cannot be ` +
+            "compared is a floor that never held",
+        });
+      }
       continue;
     }
 

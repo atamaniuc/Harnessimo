@@ -7,6 +7,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.10.1] — 2026-09-08
+
+### Fixed
+
+- **Metadata beside the floors is no longer read as a broken floor.** The first real floors
+  file this was pointed at documents itself in place — a `version` string next to five
+  numbers — and 0.10.0 would have called it an error. A value that is not a number is not a
+  floor and is skipped; unless the same key was actually scored, which makes it a metric
+  whose floor cannot be compared, and that is still caught.
+
 ## [0.10.0] — 2026-09-08
 
 Two checks, both of them rules that existed already — in scripts, in review habits, in
@@ -388,6 +398,7 @@ by hand because the tool could not say it.
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.10.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.1
 [0.10.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.0
 [0.9.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.1
 [0.9.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.0

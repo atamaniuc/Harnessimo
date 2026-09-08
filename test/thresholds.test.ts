@@ -35,14 +35,28 @@ test("a scoring step that did not run is not a scoring step that passed", () => 
   assert.match(problems[0]!.reason, /run `npm run evals`/, "the command is named, and never run from here");
 });
 
-test("floors that are not numbers are refused, and a comment key is not a floor", () => {
+test("metadata beside the floors is not a broken floor", () => {
+  // The first real floors file this was pointed at carries a `version` string
+  // next to five numbers. A non-number is not a floor, and calling it one
+  // would fail every project that documents its thresholds file in place.
+  assert.deepEqual(
+    thresholdProblems({
+      ...paths,
+      floors: { $comment: "why these numbers", version: "2026-08-21.1", recall_at_5: 0.8 },
+      results: { recall_at_5: 0.9 },
+    }),
+    [],
+  );
+});
+
+test("a floor that cannot be compared is caught where the key was actually scored", () => {
   const problems = thresholdProblems({
     ...paths,
-    floors: { $comment: "why these numbers", recall_at_5: "high" },
+    floors: { recall_at_5: "0.8" },
     results: { recall_at_5: 0.9 },
   });
-  assert.equal(problems.length, 1, "$comment is documentation, not a metric");
-  assert.match(problems[0]!.reason, /a floor is a number, and this one is a string/);
+  assert.equal(problems.length, 1, "the key was scored, so it is a metric and its floor is broken");
+  assert.match(problems[0]!.reason, /a floor that cannot be compared is a floor that never held/);
 });
 
 test("floors within reach of the agent are reported, but only where success is already declared", () => {
