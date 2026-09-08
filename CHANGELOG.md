@@ -7,6 +7,29 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.6.0] — 2026-09-08
+
+### Added
+
+- `harnessimo budget` and `harnessimo guard read` — the first rules here that fire while the
+  work happens rather than at the end of it. The guard refuses a second read of a file whose
+  size and mtime have not changed, and the budget reports what a session read, what it
+  repeated, and what the refusals saved. Every token figure is an estimate at four bytes per
+  token and is printed as one: the model's context is not visible from here, and a precise
+  number nobody can verify is worse than an approximate one that admits it.
+- `tokens` in the configuration, generated into the reference like every other section.
+  Absent means the guard does not run, and `doctor` now lists it **apart from the nine
+  checks** — it answers a different question, and printing it in the same list would be the
+  overstatement `doctor` exists to avoid.
+
+### Changed
+
+- Six configuration keys had no description in the JSON schema, so nothing could document
+  them and editors completed them blindly. They have one now.
+- The documentation is eight pages with one stated job each, held to that by
+  `docs/contracts.json`; `CONFIGURATION` is generated from the schema and `llms.txt` from
+  the pages, both drift-checked. Retired URLs redirect in both languages.
+
 ## [0.5.4] — 2026-09-08
 
 ### Fixed
@@ -203,6 +226,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.6.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.6.0
 [0.5.4]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.4
 [0.5.3]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.3
 [0.5.2]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.2

@@ -9,7 +9,7 @@ tracks, the task gate, the queue, locked surfaces, cold start, clean exit, the
 instruction-file limit and the release check — all implemented, tested, and enforced
 against this repository by `npm run check`.
 
-- 148 tests, zero runtime dependencies. Written in TypeScript (strict); Node runs the
+- 175 tests, zero runtime dependencies. Written in TypeScript (strict); Node runs the
   sources directly through type stripping, so tests and the CLI need no install, while
   `npm run build` emits `dist/` with declarations for consumers. `test/surface.types.ts`
   compiles a real consumer against those declarations, because a test suite does not
@@ -51,11 +51,18 @@ against this repository by `npm run check`.
 
 0. Nothing blocking. Registry, releases, tags, changelog and the docs site all agree.
 
-1. **Spec 0001, metric thresholds — a finding, not a design.** Both source repositories
+1. **Spec 0004, token economics — shipped, two guards deferred.** `harnessimo budget`
+   reports what a session read and repeated; `harnessimo guard read` refuses a second read
+   of an unchanged file. This is the first rule here that fires while the work happens
+   rather than at the end of it, and it is deliberately **not** a tenth check: `check` does
+   not run it and `doctor` lists it apart. Two guards of the same shape are specified and
+   not built — a file written outside declared conventions, and a destructive command
+   needing acknowledgement.
+2. **Spec 0001, metric thresholds — a finding, not a design.** Both source repositories
    invented the same rule independently (a scored metric with a declared floor, in a file
    the agent may not edit) and this package cannot express it. Open question in the
    handoff: a tenth check, or a documented use of the queue.
-2. Watch whether the release check earns its place in a repository that is not this one —
+3. Watch whether the release check earns its place in a repository that is not this one —
    it is the only check born from this project's own failure rather than from the lectures.
 
 ## Settled recently
