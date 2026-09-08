@@ -1,3 +1,4 @@
+export type * from "./types.ts";
 export { checkTarget, findMarkers, isSyntaxExample, verifyProofs } from "./proof.ts";
 export { checkTracks, checkHandoffRefs, liveTrackSpecDirs, trackLines } from "./tracks.ts";
 export { checkTaskGate, verifyTaskGates, taskBlocks } from "./tasks.ts";

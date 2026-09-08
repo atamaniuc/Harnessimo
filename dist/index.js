@@ -1,5 +1,3 @@
-// Public API, for a project that wants a rule inside its own test suite rather
-// than only at the command line.
 export { checkTarget, findMarkers, isSyntaxExample, verifyProofs } from "./proof.js";
 export { checkTracks, checkHandoffRefs, liveTrackSpecDirs, trackLines } from "./tracks.js";
 export { checkTaskGate, verifyTaskGates, taskBlocks } from "./tasks.js";

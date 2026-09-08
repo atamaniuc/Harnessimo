@@ -38,6 +38,16 @@ test("the entry point re-exports every rule module", () => {
   }
 });
 
+test("the built declarations carry the types, not only the functions", () => {
+  // The failure this catches, found by compiling a consumer against a real
+  // install: every function exported, and not one of the types they take.
+  // The extension is whatever tsc emits — checked against real consumers on
+  // nodenext and bundler resolution, both of which resolve it. What matters is
+  // that the line is there at all.
+  const declarations = readFileSync(join(ROOT, "dist/index.d.ts"), "utf8");
+  assert.match(declarations, /export type \* from "\.\/types\.(ts|js)"/);
+});
+
 test("the package points consumers at what the build produces", () => {
   assert.equal(pkg.types, "./dist/index.d.ts");
   assert.equal(pkg.exports["."]!.types, "./dist/index.d.ts");
