@@ -13,7 +13,7 @@ nav:
   - Why this exists: WHY.md
   - Guide (15 min): GUIDE.md
   - Use cases: USE-CASES.md
-  - SDD: SDD.md
+  - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
   - The standard: STANDARD.md
   - Adopting an existing repo: ADOPTING.md
   - Contributing: https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md
@@ -67,7 +67,7 @@ plugins:
             Why this exists: Зачем это
             Guide (15 min): Гайд (15 минут)
             Use cases: Сценарии
-            SDD: SDD
+            SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD — что взято из OpenSpec, Spec Kit, BMAD
             The standard: Стандарт
             Adopting an existing repo: Внедрение в существующий репозиторий
             Contributing: Как участвовать
