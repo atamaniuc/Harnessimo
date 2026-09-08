@@ -37,9 +37,12 @@ const PLAYER = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciin
     autoPlay: true, loop: true, idleTimeLimit: 1.2, terminalFontSize: "14px", theme: "nord",
   });
 </script>
+`;
 
-Nobody scripted that: \`npm run demo\` runs those commands in a throwaway repository and
-records what they print.`;
+const PLAYER_CAPTION: Record<string, string> = {
+  en: "Nobody scripted that: `npm run demo` runs those commands in a throwaway repository and\nrecords what they print.",
+  ru: "Это никто не писал вручную: `npm run demo` запускает эти команды во временном\nрепозитории и записывает то, что они напечатали.",
+};
 
 /** The install block, as tabs — one per package manager. */
 const INSTALL_TABS = [
@@ -61,8 +64,22 @@ const INSTALL_TABS = [
   .join("\n")
   .trimEnd();
 
-export function siteHome(readme: string): string {
+/** Languages this generates a home page for: the README, and its translations. */
+export const LANGUAGES = [
+  { locale: "en", readme: "README.md", page: "docs/index.md" },
+  { locale: "ru", readme: "README.ru.md", page: "docs/index.ru.md" },
+];
+
+export function siteHome(readme: string, locale = "en"): string {
   let text = readme;
+
+  // The site has a language switcher in its header, so the link the README
+  // files carry for each other is noise there.
+  const langStart = text.indexOf("<!-- lang:start -->");
+  const langEnd = text.indexOf("<!-- lang:end -->");
+  if (langStart !== -1 && langEnd !== -1) {
+    text = text.slice(0, langStart) + text.slice(langEnd + "<!-- lang:end -->".length).trimStart();
+  }
 
   const demoStart = text.indexOf("<!-- demo:start -->");
   const demoEnd = text.indexOf("<!-- demo:end -->");
@@ -70,7 +87,10 @@ export function siteHome(readme: string): string {
     throw new Error("README.md has no <!-- demo:start --> … <!-- demo:end --> region");
   }
   text =
-    text.slice(0, demoStart) + PLAYER + text.slice(demoEnd + "<!-- demo:end -->".length);
+    text.slice(0, demoStart) +
+    PLAYER +
+    (PLAYER_CAPTION[locale] ?? PLAYER_CAPTION.en) +
+    text.slice(demoEnd + "<!-- demo:end -->".length);
 
   const start = text.indexOf("<!-- install:start -->");
   const end = text.indexOf("<!-- install:end -->");
@@ -82,34 +102,39 @@ export function siteHome(readme: string): string {
   // Site pages link to each other, not out to the published site. Named
   // explicitly so a language root like /ru/ is left alone — that is a site, not
   // a page, and rewriting it produces a link to nothing.
+  // Both languages: a Russian page links to Russian pages, and the plugin
+  // resolves the plain name inside the language it is building.
   text = text.replace(
-    new RegExp(`${SITE}(WHY|GUIDE|USE-CASES|SDD|STANDARD|ADOPTING)/`, "g"),
+    new RegExp(`${SITE}(?:[a-z]{2}/)?(WHY|GUIDE|USE-CASES|SDD|STANDARD|ADOPTING)/`, "g"),
     "$1.md",
   );
   text = text.replace(`(${SITE})`, "(index.md)");
   // The image lives under docs/, so its path loses that prefix.
   text = text.replace(/src="docs\/assets\//g, 'src="assets/');
   // Files that exist in the repository but not on the site.
-  text = text.replace(/\]\((LICENSE|CONTRIBUTING\.md|package\.json)\)/g, `](${REPO}$1)`);
+  text = text.replace(
+    /\]\((LICENSE|CONTRIBUTING\.md|package\.json|README\.md|README\.ru\.md)\)/g,
+    `](${REPO}$1)`,
+  );
 
   return HEADER + text;
 }
 
-const readme = readFileSync(join(ROOT, "README.md"), "utf8");
-const generated = siteHome(readme);
-const target = join(ROOT, "docs", "index.md");
-
-if (process.argv.includes("--check")) {
-  const current = readFileSync(target, "utf8");
-  if (current !== generated) {
-    console.error(
-      "docs/index.md is not what README.md generates.\n" +
-        "  fix:  npm run docs:sync, and commit the result with the README change",
-    );
-    process.exit(1);
+const checking = process.argv.includes("--check");
+for (const language of LANGUAGES) {
+  const generated = siteHome(readFileSync(join(ROOT, language.readme), "utf8"), language.locale);
+  const target = join(ROOT, language.page);
+  if (checking) {
+    if (readFileSync(target, "utf8") !== generated) {
+      console.error(
+        `${language.page} is not what ${language.readme} generates.\n` +
+          "  fix:  npm run docs:sync, and commit the result with the README change",
+      );
+      process.exit(1);
+    }
+    console.log(`${language.page} matches ${language.readme}`);
+  } else {
+    writeFileSync(target, generated);
+    console.log(`wrote ${language.page} from ${language.readme}`);
   }
-  console.log("docs/index.md matches README.md");
-} else {
-  writeFileSync(target, generated);
-  console.log("wrote docs/index.md from README.md");
 }

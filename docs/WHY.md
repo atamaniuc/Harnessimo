@@ -117,7 +117,7 @@ this one.
 `--reverify`, which re-runs every claim that says it passes, and a cold start that clones the
 repository into an empty directory and runs the commands the documentation gives a newcomer.
 
-**113 tests, and every rule has one proving it fires on bad input.** A rule that has only
+**115 tests, and every rule has one proving it fires on bad input.** A rule that has only
 ever passed is an assumption wearing a rule's clothes. The tests run with nothing installed.
 
 **Used, not only demonstrated.** Two public repositories deleted their own versions of these

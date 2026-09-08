@@ -34,7 +34,6 @@ walks your git history. <!-- proof: package.json:"files" -->
     autoPlay: true, loop: true, idleTimeLimit: 1.2, terminalFontSize: "14px", theme: "nord",
   });
 </script>
-
 Nobody scripted that: `npm run demo` runs those commands in a throwaway repository and
 records what they print.
 
@@ -239,7 +238,7 @@ entitled to make:
 - **It is held to its own standard.** All eight checks run against this repository, including
   a cold start that clones it into an empty directory and runs the documented commands, and
   a re-verification of every passing claim. The badge above is that.
-- **113 tests**, and every rule has one that proves it fires on bad input — a rule that only
+- **115 tests**, and every rule has one that proves it fires on bad input — a rule that only
   passes is an assumption wearing a rule's clothes.
 - **Used in production, not only demonstrated.** Two repositories deleted their own versions
   of these checks to adopt it; both are linked below and both are public.
@@ -285,7 +284,7 @@ header.
 ## Development
 
 ```bash
-npm test          # 113 tests, no install — Node runs the TypeScript directly
+npm test          # 115 tests, no install — Node runs the TypeScript directly
 npm run check     # tests, then this repo's own checks
 npm run typecheck # tsc, strict, over src and test (needs npm i first)
 npm run build     # what a consumer installs: dist/, with declarations

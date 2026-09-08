@@ -7,18 +7,20 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { siteHome } from "../scripts/site-home.ts";
+import { LANGUAGES, siteHome } from "../scripts/site-home.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const readme = readFileSync(join(ROOT, "README.md"), "utf8");
 
-test("the site home page is what the README generates", () => {
-  const current = readFileSync(join(ROOT, "docs/index.md"), "utf8");
-  assert.equal(
-    current,
-    siteHome(readme),
-    "docs/index.md has drifted from README.md — run `npm run docs:sync`",
-  );
+test("every language's home page is what its README generates", () => {
+  for (const language of LANGUAGES) {
+    const source = readFileSync(join(ROOT, language.readme), "utf8");
+    assert.equal(
+      readFileSync(join(ROOT, language.page), "utf8"),
+      siteHome(source, language.locale),
+      `${language.page} has drifted from ${language.readme} — run \`npm run docs:sync\``,
+    );
+  }
 });
 
 test("the generated page links inside the site, not back out to it", () => {
