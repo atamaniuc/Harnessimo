@@ -134,3 +134,32 @@ test("guard allows anything when the repository has not asked for it", () => {
   assert.equal(second.status, 0, "a rule nobody configured must not block anybody");
   assert.match(second.out, /not configured/);
 });
+
+// Spec 0005, criterion 7 — the one that matters: a lane this tool creates has
+// to survive this tool's own rules. It did not, at first: the tasks template
+// showed a ticked example, and the task gate rejected it. A template that
+// fails the rule it teaches is a template nobody should trust.
+test("a lane opened by the tool passes the tool's own checks, and closing it distils", () => {
+  const dir = fixture(BASE);
+  run(dir, "init", "--force");
+
+  const opened = run(dir, "track", "new", "checkout-totals", "--title", "Checkout totals");
+  assert.equal(opened.status, 0, opened.out);
+  // The number depends on what the fixture already has, and asserting it here
+  // would be testing the fixture rather than the tool.
+  assert.match(opened.out, /specs\/\d{4}-checkout-totals\/spec\.md/);
+  assert.match(opened.out, /specs\/\d{4}-checkout-totals\/tasks\.md/);
+
+  const checked = run(dir, "check");
+  assert.equal(checked.status, 0, `a scaffolded lane must pass:\n${checked.out}`);
+
+  const second = run(dir, "track", "new", "checkout-totals");
+  assert.notEqual(second.status, 0, "the same work must not be opened twice");
+
+  const bare = run(dir, "track", "close", "checkout-totals");
+  assert.notEqual(bare.status, 0, "a close that writes nothing down is an archive move");
+
+  const closed = run(dir, "track", "close", "checkout-totals", "--outcome", "It rounds per currency.");
+  assert.equal(closed.status, 0, closed.out);
+  assert.equal(run(dir, "check").status, 0, "and it still passes with the handoff gone");
+});

@@ -7,6 +7,29 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.7.0] — 2026-09-08
+
+### Added
+
+- `harnessimo track new <slug>` and `harnessimo track close <slug> --outcome "..."` — the
+  lane lifecycle, which until now was a convention held together by memory. The command
+  writes only what is mechanical: the next free number, the directory, the templates copied
+  unchanged, and the line in the track index that `harnessimo brief` reads at the start of
+  every session. It does not draft a spec, judge its shape, or have an opinion on what a
+  lane contains — a generator that writes prose turns a project's convention into this
+  tool's property.
+- `templates/specs/tasks.template.md`, so a scaffolded lane has the task list the task gate
+  reads. Its first draft showed a ticked example and the gate rejected it, which is the test
+  that matters: a lane this tool creates has to survive this tool's own rules.
+
+### Changed
+
+- The positioning says what this is: **spec-driven development, and the harness that makes
+  it stick.** Both halves were always here — a lane is a contract, the checks decide when it
+  is met — but the front page led with the checks alone, which described half the tool. It
+  works on an empty repository and on one with years of history; nothing has to be rewritten
+  to start.
+
 ## [0.6.0] — 2026-09-08
 
 ### Added
@@ -226,6 +249,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.7.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.7.0
 [0.6.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.6.0
 [0.5.4]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.4
 [0.5.3]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.3

@@ -51,10 +51,18 @@ test("the checks the docs count are the checks the code has", () => {
 
   // The site description is baked into every page's meta tag and into search
   // results, where a wrong number is read by people who never open the page.
+  // The count has to be right wherever in the sentence it sits: the rule is
+  // "do not miscount", not "open with the number".
+  const description = /^site_description:.*$/m.exec(read("mkdocs.yml"))?.[0] ?? "";
   assert.match(
-    read("mkdocs.yml"),
-    new RegExp(`^site_description: ${NUMBER[count]!.en} checks `, "im"),
+    description,
+    new RegExp(`\\b${NUMBER[count]!.en} checks\\b`, "i"),
     `mkdocs.yml describes the site as something other than ${NUMBER[count]!.en} checks`,
+  );
+  assert.doesNotMatch(
+    description,
+    new RegExp(`\\b${wrong.en} checks\\b`, "i"),
+    `mkdocs.yml still says ${wrong.en} checks`,
   );
 
   for (const page of english) {

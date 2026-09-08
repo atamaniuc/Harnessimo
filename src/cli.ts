@@ -9,7 +9,7 @@
 // and "invalid" leaves them guessing.
 
 import { execFileSync, execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,6 +36,17 @@ import { detectConfig } from "./detect.ts";
 import { HOOKS_DIR, HOOK_PATH, hookScript, hookStatus } from "./hooks.ts";
 import { agentContract, briefJson, briefText, handoffPaths, mergeSessionStartHook } from "./brief.ts";
 import { DEFAULT_WINDOW_MINUTES, decideRead, emptyState, ledger, ledgerReport } from "./tokens.ts";
+import {
+  fillTemplate,
+  findLane,
+  indexLine,
+  nextNumber,
+  outcomeEntry,
+  slugProblem,
+  withLine,
+  withOutcome,
+  withoutLane,
+} from "./track.ts";
 import type {
   ReadState,
   AgentSettings,
@@ -809,6 +820,7 @@ usage: harnessimo <command> [options]
   instructions           the instruction file is still a router, not a manual
   release                the version agrees across manifest, changelog and tags
   brief [--json]         what a session should read first: tracks, handoffs, queue
+  track <sub> <slug>     new [--title] | close --outcome — open and close a lane
   budget [--reset]       what this session read, and what it read twice
   guard read <path>      refuse a re-read of a file that has not changed (exit 2)
   agent                  the contract to paste into any agent's instruction file
@@ -910,6 +922,133 @@ function cmdGuard(): void {
   process.exit(2);
 }
 
+// ---- the lane lifecycle (spec 0005)
+//
+// Only the mechanical half. The next free number, the directory, the templates
+// copied unchanged, the index line the session brief reads. What the lane is
+// for, and what done means, stays the human's — a generator that writes prose
+// turns a convention into this tool's property.
+
+/** The value after a flag: `--title "Checkout totals"`. */
+function flagValue(name: string): string | undefined {
+  const at = args.indexOf(name);
+  return at === -1 ? undefined : args[at + 1];
+}
+
+function trackPaths(): { specsDir: string; index: string; log: string } {
+  const cfg = config();
+  if (!cfg.tracks) die("harnessimo: no `tracks` section in harnessimo.config.json.");
+  return {
+    specsDir: cfg.tracks.specsDir,
+    index: cfg.tracks.file,
+    log: cfg.tracks.log,
+  };
+}
+
+function cmdTrack(): void {
+  const sub = positional[0];
+  const slug = positional[1];
+  if ((sub !== "new" && sub !== "close") || !slug) {
+    die(
+      "harnessimo: usage —\n" +
+        '  harnessimo track new <slug> [--title "..."]\n' +
+        '  harnessimo track close <slug> --outcome "what came out of it"',
+    );
+  }
+
+  const { specsDir, index, log } = trackPaths();
+  const dir = join(ROOT, specsDir);
+  const existing = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name) : [];
+  const lane = findLane(existing, slug);
+
+  if (sub === "close") return closeTrack({ slug, lane, specsDir, index, log });
+
+  const bad = slugProblem(slug, specsDir);
+  if (bad) die(`harnessimo: ${bad.target} — ${bad.reason}`);
+  if (lane) die(`harnessimo: ${specsDir}/${lane} already exists.\n  fix:  pick another slug, or work in that lane`);
+
+  const number = nextNumber(existing);
+  // A title nobody gave is the slug read back as words: wrong often enough to
+  // be edited, close enough to be useful, and never invented from nothing.
+  const title = flagValue("--title") ?? slug.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
+  const laneDir = join(dir, `${number}-${slug}`);
+  mkdirSync(laneDir, { recursive: true });
+
+  const written: string[] = [];
+  for (const [template, file] of [
+    ["spec.template.md", "spec.md"],
+    ["tasks.template.md", "tasks.md"],
+    ["handoff.template.md", "handoff.md"],
+  ] as const) {
+    const source = join(PACKAGE_ROOT, "templates", "specs", template);
+    if (!existsSync(source)) continue;
+    writeFileSync(join(laneDir, file), fillTemplate(readFileSync(source, "utf8"), { number, title }));
+    written.push(`${specsDir}/${number}-${slug}/${file}`);
+  }
+
+  const indexPath = join(ROOT, index);
+  const date = new Date().toISOString().slice(0, 10);
+  writeFileSync(
+    indexPath,
+    withLine(readFileSync(indexPath, "utf8"), indexLine({ number, slug, title, specsDir, date })),
+  );
+
+  for (const file of written) ok(`  + ${file}`);
+  ok(`  ~ ${index}`);
+  ok(
+    `\nharnessimo: lane ${number} is open. Write the acceptance criteria first — a criterion\n` +
+      "that cannot run does not exist, and the checks will hold you to that one.",
+  );
+}
+
+function closeTrack({
+  slug,
+  lane,
+  specsDir,
+  index,
+  log,
+}: {
+  slug: string;
+  lane: string | undefined;
+  specsDir: string;
+  index: string;
+  log: string;
+}): never | void {
+  if (!lane) die(`harnessimo: no lane with the slug "${slug}" in ${specsDir}/`);
+  const outcome = flagValue("--outcome");
+  if (!outcome) {
+    die(
+      "harnessimo: closing a track is a distillation, not an archive move.\n" +
+        '  fix:  harnessimo track close ' + slug + ' --outcome "what came out of it, in a sentence"',
+    );
+  }
+
+  const number = lane.slice(0, 4);
+  const title = /^#\s+\d{4}\s+—\s+(.+)$/m.exec(
+    existsSync(join(ROOT, specsDir, lane, "spec.md"))
+      ? readFileSync(join(ROOT, specsDir, lane, "spec.md"), "utf8")
+      : "",
+  )?.[1]?.trim();
+
+  const logPath = join(ROOT, log);
+  writeFileSync(
+    logPath,
+    withOutcome(readFileSync(logPath, "utf8"), outcomeEntry(title ?? slug, number, outcome)),
+  );
+
+  const indexPath = join(ROOT, index);
+  writeFileSync(indexPath, withoutLane(readFileSync(indexPath, "utf8"), specsDir, lane));
+
+  // The spec and its tasks stay: git carries them and they are the record. The
+  // handoff goes, because one kept "just in case" is a file nobody trusts and
+  // everybody reads.
+  const handoff = join(ROOT, specsDir, lane, "handoff.md");
+  if (existsSync(handoff)) rmSync(handoff);
+
+  ok(`  ~ ${log}\n  ~ ${index}\n  - ${specsDir}/${lane}/handoff.md`);
+  ok(`\nharnessimo: lane ${number} is closed.`);
+}
+
 switch (command) {
   case "check":
     cmdCheck();
@@ -943,6 +1082,9 @@ switch (command) {
     break;
   case "release":
     single("the version claims", runRelease());
+    break;
+  case "track":
+    cmdTrack();
     break;
   case "budget":
     cmdBudget();

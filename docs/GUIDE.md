@@ -127,6 +127,32 @@ make it green, commit, then take the next.
 | An agent editing what grades it | `locked` | an agent commit touched those paths |
 | npm, the tags and the changelog telling different stories | `release` | a released version has no tag, or the changelog's top entry is not what ships |
 
+## 4b. Opening and closing a lane { #lanes }
+
+The SDD half. A lane is a numbered directory whose spec carries criteria that can run, and
+the checks are what refuse to call it finished until they do.
+
+```bash
+harnessimo track new checkout-totals --title "Checkout totals"
+```
+
+Next free number, the directory, `spec.md`, `tasks.md` and `handoff.md` from the templates,
+and a line in the track index — the one `harnessimo brief` reads at the start of every
+session, so a lane cannot exist on disk and be invisible to the next session.
+
+```bash
+harnessimo track close checkout-totals --outcome "Totals round per currency."
+```
+
+The outcome goes to the top of the log, the index line goes, the handoff is deleted. The
+spec and its tasks stay; git carries them.
+
+The command writes **only what is mechanical**. It does not draft your spec, does not judge
+its shape, and has no opinion on what a lane should contain — a generator that writes prose
+turns your convention into this tool's property. The rule it follows: automate what a person
+gets wrong the same way every time; leave what they get wrong differently.
+<!-- proof: test/cli.test.ts#a lane opened by the tool passes the tool's own checks, and closing it distils -->
+
 ## 5. What a session looks like
 
 The daily loop, once it is set up. Two commands out of the five are the harness; the rest
@@ -326,7 +352,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.6.0` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.7.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

@@ -13,10 +13,16 @@
        width="720">
 </p>
 
-**Checks that stop an AI agent from calling unfinished work done.**
+**Spec-driven development, and the harness that makes it stick.**
 
-Nine of them. You turn on the ones you need. They run in CI and before every commit, and
-they fail with a file, a line and a fix.
+Two halves that need each other. **SDD**: work is a lane — a numbered spec whose acceptance
+criteria can actually run. **The harness**: nine checks that refuse to call that lane
+finished until they do. Specs without enforcement are a filing system; enforcement without
+specs has nothing to check against.
+
+`harnessimo track new <slug>` opens a lane, `harnessimo check` decides whether it is done.
+It works on an empty repository and on one with fifteen years of history — nothing has to be
+rewritten to start, and one check is a real improvement.
 
 Zero dependencies, one config file, any language — it reads your files, runs your commands,
 walks your git history. <!-- proof: package.json:"files" -->

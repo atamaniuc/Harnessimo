@@ -1,5 +1,6 @@
 site_name: Harnessimo
-site_description: Nine checks that stop an AI coding agent from calling unfinished work done.
+# Quoted: the colon would otherwise end the key, and mkdocs fails to parse.
+site_description: "Spec-driven development and the harness that makes it stick: nine checks that decide when a lane is finished."
 site_url: https://atamaniuc.github.io/Harnessimo/
 repo_url: https://github.com/atamaniuc/Harnessimo
 repo_name: atamaniuc/Harnessimo
