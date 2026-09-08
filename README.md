@@ -21,6 +21,7 @@ they fail with a file, a line and a fix.
 Zero dependencies, one config file, any language — it reads your files, runs your commands,
 walks your git history. <!-- proof: package.json:"files" -->
 
+<!-- install:start -->
 ```bash
 pnpm add -D harnessimo
 pnpm exec harnessimo init      # scans your repo, writes a config that already passes
@@ -36,14 +37,48 @@ yarn add -D harnessimo && yarn harnessimo init && yarn harnessimo check
 bun add  -d harnessimo && bunx harnessimo init && bunx harnessimo check
 ```
 
-All four were run against this release before being written down. On the
-[docs site](https://atamaniuc.github.io/Harnessimo/) the same commands are tabs, one per
-package manager.
-
-It is published to npm, so the install is the boring line above. Releases also carry the
-same tarball as an asset for anyone pinning by URL.
+All four were run against this release before being written down.
 
 </details>
+<!-- install:end -->
+
+## Who this is for
+
+**You, if an agent writes a meaningful share of your code and you are the only one checking
+its work.** One person with three agents has the review load of a team lead and none of the
+team. These checks are the part of a reviewer's job that a command can do.
+
+Concretely:
+
+| | What changes |
+|---|---|
+| **Solo developer, agent-assisted** | You stop re-reading diffs to find out whether the thing it said it finished is finished |
+| **Vibe coding a real project** | The README stays true as the project moves, so the next session — yours or the agent's — is not working from fiction |
+| **A team running an agentic SDLC** | "Done" becomes a command's exit code instead of a status somebody typed, and it means the same thing for every person and every agent |
+| **A long-running codebase with agents in it** | Work survives session boundaries: tracks and handoffs are checked, not hoped for |
+
+**Not for you** if the project is a weekend script, if you write everything yourself and
+review it yourself, or if nobody will write the one-line proof markers — they are the only
+manual part, and a repository where nobody writes them ends up with a gate that enforces
+nothing.
+
+## Why this, when Kiro and Spec Kit exist
+
+Because they solve a different half. Kiro, Spec Kit, BMAD, Copilot's coding agent and the
+agent CLIs are about **producing** work: context, specs, planning, tools, sandboxes. Their
+answer to "is it actually done" is the one everybody already has — run the tests, ask a
+human.
+
+This is the other half, and it is the half nobody ships: **the arbiter**. Documentation that
+fails the build when it stops being true. A work queue whose state only a passing command
+can write. Scoring files an agent's own commit may not touch.
+
+It is also deliberately not a platform. No runtime, no daemon, no dependencies, no lock-in:
+one npm package and a JSON file that work the same under Claude Code, Cursor, Codex, Kiro or
+a person with a keyboard — and keep working when you switch.
+
+The full comparison, layer by layer, is
+[Why this exists](https://atamaniuc.github.io/Harnessimo/WHY/).
 
 ## What it catches
 
@@ -140,6 +175,49 @@ Turn on one check, make it green, commit. Then the next one.
 
 Details: [Adopting an existing repo](https://atamaniuc.github.io/Harnessimo/ADOPTING/).
 
+## Using it, by hand and by agent
+
+Same checks, two ways in.
+
+**A person** runs `harnessimo check` before pushing — or lets the pre-commit hook do it —
+and `harnessimo doctor` when they want to know what this repository actually guarantees.
+Nothing else is required: the checks read files and run commands, so they work in a
+repository with no agents anywhere near it.
+
+**An agent** gets three things it cannot get from an instruction file. At session start a
+hook hands it the live tracks, the head of each handoff and what is in flight, so it does
+not re-derive them. During the work, `harnessimo queue verify <id>` is the only way an item
+becomes `passing` — the agent runs the command, the tool records the outcome. At commit, the
+same gate a person gets.
+
+```bash
+harnessimo hooks install --agent   # SessionStart briefing, merged into .claude/settings.json
+harnessimo hooks install           # the fast gates, before every commit
+```
+
+Both flows in detail: [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/).
+
+## Why you can trust it
+
+Every line here is checkable, which is the only kind of trust argument this project is
+entitled to make:
+
+- **Published by a workflow, not a person.** Releases are built and signed in GitHub Actions
+  and authenticated by OIDC — there is no npm token in this repository or in its secrets to
+  steal. Each version carries a provenance statement naming the commit and workflow that
+  produced it; `npm audit signatures` verifies it.
+- **Zero runtime dependencies**, by a rule its own CI enforces. Nothing it pulls in can break
+  the project it is guarding, and there is no supply chain under it to audit but this one.
+- **It is held to its own standard.** All eight checks run against this repository, including
+  a cold start that clones it into an empty directory and runs the documented commands, and
+  a re-verification of every passing claim. The badge above is that.
+- **109 tests**, and every rule has one that proves it fires on bad input — a rule that only
+  passes is an assumption wearing a rule's clothes.
+- **Used in production, not only demonstrated.** Two repositories deleted their own versions
+  of these checks to adopt it; both are linked below and both are public.
+- **MIT, and small enough to read.** About three thousand lines. If it disappeared tomorrow
+  you could vendor it in an afternoon.
+
 ## Who runs it
 
 Two production repos, both of which deleted their own versions of these checks:
@@ -166,6 +244,7 @@ This repo runs all eight checks on itself, including from a fresh clone.
 
 **<https://atamaniuc.github.io/Harnessimo/>**
 
+- [Why this exists](https://atamaniuc.github.io/Harnessimo/WHY/) — who it is for, when it is worth it, and how it sits next to Kiro, Spec Kit, Copilot and the agent CLIs
 - [15-minute guide](https://atamaniuc.github.io/Harnessimo/GUIDE/) · [по-русски](https://atamaniuc.github.io/Harnessimo/GUIDE.ru/)
 - [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/) — seven situations, and how it runs itself once installed
 - [SDD](https://atamaniuc.github.io/Harnessimo/SDD/) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: what was taken from each, what was left, where every piece is implemented and how to use it
@@ -176,7 +255,7 @@ This repo runs all eight checks on itself, including from a fresh clone.
 ## Development
 
 ```bash
-npm test          # 105 tests, no install — Node runs the TypeScript directly
+npm test          # 109 tests, no install — Node runs the TypeScript directly
 npm run check     # tests, then this repo's own checks
 npm run typecheck # tsc, strict, over src and test (needs npm i first)
 npm run build     # what a consumer installs: dist/, with declarations

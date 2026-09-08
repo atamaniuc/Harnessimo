@@ -75,6 +75,53 @@ failure — instead of a cheerful summary of things that did not happen.
 
 ---
 
+## Two ways to run it
+
+The checks do not care who is working. What differs is how they reach you.
+
+### By hand
+
+```bash
+harnessimo check        # everything this repository asked for; the CI command
+harnessimo doctor       # what is enforced here, and what is not
+harnessimo proof docs/  # one check, one directory, while you edit
+```
+
+The pre-commit hook runs the fast ones, so the loop is the one you already have: write,
+commit, and find out in a second rather than in CI. Nothing here needs an agent, an editor
+integration or a subscription — a repository with no AI in it gets the same value from
+`proof` and `cold-start`.
+
+### By agent
+
+An agent gets three things it cannot get from a line in `AGENTS.md`.
+
+**At the start of a session** the SessionStart hook prints the state instead of hoping the
+agent asks for it: live tracks, the head of each handoff, what is in flight, and which checks
+this repository enforces. That is `harnessimo brief`, wired up by
+`harnessimo hooks install --agent`.
+
+**During the work** the queue takes one decision away from it: `harnessimo queue verify <id>`
+runs the item's own command and records the outcome. The agent cannot write `passing`, and
+`check --reverify` re-runs every claim in CI, so editing the state file by hand is caught
+rather than trusted.
+
+**At commit** it hits the same gate a person does — and `locked` additionally refuses a
+commit carrying the agent trailer that touches the files defining success.
+
+Put the three rules an agent must follow in your instruction file, where they are short
+enough to survive:
+
+```markdown
+- Run `harnessimo check` before saying anything is done.
+- Never edit state in the queue file; use `harnessimo queue verify <id>`.
+- Starting a track means reading its handoff first — `harnessimo brief` prints them.
+```
+
+The rest is enforcement, and enforcement is not an instruction.
+
+---
+
 ## 1. The README describes software that does not exist
 
 *Brownfield, inherited repo, or an agent that documented its intentions.*

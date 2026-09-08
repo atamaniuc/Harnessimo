@@ -66,6 +66,7 @@
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json",
     "check": "node --test test/*.test.ts && node src/cli.ts check",
+    "docs:sync": "node scripts/site-home.ts",
     "harnessimo": "node src/cli.ts"
   },
   "homepage": "https://atamaniuc.github.io/Harnessimo/",

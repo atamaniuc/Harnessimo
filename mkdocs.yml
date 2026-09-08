@@ -10,6 +10,7 @@ edit_uri: blob/main/docs/
 
 nav:
   - Home: index.md
+  - Why this exists: WHY.md
   - Guide (15 min): GUIDE.md
   - Гайд (15 минут): GUIDE.ru.md
   - Use cases: USE-CASES.md
