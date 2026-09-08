@@ -23,7 +23,7 @@ walks your git history. <!-- proof: package.json:"files" -->
 
 <!-- demo:start -->
 <p align="center">
-  <img src="''' + RAW + '''demo.png"
+  <img src="https://raw.githubusercontent.com/atamaniuc/Harnessimo/main/docs/assets/demo.png"
        alt="A terminal: harnessimo init writes a config, check passes, someone renames a function the README pointed at, and check now fails naming the file, the line and the claim"
        width="860">
 </p>
