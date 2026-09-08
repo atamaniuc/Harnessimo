@@ -106,7 +106,7 @@ believes a check exists stops looking for the missing one.
 
 ## 4. Turn on what hurts
 
-Do not switch on all eight at once. Pick the one matching a problem you actually have,
+Do not switch on all nine at once. Pick the one matching a problem you actually have,
 make it green, commit, then take the next.
 
 | The problem you have | Turn on | It fails when |
@@ -119,6 +119,7 @@ make it green, commit, then take the next.
 | Debug leftovers, stale progress notes | `cleanExit` | a session left debris or wrote nothing down |
 | The agent file has become a 600-line manual | `instructions` | it is over its line limit |
 | An agent editing what grades it | `locked` | an agent commit touched those paths |
+| npm, the tags and the changelog telling different stories | `release` | a released version has no tag, or the changelog's top entry is not what ships |
 
 ## 5. What a session looks like
 

@@ -9,7 +9,7 @@ tracks, the task gate, the queue, locked surfaces, cold start, clean exit, the
 instruction-file limit and the release check — all implemented, tested, and enforced
 against this repository by `npm run check`.
 
-- 137 tests, zero runtime dependencies. Written in TypeScript (strict); Node runs the
+- 148 tests, zero runtime dependencies. Written in TypeScript (strict); Node runs the
   sources directly through type stripping, so tests and the CLI need no install, while
   `npm run build` emits `dist/` with declarations for consumers. `test/surface.types.ts`
   compiles a real consumer against those declarations, because a test suite does not

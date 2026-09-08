@@ -62,8 +62,8 @@ The only way a router stays a router is if something fails when it stops being o
 line limit is a check rather than a note. <!-- proof: src/cleanexit.ts:instructionProblems -->
 
 The rule that makes this layer worth having is **labelling**: every constraint states
-whether a command fails on it, or whether it is caught in review. In this repository four of
-nine are review-only, and they say so.
+whether a command fails on it, or whether it is caught in review. Of the ten constraints in
+this repository's own `CONSTRAINTS.md`, four are review-only, and they say so.
 
 **Why labelling matters more than the rules:** claiming enforcement that does not exist is
 worse than claiming none, because a team that believes a check exists stops looking for the

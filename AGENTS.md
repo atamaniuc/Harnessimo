@@ -17,8 +17,8 @@ node src/cli.ts doctor    # what is enforced here
 node src/cli.ts help      # every command
 ```
 
-Eight checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clean-exit`,
-`instructions`. What each is for, and which lecture of
+Nine checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clean-exit`,
+`instructions`, `release`. What each is for, and which lecture of
 [Learn Harness Engineering](https://walkinglabs.github.io/learn-harness-engineering/ru/) it
 comes from: `docs/STANDARD.md`. The fastest way in for a newcomer: `docs/GUIDE.md`.
 Published, with the diagrams rendered: <https://atamaniuc.github.io/Harnessimo/>.

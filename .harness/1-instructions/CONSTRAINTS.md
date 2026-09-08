@@ -42,7 +42,7 @@ literal: **enforced** means a command fails.
 
 7. **Never state an enforcement that does not exist.** _(review only, and it is the rule
    most worth reviewing)_
-   Every rule here says whether a command catches it. Four of the nine are review-only and
+   Every rule here says whether a command catches it. Four of the ten are review-only and
    say so. Claiming enforcement that is absent is worse than claiming none: it stops
    anyone from looking for the missing check.
 

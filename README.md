@@ -15,7 +15,7 @@
 
 **Checks that stop an AI agent from calling unfinished work done.**
 
-Eight of them. You turn on the ones you need. They run in CI and before every commit, and
+Nine of them. You turn on the ones you need. They run in CI and before every commit, and
 they fail with a file, a line and a fix.
 
 Zero dependencies, one config file, any language — it reads your files, runs your commands,
@@ -249,11 +249,11 @@ entitled to make:
   produced it; `npm audit signatures` verifies it.
 - **Zero runtime dependencies**, by a rule its own CI enforces. Nothing it pulls in can break
   the project it is guarding, and there is no supply chain under it to audit but this one.
-- **It is held to its own standard.** All eight checks run against this repository, including
+- **It is held to its own standard.** All nine checks run against this repository, including
   a cold start that clones it into an empty directory and runs the documented commands, and
   a re-verification of every passing claim. The badge above is that.
-- **131 tests**, and every rule has one that proves it fires on bad input — a rule that only
-  passes is an assumption wearing a rule's clothes.
+- **Every rule has a test that proves it fires on bad input** — a rule that has only ever
+  passed is an assumption wearing a rule's clothes.
 - **Used in production, not only demonstrated.** Two repositories deleted their own versions
   of these checks to adopt it; both are linked below and both are public.
 - **MIT, and small enough to read.** About three thousand lines. If it disappeared tomorrow
@@ -269,7 +269,7 @@ Two production repos, both of which deleted their own versions of these checks:
 - [`code-knowledge-base`](https://github.com/atamaniuc/code-knowledge-base) — dropped four
   local scripts, picked up proof markers, work tracks and the task gate.
 
-This repo runs all eight checks on itself, including from a fresh clone.
+This repo runs all nine checks on itself, including from a fresh clone.
 <!-- proof: npm run check -->
 
 ## What it isn't
@@ -298,7 +298,7 @@ header.
 ## Development
 
 ```bash
-npm test          # 131 tests, no install — Node runs the TypeScript directly
+npm test          # the whole suite, no install — Node runs the TypeScript directly
 npm run check     # tests, then this repo's own checks
 npm run typecheck # tsc, strict, over src and test (needs npm i first)
 npm run build     # what a consumer installs: dist/, with declarations
