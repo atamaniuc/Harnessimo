@@ -140,6 +140,14 @@ export interface ReleaseConfig {
   tagPrefix: string;
 }
 
+/** The read guard (spec 0004): enforcement while the work happens, not after it. */
+export interface TokensConfig {
+  /** How long a read is remembered. A session that ran longer is not one session. */
+  windowMinutes?: number;
+  /** Where the per-session state lives. Never committed: it describes one run. */
+  statePath?: string;
+}
+
 export interface InstructionsConfig {
   /** Path -> maximum lines. */
   limits: Record<string, number>;
@@ -163,6 +171,7 @@ export interface LoadedConfig {
   cleanExit?: CleanExitConfig;
   instructions?: InstructionsConfig;
   release?: ReleaseConfig;
+  tokens?: TokensConfig;
   hooks?: HooksConfig;
 }
 
@@ -233,3 +242,44 @@ export type DetectedConfig = { $schema: string } & {
   // leaves the rest to the defaults in loadConfig, rather than guessing.
   [K in keyof Omit<LoadedConfig, "root" | "path">]?: Partial<NonNullable<LoadedConfig[K]>>;
 };
+
+// ---- token economics (spec 0004)
+
+/** One file, as the read guard remembers it within a session. */
+export interface ReadRecord {
+  size: number;
+  mtimeMs: number;
+  /** When it was last read, so a stale entry can be forgotten. */
+  at: number;
+  reads: number;
+  /** Re-reads the guard refused: what the ledger reports as saved. */
+  refused?: number;
+  /** Re-reads allowed because the caller insisted. Visible on purpose. */
+  overrides?: number;
+}
+
+/** Everything the guard remembers about one session. Never committed. */
+export interface ReadState {
+  reads: Record<string, ReadRecord>;
+}
+
+/** The verdict on one read, with the reason a person needs to act on it. */
+export interface ReadDecision {
+  allow: boolean;
+  reason: string;
+  savedTokens?: number;
+  message?: string;
+}
+
+/** What a session cost and what it repeated. Every token figure is an estimate. */
+export interface ReadLedger {
+  files: number;
+  reads: number;
+  tokensRead: number;
+  repeated: number;
+  tokensRepeated: number;
+  refused: number;
+  tokensSaved: number;
+  overrides: number;
+  largest?: { path: string; tokens: number; reads: number };
+}

@@ -35,7 +35,9 @@ import { releaseProblems } from "./release.ts";
 import { detectConfig } from "./detect.ts";
 import { HOOKS_DIR, HOOK_PATH, hookScript, hookStatus } from "./hooks.ts";
 import { agentContract, briefJson, briefText, handoffPaths, mergeSessionStartHook } from "./brief.ts";
+import { DEFAULT_WINDOW_MINUTES, decideRead, emptyState, ledger, ledgerReport } from "./tokens.ts";
 import type {
+  ReadState,
   AgentSettings,
   DocsConfig,
   FeatureList,
@@ -418,6 +420,15 @@ function cmdDoctor() {
   for (const [name, on, what] of rows) {
     ok(`  ${on ? "enforced " : "not set  "} ${name.padEnd(16)} ${what}`);
   }
+  // Listed apart, and after a blank line, because it is not a tenth check: the
+  // nine answer "is this finished", and this one fires while the work happens.
+  // Printing it in the same list would be the overstatement `doctor` exists to
+  // avoid.
+  ok(
+    `\n  ${cfg.tokens ? "enforced " : "not set  "} read guard       ` +
+      "a re-read of an unchanged file is refused; `harnessimo budget` reports the cost",
+  );
+
   const off = rows.filter(([, on]) => !on).length;
   ok(
     off === 0
@@ -798,6 +809,8 @@ usage: harnessimo <command> [options]
   instructions           the instruction file is still a router, not a manual
   release                the version agrees across manifest, changelog and tags
   brief [--json]         what a session should read first: tracks, handoffs, queue
+  budget [--reset]       what this session read, and what it read twice
+  guard read <path>      refuse a re-read of a file that has not changed (exit 2)
   agent                  the contract to paste into any agent's instruction file
   hooks <sub>            status | install [--agent] | uninstall — the gates, on commit
   init [--force]         scaffold .harness/, specs/ and harnessimo.config.json
@@ -817,6 +830,84 @@ function single(name: string, result: CheckResult): void {
     die(`\nharnessimo: ${result.problems.length} problem(s) in ${name}.`);
   }
   ok(`harnessimo: ${result.summary}`);
+}
+
+// ---- the read guard (spec 0004)
+//
+// The only rule here that fires while the work happens rather than at the end
+// of it. Kept out of `check` on purpose: a completion gate that depended on
+// session state would be a gate nobody could reproduce.
+
+const DEFAULT_STATE_PATH = ".harness/3-environment/.reads.json";
+
+function statePath(): string {
+  return join(ROOT, config().tokens?.statePath ?? DEFAULT_STATE_PATH);
+}
+
+function loadReadState(): ReadState {
+  try {
+    return JSON.parse(readFileSync(statePath(), "utf8")) as ReadState;
+  } catch {
+    // No state is the normal case at the start of a session, not an error.
+    return emptyState();
+  }
+}
+
+function saveReadState(state: ReadState): void {
+  const path = statePath();
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(state));
+}
+
+function cmdBudget(): void {
+  if (flags.has("--reset")) {
+    saveReadState(emptyState());
+    return ok("harnessimo: the read ledger is empty again.");
+  }
+  ok(ledgerReport(ledger(loadReadState())));
+}
+
+/**
+ * Decides one read. Exits 0 to allow and 2 to refuse, which is what a tool-use
+ * hook reads — a refusal has to be a different code from a crash, or a broken
+ * guard silently becomes an open gate.
+ */
+function cmdGuard(): void {
+  const target = positional[1];
+  if (positional[0] !== "read" || !target) {
+    die("harnessimo: usage — `harnessimo guard read <path> [--partial] [--override]`");
+  }
+  const cfg = config();
+  if (!cfg.tokens) {
+    // Not configured is not an error: it is a rule this repository did not ask
+    // for, and `doctor` says so.
+    return ok("harnessimo: the read guard is not configured here; allowing.");
+  }
+
+  let size: number;
+  let mtimeMs: number;
+  try {
+    const stats = statSync(join(ROOT, target));
+    size = stats.size;
+    mtimeMs = Math.round(stats.mtimeMs);
+  } catch {
+    // A file the guard cannot stat is a file it has nothing to say about.
+    return ok(`harnessimo: ${target} cannot be read from here; allowing.`);
+  }
+
+  const { decision, state } = decideRead(loadReadState(), {
+    path: target,
+    size,
+    mtimeMs,
+    partial: flags.has("--partial"),
+    override: flags.has("--override"),
+    windowMinutes: cfg.tokens.windowMinutes ?? DEFAULT_WINDOW_MINUTES,
+  });
+  saveReadState(state);
+
+  if (decision.allow) return ok(`harnessimo: ${target} — ${decision.reason}`);
+  ok(`harnessimo: ${decision.message}`);
+  process.exit(2);
 }
 
 switch (command) {
@@ -852,6 +943,12 @@ switch (command) {
     break;
   case "release":
     single("the version claims", runRelease());
+    break;
+  case "budget":
+    cmdBudget();
+    break;
+  case "guard":
+    cmdGuard();
     break;
   case "init":
     cmdInit();

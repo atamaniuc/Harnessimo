@@ -116,3 +116,12 @@ The version is a claim made on several surfaces: they must agree.
 | `manifest` | string | Where the version being shipped is declared. Usually package.json. |
 | `changelog` | string | The file describing each released version. |
 | `tagPrefix` | string | What a tag for x.y.z looks like: "v" gives v1.2.3. |
+
+## `tokens`
+
+The read guard: a re-read of a file that has not changed is refused, and what a session cost is reported. Enforcement while the work happens, not a check on whether it is finished.
+
+| Key | Type | What it does |
+|---|---|---|
+| `windowMinutes` | integer | How long a read is remembered. Past this, the same file may be read again — a session that ran longer is not one piece of work. Defaults to 20. |
+| `statePath` | string | Where the per-session state is kept. It describes one run, so it belongs outside git. |

@@ -79,6 +79,14 @@ Not without it showing. That is what `locked` is for: the files that define succ
 named in the config, and a commit carrying an agent trailer that touches them fails. Moving
 the boundary is a separate, human-visible commit.
 
+**Does it help with token cost?**
+
+That is what `harnessimo budget` and the read guard are for. The guard refuses a second read
+of a file that has not changed and reports what that saved; the budget prints what a session
+cost and how much of it was repetition. Every figure is an estimate at four bytes per token
+and says so — we cannot see the model's context, and a precise number nobody can verify is
+worse than an approximate one that admits it.
+
 ## Trust
 
 **Why should I believe the checks work?**

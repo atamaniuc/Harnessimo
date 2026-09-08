@@ -245,6 +245,24 @@
           "description": "What a tag for x.y.z looks like: \"v\" gives v1.2.3."
         }
       }
+    },
+    "tokens": {
+      "type": "object",
+      "description": "The read guard: a re-read of a file that has not changed is refused, and what a session cost is reported. Enforcement while the work happens, not a check on whether it is finished.",
+      "additionalProperties": false,
+      "properties": {
+        "$comment": {
+          "type": "string"
+        },
+        "windowMinutes": {
+          "type": "integer",
+          "description": "How long a read is remembered. Past this, the same file may be read again \u2014 a session that ran longer is not one piece of work. Defaults to 20."
+        },
+        "statePath": {
+          "type": "string",
+          "description": "Where the per-session state is kept. It describes one run, so it belongs outside git."
+        }
+      }
     }
   }
 }

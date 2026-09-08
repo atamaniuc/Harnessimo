@@ -38,6 +38,9 @@ const SECTION_DEFAULTS = {
   },
   instructions: { limits: {} },
   release: { manifest: "package.json", changelog: "CHANGELOG.md", tagPrefix: "v" },
+  // The read guard (spec 0004). Not a check: it fires while the work happens,
+  // and `doctor` lists it apart from the nine for exactly that reason.
+  tokens: { windowMinutes: 20, statePath: ".harness/3-environment/.reads.json" },
   hooks: { before: [] }, // project commands the pre-commit hook runs before the gates
 };
 

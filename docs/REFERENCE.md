@@ -199,6 +199,39 @@ fail. <!-- proof: src/release.ts:releaseProblems -->
 
 ---
 
+## 9. The session is expensive and nobody is counting
+
+*Long agent runs, where most of the budget goes before anything is finished.*
+
+The largest avoidable cost in a long session is the same file read twice. The second read
+costs its full length again and teaches the model nothing it does not already hold — and
+nothing reports it, so nobody fixes it.
+
+```
+$ harnessimo budget
+harnessimo budget — this session (estimated at 4 bytes per token)
+
+  read          38 file(s), ~184k tokens
+  re-read        9 file(s), ~41k tokens — 22% of everything read
+  largest     src/pipeline.ts, read 3×, ~7k each
+
+  fix:  a re-read is a session that lost its place. `harnessimo guard read <path>`
+        refuses the second read of a file that has not changed.
+```
+
+Wired as a tool-use hook, the guard answers before the read happens: allowed the first
+time, refused the second if nothing changed, allowed again the moment it does. A range is
+not a whole file, and `--override` always wins — and is counted, so a rule that gets in the
+way shows up in the ledger rather than in somebody's frustration.
+
+**Turn on:** `tokens`. Note that this is **not** a tenth check: the nine answer "is this
+finished", and this one fires while the work happens. `doctor` lists it apart for that
+reason, and `check` does not run it — a completion gate that depended on session state
+would be a gate nobody could reproduce.
+<!-- proof: src/tokens.ts:decideRead -->
+
+---
+
 ## A full session, end to end
 
 ```

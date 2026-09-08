@@ -4,3 +4,6 @@ node_modules/
 site/
 *.tgz
 dist/
+
+# Per-session read state for the guard: one run, not the repository.
+.harness/3-environment/.reads.json

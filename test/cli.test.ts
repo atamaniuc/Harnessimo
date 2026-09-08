@@ -94,3 +94,43 @@ test("init scaffolds a working harness that immediately passes its own check", (
   assert.equal(check.status, 0, check.out);
   rmSync(dir, { recursive: true, force: true });
 });
+
+// Spec 0004. The guard is the only rule here that answers while the work
+// happens, so its exit codes are part of the contract: a refusal has to read
+// differently from a crash, or a broken guard becomes an open gate.
+const GUARDED = { ...BASE, "harnessimo.config.json": JSON.stringify({ ...JSON.parse(CONFIG), tokens: {} }) };
+
+test("guard allows a first read, refuses the second, and budget reports both", () => {
+  const dir = fixture({ ...GUARDED, "notes.md": "x".repeat(4000) });
+
+  const first = run(dir, "guard", "read", "notes.md");
+  assert.equal(first.status, 0, first.out);
+  assert.match(first.out, /first read/);
+
+  const second = run(dir, "guard", "read", "notes.md");
+  assert.equal(second.status, 2, "a refusal exits 2 — a crash and a verdict must not look alike");
+  assert.match(second.out, /already read/);
+  assert.match(second.out, /fix:/);
+
+  const budget = run(dir, "budget");
+  assert.equal(budget.status, 0);
+  assert.match(budget.out, /estimated at 4 bytes per token/);
+  assert.match(budget.out, /refused re-read/);
+});
+
+test("guard allows the read again once the file has changed", () => {
+  const dir = fixture({ ...GUARDED, "notes.md": "one" });
+  run(dir, "guard", "read", "notes.md");
+  writeFileSync(join(dir, "notes.md"), "one, and then rather more than before");
+
+  const again = run(dir, "guard", "read", "notes.md");
+  assert.equal(again.status, 0, "changed content is content the agent does not have");
+});
+
+test("guard allows anything when the repository has not asked for it", () => {
+  const dir = fixture({ ...BASE, "notes.md": "x".repeat(500) });
+  run(dir, "guard", "read", "notes.md");
+  const second = run(dir, "guard", "read", "notes.md");
+  assert.equal(second.status, 0, "a rule nobody configured must not block anybody");
+  assert.match(second.out, /not configured/);
+});

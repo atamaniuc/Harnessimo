@@ -97,5 +97,10 @@
     "manifest": "package.json",
     "changelog": "CHANGELOG.md",
     "tagPrefix": "v"
+  },
+  "tokens": {
+    "$comment": "Spec 0004. On here because this repository is held to its own rules, and because a guard nobody runs against real work is a guard nobody has tested. The state is per-session and gitignored: it describes one run, not the repository.",
+    "windowMinutes": 20,
+    "statePath": ".harness/3-environment/.reads.json"
   }
 }
