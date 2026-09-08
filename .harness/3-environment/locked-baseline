@@ -24,4 +24,5 @@
 # The tenth records that publishing checks for a release rather than trusting
 # a trigger that, created by a workflow, never fires.
 # The eleventh points the operations workflow at the secret's real name.
-1630db72c163d59b6946ead9cdb7699879d953af
+# The twelfth makes the workflows fetch the tags the release check reads.
+98a575ac8790ac4b7999819b74396dfc6e7552a2
