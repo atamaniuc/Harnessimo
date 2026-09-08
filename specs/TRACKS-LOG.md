@@ -4,6 +4,8 @@ Newest first. One or two sentences per track: what came out of it. Lasting decis
 [`.harness/4-state/DECISIONS.md`](../.harness/4-state/DECISIONS.md), not here; git carries
 the rest.
 
+- **How much was this run watched (spec 0007)** — A run declares how closely it was watched and the level decides how much is re-checked: watched runs the fast checks, reviewed adds re-verification and the locked-surface check, unattended adds clean exit and cold start. Declared rather than inferred, a floor a flag can raise and never lower, and a level the repository cannot back is refused.
+
 - **More than one agent (spec 0006)** — A lane declares the paths it owns and `tracks` fails when two live lanes collide; two lane directories can no longer share a number; `hooks install --agent` installs Stop and SubagentStop so a turn cannot end while `check` is red; `brief --track` hands one lane to one agent. Declaration and detection only — no locking, and stale claims and lane dependencies stay specified and unbuilt.
 
 - **Docs consolidation (spec 0002)** — seven nav entries became eight pages with distinct
