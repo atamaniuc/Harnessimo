@@ -21,4 +21,6 @@
 # token; the eighth makes publishing release-only and idempotent; the ninth
 # adds ops.yml, which does what a session may not — tags, refs, repository
 # settings — under a token that never enters a session's context.
-a0b5ad015e3dc2ca985b9fc9a207cffcdccd3f64
+# The tenth records that publishing checks for a release rather than trusting
+# a trigger that, created by a workflow, never fires.
+8ade9da060c0be9b93e2df1bf71b73ddf2ccb378
