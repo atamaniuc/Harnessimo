@@ -7,6 +7,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.5.4] — 2026-09-08
+
+### Fixed
+
+- The documentation contradicted itself about how many checks there are: the ninth shipped
+  in 0.5.0 and seven sentences across both languages kept saying eight, including the first
+  paragraph of the README the registry serves. The guide told readers not to switch on all
+  nine at once and then listed eight. A second, unrelated "nine" — the constraints, now ten
+  — used the same word for a different count on the same site.
+- Test counts in prose were stale in five places. They are gone: the claim beside them,
+  that every rule has a test proving it fires on bad input, is the part that matters.
+
+### Added
+
+- `test/counts.test.ts`: the check count is read from `EnabledChecks` and the constraint
+  counts from `CONSTRAINTS.md`, and every sentence and table that states a number is held
+  to them, in English and Russian. A tenth check cannot ship half-documented.
+
 ## [0.5.3] — 2026-09-08
 
 ### Fixed
@@ -185,6 +203,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.5.4]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.4
 [0.5.3]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.3
 [0.5.2]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.2
 [0.5.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.1
