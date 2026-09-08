@@ -65,3 +65,13 @@ test("the tag prefix is configuration, not an assumption", () => {
   });
   assert.deepEqual(problems, []);
 });
+
+test("a checkout with no tags says so once, instead of blaming every version", () => {
+  // The failure this was written for: CI checks out shallow, the tags are not
+  // there, and eight versions look unreleased. A check that misreports its own
+  // blindness teaches people to ignore it.
+  const problems = releaseProblems({ version: "0.3.0", changelog: CHANGELOG, tags: [] });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0]!.reason, /has no tags/);
+  assert.match(problems[0]!.reason, /fetch-depth: 0/);
+});

@@ -7,6 +7,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.5.1] — 2026-09-08
+
+### Fixed
+
+- The release check treated a checkout with no tags as eight unreleased versions. That is
+  not what it means: `actions/checkout` is shallow by default and fetches none, so the
+  check was blind and said something else. It now reports the blindness once, and names the
+  fix. The workflows that run it fetch tags.
+
+### Note
+
+- 0.5.0 was tagged and released on GitHub but never reached the registry: publishing was
+  waiting on a trigger that a workflow-created release does not raise. Fixed in the same
+  breath, but the version stays where it is rather than being quietly reused.
+
 ## [0.5.0] — 2026-09-08
 
 ### Added
@@ -133,6 +148,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.5.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.1
 [0.5.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.0
 [0.4.4]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.4.4
 [0.4.3]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.4.3

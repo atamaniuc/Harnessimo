@@ -42,6 +42,23 @@ export function releaseProblems(
 ): Problem[] {
   const problems: Problem[] = [];
   const documented = changelogVersions(changelog);
+
+  // No tags at all is almost never a repository with no releases: it is a
+  // shallow checkout that did not fetch them, which is the default in CI. One
+  // problem naming that beats one per version blaming the changelog — a check
+  // that misreports its own blindness is worse than one that stays quiet.
+  if (tags.length === 0 && documented.length > 1) {
+    return [
+      {
+        file: changelogPath,
+        line: 1,
+        target: "(no tags)",
+        reason:
+          "this checkout has no tags, so whether the released versions are tagged cannot be checked\n" +
+          "  fix:  fetch tags — actions/checkout needs fetch-depth: 0",
+      },
+    ];
+  }
   const tagged = new Set(
     tags.filter((tag) => tag.startsWith(tagPrefix)).map((tag) => tag.slice(tagPrefix.length)),
   );
