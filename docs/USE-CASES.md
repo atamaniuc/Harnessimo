@@ -244,5 +244,5 @@ The commit went through because the checks passed, not because anybody said it w
 
 ---
 
-Next: [what was taken from OpenSpec, Spec Kit, BMAD and the rest](METHODS.md), or
+Next: [what was taken from OpenSpec, Spec Kit, BMAD and the rest](SDD.md), or
 [adopting it in an existing repo](ADOPTING.md).

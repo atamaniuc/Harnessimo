@@ -1,9 +1,12 @@
-# What was taken from each system, and what was not
+# SDD
 
-Six systems were read before any of this was written: OpenSpec, Agent OS, Spec Kit, BMAD,
-handoff-driven development and plain TDD, plus the Learn Harness Engineering course the
-vocabulary comes from. Each one organises how work gets done. **None of them re-checks the
-claim that the work is finished** — and that is the only thing this package does.
+**Spec-driven development, and what was taken from each system built around it.**
+
+Six systems were read before any of this was written: OpenSpec, Agent OS, Spec Kit and BMAD
+on the SDD side, handoff-driven development and plain TDD next to them, plus the Learn
+Harness Engineering course the vocabulary comes from. Each one organises how work gets
+done. **None of them re-checks the claim that the work is finished** — and that is the only
+thing this package does.
 
 So nothing here competes with them. Every rule below is one idea taken from one of those
 systems and reduced to a command that exits non-zero, with the framework, the CLI, the

@@ -164,7 +164,7 @@ This repo runs all eight checks on itself, including from a fresh clone.
 
 - [15-minute guide](https://atamaniuc.github.io/Harnessimo/GUIDE/) · [по-русски](https://atamaniuc.github.io/Harnessimo/GUIDE.ru/)
 - [Use cases](https://atamaniuc.github.io/Harnessimo/USE-CASES/) — seven situations, and how it runs itself once installed
-- [What was taken from each system](https://atamaniuc.github.io/Harnessimo/METHODS/) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: what was kept, what was left, where each piece is implemented and how to use it
+- [SDD](https://atamaniuc.github.io/Harnessimo/SDD/) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: what was taken from each, what was left, where every piece is implemented and how to use it
 - [Why each rule exists](https://atamaniuc.github.io/Harnessimo/STANDARD/)
 - [Adopting an existing repo](https://atamaniuc.github.io/Harnessimo/ADOPTING/)
 - [Contributing](CONTRIBUTING.md)
