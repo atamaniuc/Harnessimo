@@ -23,12 +23,22 @@ test("the site home page is what the README generates", () => {
 
 test("the generated page links inside the site, not back out to it", () => {
   const generated = siteHome(readme);
+  // A language root (/ru/) is another site, not a neighbouring page, and stays
+  // absolute — the switcher and the README both need it that way.
   assert.doesNotMatch(
     generated.replace(/img\.shields\.io[^)]*/g, ""),
-    /https:\/\/atamaniuc\.github\.io\/Harnessimo\/[A-Za-z]/,
+    /https:\/\/atamaniuc\.github\.io\/Harnessimo\/[A-Z]/,
     "a page on the site should link to its neighbours relatively",
   );
   assert.match(generated, /\(GUIDE\.md\)|\(WHY\.md\)/);
+});
+
+test("the site plays the recording, the README shows a still of it", () => {
+  const generated = siteHome(readme);
+  assert.match(generated, /asciinema-player/, "the site should embed the player");
+  assert.match(generated, /assets\/demo\.cast/, "the player should point at the recording");
+  assert.doesNotMatch(generated, /demo\.png/, "the still is for surfaces that cannot play it");
+  assert.match(readme, /demo\.png/, "the README needs an image, not a player");
 });
 
 test("the install block becomes tabs, which GitHub cannot render", () => {

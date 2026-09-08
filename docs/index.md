@@ -13,7 +13,7 @@
 [![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](https://github.com/atamaniuc/Harnessimo/blob/main/package.json)
 
 <p align="center">
-  <img src="assets/harnessimo.jpg"
+  <img src="https://raw.githubusercontent.com/atamaniuc/Harnessimo/main/docs/assets/harnessimo.jpg"
        alt="Robots in a server room wrestling a firehose of data while one of them holds a loop of it steady, under a sign reading HARNESSIMO"
        width="720">
 </p>
@@ -25,6 +25,18 @@ they fail with a file, a line and a fix.
 
 Zero dependencies, one config file, any language — it reads your files, runs your commands,
 walks your git history. <!-- proof: package.json:"files" -->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.css">
+<div id="demo" class="demo-player"></div>
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.js"></script>
+<script>
+  AsciinemaPlayer.create("/Harnessimo/assets/demo.cast", document.getElementById("demo"), {
+    autoPlay: true, loop: true, idleTimeLimit: 1.2, terminalFontSize: "14px", theme: "nord",
+  });
+</script>
+
+Nobody scripted that: `npm run demo` runs those commands in a throwaway repository and
+records what they print.
 
 === "pnpm"
 
@@ -227,7 +239,7 @@ entitled to make:
 - **It is held to its own standard.** All eight checks run against this repository, including
   a cold start that clones it into an empty directory and runs the documented commands, and
   a re-verification of every passing claim. The badge above is that.
-- **109 tests**, and every rule has one that proves it fires on bad input — a rule that only
+- **113 tests**, and every rule has one that proves it fires on bad input — a rule that only
   passes is an assumption wearing a rule's clothes.
 - **Used in production, not only demonstrated.** Two repositories deleted their own versions
   of these checks to adopt it; both are linked below and both are public.
@@ -258,10 +270,12 @@ This repo runs all eight checks on itself, including from a fresh clone.
 
 ## Docs
 
-**<https://atamaniuc.github.io/Harnessimo/>**
+**<https://atamaniuc.github.io/Harnessimo/>** — every page is also in Russian:
+[по-русски](https://atamaniuc.github.io/Harnessimo/ru/), or the language switcher in the
+header.
 
 - [Why this exists](WHY.md) — who it is for, when it is worth it, and how it sits next to Kiro, Spec Kit, Copilot and the agent CLIs
-- [15-minute guide](GUIDE.md) · [по-русски](GUIDE.ru.md)
+- [15-minute guide](GUIDE.md)
 - [Use cases](USE-CASES.md) — seven situations, and how it runs itself once installed
 - [SDD](SDD.md) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: what was taken from each, what was left, where every piece is implemented and how to use it
 - [Why each rule exists](STANDARD.md)
@@ -271,7 +285,7 @@ This repo runs all eight checks on itself, including from a fresh clone.
 ## Development
 
 ```bash
-npm test          # 109 tests, no install — Node runs the TypeScript directly
+npm test          # 113 tests, no install — Node runs the TypeScript directly
 npm run check     # tests, then this repo's own checks
 npm run typecheck # tsc, strict, over src and test (needs npm i first)
 npm run build     # what a consumer installs: dist/, with declarations

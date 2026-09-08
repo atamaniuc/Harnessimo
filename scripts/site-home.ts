@@ -28,6 +28,19 @@ const HEADER = `<!--
 -->
 `;
 
+/** The site plays the recording; GitHub and npm can only show a still of it. */
+const PLAYER = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.css">
+<div id="demo" class="demo-player"></div>
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.js"></script>
+<script>
+  AsciinemaPlayer.create("/Harnessimo/assets/demo.cast", document.getElementById("demo"), {
+    autoPlay: true, loop: true, idleTimeLimit: 1.2, terminalFontSize: "14px", theme: "nord",
+  });
+</script>
+
+Nobody scripted that: \`npm run demo\` runs those commands in a throwaway repository and
+records what they print.`;
+
 /** The install block, as tabs — one per package manager. */
 const INSTALL_TABS = [
   ["pnpm", "pnpm add -D harnessimo", "pnpm exec harnessimo"],
@@ -51,6 +64,14 @@ const INSTALL_TABS = [
 export function siteHome(readme: string): string {
   let text = readme;
 
+  const demoStart = text.indexOf("<!-- demo:start -->");
+  const demoEnd = text.indexOf("<!-- demo:end -->");
+  if (demoStart === -1 || demoEnd === -1) {
+    throw new Error("README.md has no <!-- demo:start --> … <!-- demo:end --> region");
+  }
+  text =
+    text.slice(0, demoStart) + PLAYER + text.slice(demoEnd + "<!-- demo:end -->".length);
+
   const start = text.indexOf("<!-- install:start -->");
   const end = text.indexOf("<!-- install:end -->");
   if (start === -1 || end === -1) {
@@ -58,8 +79,13 @@ export function siteHome(readme: string): string {
   }
   text = text.slice(0, start) + INSTALL_TABS + text.slice(end + "<!-- install:end -->".length);
 
-  // Site pages link to each other, not out to the published site.
-  text = text.replace(new RegExp(`${SITE}([A-Za-z.-]+)/`, "g"), "$1.md");
+  // Site pages link to each other, not out to the published site. Named
+  // explicitly so a language root like /ru/ is left alone — that is a site, not
+  // a page, and rewriting it produces a link to nothing.
+  text = text.replace(
+    new RegExp(`${SITE}(WHY|GUIDE|USE-CASES|SDD|STANDARD|ADOPTING)/`, "g"),
+    "$1.md",
+  );
   text = text.replace(`(${SITE})`, "(index.md)");
   // The image lives under docs/, so its path loses that prefix.
   text = text.replace(/src="docs\/assets\//g, 'src="assets/');

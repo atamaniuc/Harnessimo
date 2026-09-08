@@ -12,7 +12,6 @@ nav:
   - Home: index.md
   - Why this exists: WHY.md
   - Guide (15 min): GUIDE.md
-  - Гайд (15 минут): GUIDE.ru.md
   - Use cases: USE-CASES.md
   - SDD: SDD.md
   - The standard: STANDARD.md
@@ -22,7 +21,8 @@ nav:
 theme:
   name: material
   features:
-    - navigation.instant
+    # navigation.instant is deliberately absent: it breaks the language
+    # switcher's contextual link, which matters more than the transition.
     - navigation.top
     - content.code.copy
     # Every page links back to its source: "view" opens the Markdown on GitHub,
@@ -44,6 +44,33 @@ theme:
       toggle: { icon: material/brightness-4, name: Switch to light mode }
 
 plugins:
+  # Language first: it rewrites the page tree the others then see.
+  #
+  # Suffix scheme — GUIDE.md is English, GUIDE.ru.md is its translation. The
+  # English site stays at the root so every link ever published keeps working,
+  # and Russian is served under /ru/. Adding a language later is one entry here
+  # plus the files; nothing else in this repository knows how many there are.
+  - i18n:
+      docs_structure: suffix
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: ru
+          name: Русский
+          build: true
+          nav_translations:
+            Home: Главная
+            Why this exists: Зачем это
+            Guide (15 min): Гайд (15 минут)
+            Use cases: Сценарии
+            SDD: SDD
+            The standard: Стандарт
+            Adopting an existing repo: Внедрение в существующий репозиторий
+            Contributing: Как участвовать
   - search
   - mermaid2
 

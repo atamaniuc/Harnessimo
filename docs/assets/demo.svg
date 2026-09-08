@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="545" viewBox="0 0 860 545" role="img" aria-label="A terminal running harnessimo init, then check, then check again after a rename breaks a documented claim">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: pre; }
+    .prompt { fill: #e6e9ef; }
+    .sigil { fill: #4ade80; }
+    .out { fill: #9aa4b2; }
+    .good { fill: #4ade80; }
+    .bad { fill: #f87171; }
+    .comment { fill: #6b7484; font-style: italic; }
+  </style>
+  <rect width="860" height="545" rx="10" fill="#14171c"/>
+  <circle cx="24" cy="22" r="5" fill="#f87171"/>
+  <circle cx="42" cy="22" r="5" fill="#fbbf24"/>
+  <circle cx="60" cy="22" r="5" fill="#4ade80"/>
+  <text x="430" y="26" text-anchor="middle" class="comment">harnessimo</text>
+    <text x="22" y="66" class="prompt"><tspan class="sigil">$ </tspan>harnessimo init</text>
+    <text x="22" y="85" class="out">harnessimo init: wrote 16 file(s)</text>
+    <text x="22" y="104" class="out">  + .harness/2-tools/README.md</text>
+    <text x="22" y="123" class="out">  + .harness/README.md</text>
+    <text x="22" y="142" class="out">  + .harness/5-feedback/README.md</text>
+    <text x="22" y="161" class="comment">  … 28 more lines</text>
+    <text x="22" y="180" class="out"></text>
+    <text x="22" y="199" class="prompt"><tspan class="sigil">$ </tspan>harnessimo check</text>
+    <text x="22" y="218" class="good">  ok    proof markers  2 proof marker(s) across 14 document(s) all resolve</text>
+    <text x="22" y="237" class="good">  ok    work tracks    0 live track(s) in specs/TRACKS.md resolve and carry a status</text>
+    <text x="22" y="256" class="good">  ok    task gate      checked boxes in 0 live task list(s) name a passing check</text>
+    <text x="22" y="275" class="good">  ok    queue          queue invariants hold</text>
+    <text x="22" y="294" class="good">harnessimo: every configured check passes.</text>
+    <text x="22" y="313" class="out"></text>
+    <text x="22" y="332" class="comment"># someone renames the function the README points at</text>
+    <text x="22" y="351" class="out"></text>
+    <text x="22" y="370" class="prompt"><tspan class="sigil">$ </tspan>harnessimo check</text>
+    <text x="22" y="389" class="good">  ok    work tracks    0 live track(s) in specs/TRACKS.md resolve and carry a status</text>
+    <text x="22" y="408" class="good">  ok    task gate      checked boxes in 0 live task list(s) name a passing check</text>
+    <text x="22" y="427" class="good">  ok    queue          queue invariants hold</text>
+    <text x="22" y="446" class="bad">  FAIL  proof markers</text>
+    <text x="22" y="465" class="out">    README.md:3  src/totals.ts:orderTotal</text>
+    <text x="22" y="484" class="out">        "src/totals.ts" does not contain "orderTotal"</text>
+    <text x="22" y="503" class="bad">harnessimo: 1 problem(s).</text>
+    <text x="22" y="522" class="out"></text>
+</svg>

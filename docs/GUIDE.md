@@ -3,7 +3,6 @@
 What this is, why you would want it, and how to get a green check in your own repository.
 Read top to bottom; it is meant to be finished in one sitting.
 
-Russian version: [GUIDE.ru.md](GUIDE.ru.md).
 
 ## 1. Why
 

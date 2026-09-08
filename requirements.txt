@@ -2,3 +2,4 @@ mkdocs
 mkdocs-material
 mkdocs-mermaid2-plugin
 pymdown-extensions
+mkdocs-static-i18n
