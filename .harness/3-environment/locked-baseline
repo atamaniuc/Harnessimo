@@ -8,5 +8,8 @@
 # decision, and this line is where the decision is recorded. The fifth move
 # decision, and this line is where the decision is recorded. The fifth move
 # adds publish.yml and changes how the release ships the package; the sixth
-# prepares publishing to authenticate by OIDC instead of a stored secret.
-a93053c16841210d73d23bd41681e0befeb2e91a
+# decision, and this line is where the decision is recorded. The fifth move
+# adds publish.yml and changes how the release ships the package; the sixth
+# prepares publishing to authenticate by OIDC; the seventh removes the stored
+# token from it entirely.
+b0a0280885d95d026dc3998ca93556c5bc468f9b
