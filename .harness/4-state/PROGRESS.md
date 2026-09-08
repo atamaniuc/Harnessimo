@@ -8,8 +8,13 @@ State carried between sessions. Read this first; update it before you stop.
 tracks, the task gate, the queue, locked surfaces, cold start, clean exit, the
 instruction-file limit and the release check — all implemented, tested, and enforced
 against this repository by `npm run check`. Beside them: a read guard that fires while the
-work happens, a lane lifecycle (`track new` / `track close`), and the rules that only
-matter once more than one agent is working (spec 0006).
+work happens, a lane lifecycle (`track new` / `track close`), the rules that only matter
+once more than one agent is working (spec 0006), and a declared supervision level that
+decides how much of the nine a given run is held to (spec 0007).
+
+- `harnessimo check` runs at the level this repository declares — `watched` here, because
+  the Stop hook runs it at the end of every turn and a floor that re-verified the whole
+  queue would make that gate slow enough to be removed. CI is honestly `unattended`.
 
 - Zero runtime dependencies. Written in TypeScript (strict); Node runs the sources
   directly through type stripping, so tests and the CLI need no install, while
