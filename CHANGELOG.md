@@ -7,6 +7,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.5.3] — 2026-09-08
+
+### Fixed
+
+- The README's demo image was broken on GitHub and on npm: its URL carried an unexpanded
+  `''' + RAW + '''` from the heredoc that wrote the file. The docs site never showed it,
+  because its generator replaces that region with the player — a single-sourced document
+  drifting on one surface only, which is the failure mode single-sourcing is supposed to
+  remove. This release exists so the registry stops serving the broken page.
+
+### Added
+
+- `test/readme-links.test.ts`: every link in both READMEs must be free of unexpanded
+  templates, and every file this repository points at must exist. Quoted terminal output
+  is left alone — the sample from `harnessimo brief` names a spec that is not here on
+  purpose.
+- The version the adoption guide tells people to pin is now held to the manifest by a test.
+  The English page said 0.4.1 and the Russian 0.4.3 while the registry served 0.5.2.
+
 ## [0.5.2] — 2026-09-08
 
 ### Fixed
@@ -166,6 +185,7 @@ release workflow refuses to cut one from a commit that does not pass its own che
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.5.3]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.3
 [0.5.2]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.2
 [0.5.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.1
 [0.5.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.5.0
