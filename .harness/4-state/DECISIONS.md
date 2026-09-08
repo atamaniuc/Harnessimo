@@ -109,15 +109,23 @@ they are — `npm test` and `node src/cli.ts check` still need no install, which
 keeps the cold-start check honest. `tsc` rewrites those specifiers to `.js` when it emits
 `dist/`.
 
-**`dist/` is committed, and that was measured rather than assumed.** The first attempt used
-a `prepare` script, which is the documented way to make a git dependency build itself. It
-works on npm and fails on the other two that were tried: pnpm 10 refuses to run a
-dependency's lifecycle scripts at all and stops the install, and yarn 1 installs the
-repository without building it — both leaving a consumer with a package containing no
-JavaScript. Committing the build is what makes `pnpm add`, `yarn add`, `bun add` and
-`npm i` from a git tag all work with nothing to configure. The claim that it matches its
-source is checked like any other: `scripts/build-is-current.mjs` rebuilds in CI and fails
-if anything moved.
+**What consumers install is the tarball attached to a release.** This took three attempts
+and each failure was measured, not guessed:
+
+1. `prepare`, the documented way to make a git dependency build itself. Works on npm;
+   pnpm 10 refuses to run a dependency's lifecycle scripts and aborts the install, and
+   yarn 1 installs the repository without building it. Two of four managers left the
+   consumer with a directory of TypeScript and no CLI.
+2. Committing `dist/`. It works everywhere, and it is build output in version control —
+   a second copy of every module, in every diff, for a distribution problem.
+3. `npm pack` in the release workflow, uploaded as a release asset. Every manager installs
+   a tarball URL, nothing is built at install time, no scripts need approving, and the
+   repository holds only source.
+
+**The better answer is the npm registry**, where the install line is `harnessimo@0.4.1` and
+none of this is interesting. It needs a publish token, which is a human decision rather than
+a technical one; `.github/workflows/publish.yml` is written and skips itself until the
+secret exists.
 
 **Cost, accepted:** two devDependencies, a `dist/` to build before publishing, and
 `erasableSyntaxOnly` as a permanent restriction — no enums, no namespaces, no parameter

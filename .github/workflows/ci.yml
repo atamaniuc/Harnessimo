@@ -69,10 +69,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci --no-audit --no-fund
-      # dist/ is committed because that is the only way a git install works in
-      # every package manager. A committed build is a claim, so it is checked:
-      # rebuild, and fail if anything moved.
-      - run: node scripts/build-is-current.mjs
+      - run: npm run build
       # What a consumer actually gets: the compiled CLI, from a packed tarball,
       # checking this repository. A build that emits files nobody runs is not
       # evidence of anything.

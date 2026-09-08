@@ -14,7 +14,7 @@ they fail with a file, a line and a fix.
 === "pnpm"
 
     ```bash
-    pnpm add -D github:atamaniuc/Harnessimo#v0.4.0
+    pnpm add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     pnpm exec harnessimo init    # scans your repo, writes a config that already passes
     pnpm exec harnessimo check   # run this in CI
     ```
@@ -22,7 +22,7 @@ they fail with a file, a line and a fix.
 === "npm"
 
     ```bash
-    npm i -D github:atamaniuc/Harnessimo#v0.4.0
+    npm i -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     npx harnessimo init    # scans your repo, writes a config that already passes
     npx harnessimo check   # run this in CI
     ```
@@ -30,7 +30,7 @@ they fail with a file, a line and a fix.
 === "yarn"
 
     ```bash
-    yarn add -D github:atamaniuc/Harnessimo#v0.4.0
+    yarn add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     yarn harnessimo init    # scans your repo, writes a config that already passes
     yarn harnessimo check   # run this in CI
     ```
@@ -38,7 +38,7 @@ they fail with a file, a line and a fix.
 === "bun"
 
     ```bash
-    bun add -d github:atamaniuc/Harnessimo#v0.4.0
+    bun add -d https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     bunx harnessimo init    # scans your repo, writes a config that already passes
     bunx harnessimo check   # run this in CI
     ```

@@ -21,7 +21,7 @@ Zero dependencies, one config file, any language — it reads your files, runs y
 walks your git history. <!-- proof: package.json:"files" -->
 
 ```bash
-pnpm add -D github:atamaniuc/Harnessimo#v0.4.0
+pnpm add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
 pnpm exec harnessimo init      # scans your repo, writes a config that already passes
 pnpm exec harnessimo check     # run this in CI
 ```
@@ -30,14 +30,20 @@ pnpm exec harnessimo check     # run this in CI
 <summary>npm, yarn, bun</summary>
 
 ```bash
-npm i -D github:atamaniuc/Harnessimo#v0.4.0     && npx harnessimo init  && npx harnessimo check
-yarn add -D github:atamaniuc/Harnessimo#v0.4.0  && yarn harnessimo init && yarn harnessimo check
-bun add -d github:atamaniuc/Harnessimo#v0.4.0   && bunx harnessimo init && bunx harnessimo check
+TARBALL=https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
+
+npm i  -D $TARBALL  && npx  harnessimo init && npx  harnessimo check
+yarn add -D $TARBALL && yarn harnessimo init && yarn harnessimo check
+bun add  -d $TARBALL && bunx harnessimo init && bunx harnessimo check
 ```
 
 All four were run against this release before being written down. On the
 [docs site](https://atamaniuc.github.io/Harnessimo/) the same commands are tabs, one per
 package manager.
+
+The install target is the tarball attached to each release rather than the git repository:
+a git install would hand you TypeScript with nothing built, and the lifecycle script that is
+supposed to fix that does not run under pnpm or yarn. Both were tried.
 
 </details>
 
@@ -185,9 +191,9 @@ touch the disk. <!-- proof: test/cli.test.ts -->
 There is no build step in the way of running it: sources import each other as `.ts`, so
 Node's own type stripping runs them as they are — which is why `npm test` needs nothing
 installed and the cold-start check still measures the repository rather than npm. `tsc`
-emits `dist/` for consumers, rewriting those specifiers to `.js`, and `dist/` is committed:
-it is what a git install gets, and CI fails if it does not match the source it was built
-from. <!-- proof: test/types.test.ts -->
+emits `dist/` (rewriting those specifiers to `.js`) and the release workflow packs it into
+the tarball you install. Build output is not committed.
+<!-- proof: test/types.test.ts -->
 
 ## License
 

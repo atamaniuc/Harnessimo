@@ -11,7 +11,7 @@ in fifteen minutes and this document assumes it.
 === "pnpm"
 
     ```bash
-    pnpm add -D github:atamaniuc/Harnessimo#v0.4.0
+    pnpm add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     pnpm exec harnessimo init
     pnpm exec harnessimo check
     ```
@@ -19,7 +19,7 @@ in fifteen minutes and this document assumes it.
 === "npm"
 
     ```bash
-    npm i -D github:atamaniuc/Harnessimo#v0.4.0
+    npm i -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     npx harnessimo init
     npx harnessimo check
     ```
@@ -27,7 +27,7 @@ in fifteen minutes and this document assumes it.
 === "yarn"
 
     ```bash
-    yarn add -D github:atamaniuc/Harnessimo#v0.4.0
+    yarn add -D https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     yarn harnessimo init
     yarn harnessimo check
     ```
@@ -35,7 +35,7 @@ in fifteen minutes and this document assumes it.
 === "bun"
 
     ```bash
-    bun add -d github:atamaniuc/Harnessimo#v0.4.0
+    bun add -d https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz
     bunx harnessimo init
     bunx harnessimo check
     ```
@@ -144,7 +144,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ## After adoption
 
-- Cut a tag and pin it: `pnpm add -D github:atamaniuc/Harnessimo#v0.4.0`. Tracking `main`
+- Pin the release you adopted: install from `https://github.com/atamaniuc/Harnessimo/releases/download/v0.4.1/harnessimo-0.4.1.tgz` rather than from a branch. Tracking `main`
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

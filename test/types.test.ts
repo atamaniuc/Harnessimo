@@ -38,14 +38,13 @@ test("the entry point re-exports every rule module", () => {
   }
 });
 
-test("the built declarations carry the types, not only the functions", () => {
+test("the entry point re-exports the types, not only the functions", () => {
   // The failure this catches, found by compiling a consumer against a real
-  // install: every function exported, and not one of the types they take.
-  // The extension is whatever tsc emits — checked against real consumers on
-  // nodenext and bundler resolution, both of which resolve it. What matters is
-  // that the line is there at all.
-  const declarations = readFileSync(join(ROOT, "dist/index.d.ts"), "utf8");
-  assert.match(declarations, /export type \* from "\.\/types\.(ts|js)"/);
+  // install: every function exported, and not one of the types they take. It
+  // reads the source rather than the build, because `npm test` runs on a clean
+  // checkout where nothing has been built yet.
+  const entry = readFileSync(join(ROOT, "src/index.ts"), "utf8");
+  assert.match(entry, /export type \* from "\.\/types\.ts"/);
 });
 
 test("the package points consumers at what the build produces", () => {
@@ -56,13 +55,10 @@ test("the package points consumers at what the build produces", () => {
   assert.ok(pkg.files.includes("dist"), "dist/ must be published");
 });
 
-test("a consumer installing from a git tag gets JavaScript, not TypeScript", () => {
-  // Not a lifecycle script: pnpm 10 refuses to run a dependency's scripts and
-  // yarn 1 does not build git dependencies, so both would install a package
-  // with nothing runnable in it. dist/ is committed, and CI proves it matches
-  // the source (scripts/build-is-current.mjs).
+test("what ships is the build, and only the build", () => {
+  // A consumer installs the tarball attached to a release, which is `npm pack`
+  // over `files`. Sources are deliberately not in it: they would ship a second
+  // copy of every module that no package manager would run.
   assert.match(pkg.scripts.build ?? "", /tsconfig\.build\.json/);
-  for (const file of ["dist/index.js", "dist/index.d.ts", "dist/cli.js"]) {
-    assert.ok(existsSync(join(ROOT, file)), `${file} is missing: run npm run build`);
-  }
+  assert.deepEqual(pkg.files, ["dist", "templates", "schema", "README.md", "LICENSE"]);
 });
