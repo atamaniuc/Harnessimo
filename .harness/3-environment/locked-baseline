@@ -25,4 +25,6 @@
 # a trigger that, created by a workflow, never fires.
 # The eleventh points the operations workflow at the secret's real name.
 # The twelfth makes the workflows fetch the tags the release check reads.
-98a575ac8790ac4b7999819b74396dfc6e7552a2
+# The thirteenth gives the compiled-package job the tags too, and makes a test
+# say so instead of each job remembering.
+89dedb3cf6cdc4016ae45ffe8e575971fe14f0e9
