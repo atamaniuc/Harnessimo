@@ -8,11 +8,37 @@ nobody has to remember it exists.**
 
 Three commands, run a single time in a repository:
 
-```bash
-pnpm exec harnessimo init                    # writes harnessimo.config.json from what you already have
-pnpm exec harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
-pnpm exec harnessimo hooks install           # the fast checks run before every commit
-```
+=== "pnpm"
+
+    ```bash
+    pnpm exec harnessimo init                    # writes harnessimo.config.json from what you already have
+    pnpm exec harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    pnpm exec harnessimo hooks install           # the fast checks run before every commit
+    ```
+
+=== "npm"
+
+    ```bash
+    npx harnessimo init                    # writes harnessimo.config.json from what you already have
+    npx harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    npx harnessimo hooks install           # the fast checks run before every commit
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn harnessimo init                    # writes harnessimo.config.json from what you already have
+    yarn harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    yarn harnessimo hooks install           # the fast checks run before every commit
+    ```
+
+=== "bun"
+
+    ```bash
+    bunx harnessimo init                    # writes harnessimo.config.json from what you already have
+    bunx harnessimo hooks install --agent   # the agent gets a briefing at the start of every session
+    bunx harnessimo hooks install           # the fast checks run before every commit
+    ```
 
 Plus ten lines in CI:
 

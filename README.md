@@ -26,6 +26,21 @@ pnpm exec harnessimo init      # scans your repo, writes a config that already p
 pnpm exec harnessimo check     # run this in CI
 ```
 
+<details>
+<summary>npm, yarn, bun</summary>
+
+```bash
+npm i -D github:atamaniuc/Harnessimo#v0.3.0     && npx harnessimo init  && npx harnessimo check
+yarn add -D github:atamaniuc/Harnessimo#v0.3.0  && yarn harnessimo init && yarn harnessimo check
+bun add -d github:atamaniuc/Harnessimo#v0.3.0   && bunx harnessimo init && bunx harnessimo check
+```
+
+All four were run against this release before being written down. On the
+[docs site](https://atamaniuc.github.io/Harnessimo/) the same commands are tabs, one per
+package manager.
+
+</details>
+
 ## What it catches
 
 Three real failures from the repos this came out of.

@@ -11,11 +11,37 @@
 Eight of them. You turn on the ones you need. They run in CI and before every commit, and
 they fail with a file, a line and a fix.
 
-```bash
-pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
-pnpm exec harnessimo init      # scans your repo, writes a config that already passes
-pnpm exec harnessimo check     # run this in CI
-```
+=== "pnpm"
+
+    ```bash
+    pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
+    pnpm exec harnessimo init    # scans your repo, writes a config that already passes
+    pnpm exec harnessimo check   # run this in CI
+    ```
+
+=== "npm"
+
+    ```bash
+    npm i -D github:atamaniuc/Harnessimo#v0.3.0
+    npx harnessimo init    # scans your repo, writes a config that already passes
+    npx harnessimo check   # run this in CI
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn add -D github:atamaniuc/Harnessimo#v0.3.0
+    yarn harnessimo init    # scans your repo, writes a config that already passes
+    yarn harnessimo check   # run this in CI
+    ```
+
+=== "bun"
+
+    ```bash
+    bun add -d github:atamaniuc/Harnessimo#v0.3.0
+    bunx harnessimo init    # scans your repo, writes a config that already passes
+    bunx harnessimo check   # run this in CI
+    ```
 
 Zero dependencies, one config file, any language — it reads your files, runs your commands,
 walks your git history.

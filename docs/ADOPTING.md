@@ -8,11 +8,40 @@ in fifteen minutes and this document assumes it.
 
 ## A new repository
 
-```bash
-pnpm add -D github:atamaniuc/Harnessimo      # or npm i -D
-pnpm exec harnessimo init
-pnpm exec harnessimo check
-```
+=== "pnpm"
+
+    ```bash
+    pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
+    pnpm exec harnessimo init
+    pnpm exec harnessimo check
+    ```
+
+=== "npm"
+
+    ```bash
+    npm i -D github:atamaniuc/Harnessimo#v0.3.0
+    npx harnessimo init
+    npx harnessimo check
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn add -D github:atamaniuc/Harnessimo#v0.3.0
+    yarn harnessimo init
+    yarn harnessimo check
+    ```
+
+=== "bun"
+
+    ```bash
+    bun add -d github:atamaniuc/Harnessimo#v0.3.0
+    bunx harnessimo init
+    bunx harnessimo check
+    ```
+
+Later examples write `harnessimo …` on its own: prefix it with your runner — `pnpm exec`,
+`npx`, `yarn` or `bunx`.
 
 `init` writes `.harness/` (five layers, with starter documents), `specs/` (the track index,
 its log, and templates for a spec and a handoff), and `harnessimo.config.json`. The scaffolded
@@ -48,7 +77,7 @@ exists to prevent.
 List what you enforce today and what enforces it. Then run:
 
 ```bash
-pnpm exec harnessimo doctor
+harnessimo doctor
 ```
 
 and compare, line by line. `doctor` reports what is configured, never what is aspirational,

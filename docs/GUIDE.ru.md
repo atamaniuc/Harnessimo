@@ -45,11 +45,40 @@ flowchart LR
 
 ## 3. Три минуты до зелёной проверки
 
-```bash
-pnpm add -D github:atamaniuc/Harnessimo#v0.1.0   # или: npm i -D github:atamaniuc/Harnessimo
-pnpm exec harnessimo init
-pnpm exec harnessimo check
-```
+=== "pnpm"
+
+    ```bash
+    pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
+    pnpm exec harnessimo init
+    pnpm exec harnessimo check
+    ```
+
+=== "npm"
+
+    ```bash
+    npm i -D github:atamaniuc/Harnessimo#v0.3.0
+    npx harnessimo init
+    npx harnessimo check
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn add -D github:atamaniuc/Harnessimo#v0.3.0
+    yarn harnessimo init
+    yarn harnessimo check
+    ```
+
+=== "bun"
+
+    ```bash
+    bun add -d github:atamaniuc/Harnessimo#v0.3.0
+    bunx harnessimo init
+    bunx harnessimo check
+    ```
+
+Дальше в примерах пишется просто `harnessimo …` — подставьте свой запускатор: `pnpm exec`,
+`npx`, `yarn` или `bunx`.
 
 `init` сначала читает ваш репозиторий — чем запускаются команды, где исходники, есть ли
 миграции и CI — и пишет конфиг, который уже проходит. Затем создаёт ровно три вещи:
@@ -71,7 +100,7 @@ harnessimo.config.json  какие проверки вы включили
 Дальше:
 
 ```bash
-pnpm exec harnessimo doctor
+harnessimo doctor
 ```
 
 Печатает, что реально включено, а что нет. **Секция, которую вы не указали в конфиге, —
@@ -148,7 +177,7 @@ flowchart LR
 ## 7. На каждом коммите
 
 ```bash
-pnpm exec harnessimo hooks install
+harnessimo hooks install
 ```
 
 Создаёт `.githooks/pre-commit` и указывает на него git, чтобы быстрые проверки
@@ -160,7 +189,7 @@ pnpm exec harnessimo hooks install
 есть своя быстрая команда — укажите её в конфиге, и хук выполнит её первой:
 
 ```jsonc
-{ "hooks": { "before": ["pnpm run validate >/dev/null"] } }
+{ "hooks": { "before": ["npm run validate >/dev/null"] } }
 ```
 
 `harnessimo hooks status` отвечает на вопрос, который никто не догадывается задать:
@@ -173,7 +202,7 @@ pnpm exec harnessimo hooks install
 работает» не о чем:
 
 ```yaml
-- run: pnpm exec harnessimo check --reverify
+- run: npx harnessimo check --reverify
 ```
 
 `--reverify` перезапускает каждый пункт, который claims passing. Именно эта строка
@@ -182,8 +211,8 @@ pnpm exec harnessimo hooks install
 Двум проверкам нужен диапазон коммитов, поэтому у них свой шаг:
 
 ```yaml
-- run: pnpm exec harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
-- run: pnpm exec harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
+- run: npx harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
+- run: npx harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
 ```
 
 ## 8. Вопросы, которые задают на самом деле

@@ -28,6 +28,9 @@ theme:
     # "edit" opens it ready to change. A documentation site with no way back to
     # the file it was built from invites a fix to be written twice.
     - content.action.edit
+    # One choice of package manager, remembered across every tabbed block and
+    # every page: picking npm once should not have to be repeated per snippet.
+    - content.tabs.link
   icon:
     # The action is "read the source", so the icon says GitHub, not a pencil.
     edit: material/github
@@ -45,6 +48,10 @@ plugins:
 
 markdown_extensions:
   - admonition
+  # Package-manager tabs (pnpm / npm / yarn / bun) on every install and run
+  # example. Without alternate_style the tabs render as plain headings.
+  - pymdownx.tabbed:
+      alternate_style: true
   - def_list
   - tables
   - attr_list

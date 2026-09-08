@@ -42,11 +42,40 @@ checker:
 
 ## 3. Three minutes to a green check
 
-```bash
-pnpm add -D github:atamaniuc/Harnessimo#v0.1.0   # or: npm i -D github:atamaniuc/Harnessimo
-pnpm exec harnessimo init
-pnpm exec harnessimo check
-```
+=== "pnpm"
+
+    ```bash
+    pnpm add -D github:atamaniuc/Harnessimo#v0.3.0
+    pnpm exec harnessimo init
+    pnpm exec harnessimo check
+    ```
+
+=== "npm"
+
+    ```bash
+    npm i -D github:atamaniuc/Harnessimo#v0.3.0
+    npx harnessimo init
+    npx harnessimo check
+    ```
+
+=== "yarn"
+
+    ```bash
+    yarn add -D github:atamaniuc/Harnessimo#v0.3.0
+    yarn harnessimo init
+    yarn harnessimo check
+    ```
+
+=== "bun"
+
+    ```bash
+    bun add -d github:atamaniuc/Harnessimo#v0.3.0
+    bunx harnessimo init
+    bunx harnessimo check
+    ```
+
+Later examples write `harnessimo …` on its own: prefix it with your runner — `pnpm exec`,
+`npx`, `yarn` or `bunx`.
 
 `init` reads your repository first — command runner, source directories, migrations, CI —
 and writes a configuration that already passes. Then three things and nothing else:
@@ -69,7 +98,7 @@ and every red one after that means something.
 Then run:
 
 ```bash
-pnpm exec harnessimo doctor
+harnessimo doctor
 ```
 
 It prints what is enforced and what is not. **A section you leave out of the config is a
@@ -146,7 +175,7 @@ practice: a fresh session's budget goes on whatever you failed to rule out.
 ## 7. On every commit
 
 ```bash
-pnpm exec harnessimo hooks install
+harnessimo hooks install
 ```
 
 Writes `.githooks/pre-commit` and points git at it, so the fast checks run
@@ -159,7 +188,7 @@ nothing. If your project has its own fast command, name it in the config and the
 hook runs it first:
 
 ```jsonc
-{ "hooks": { "before": ["pnpm run validate >/dev/null"] } }
+{ "hooks": { "before": ["npm run validate >/dev/null"] } }
 ```
 
 `harnessimo hooks status` answers the question nobody thinks to ask: the file
@@ -172,7 +201,7 @@ One job. It runs the same command you run locally, so there is no "works on my m
 gap to argue about:
 
 ```yaml
-- run: pnpm exec harnessimo check --reverify
+- run: npx harnessimo check --reverify
 ```
 
 `--reverify` re-runs every item claiming to pass. That is the line that makes the queue's
@@ -181,8 +210,8 @@ evidence *evidence* rather than a string someone typed.
 Two checks need a commit range and get their own step:
 
 ```yaml
-- run: pnpm exec harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
-- run: pnpm exec harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
+- run: npx harnessimo locked     "${{ github.event.pull_request.base.sha }}" HEAD
+- run: npx harnessimo clean-exit "${{ github.event.pull_request.base.sha }}" HEAD
 ```
 
 ## 8. Questions people actually ask
