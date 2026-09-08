@@ -15,7 +15,6 @@ nav:
   - Use cases: USE-CASES.md
   - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
   - The standard: STANDARD.md
-  - Adopting an existing repo: ADOPTING.md
   - Contributing: https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md
 
 theme:
@@ -69,10 +68,21 @@ plugins:
             Use cases: Сценарии
             SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD — что взято из OpenSpec, Spec Kit, BMAD
             The standard: Стандарт
-            Adopting an existing repo: Внедрение в существующий репозиторий
             Contributing: Как участвовать
   - search
   - mermaid2
+  # A page that moves takes its published links with it unless something
+  # catches them. Every retired page keeps answering, pointed at whatever
+  # absorbed it, and test/docs-structure.test.ts fails when a target here is
+  # not a page that exists.
+  - redirects:
+      redirect_maps:
+        ADOPTING.md: GUIDE.md
+        ADOPTING.ru.md: GUIDE.ru.md
+
+hooks:
+  # mkdocs-redirects builds for one page tree; the site has one per language.
+  - hooks/i18n_redirects.py
 
 markdown_extensions:
   - admonition

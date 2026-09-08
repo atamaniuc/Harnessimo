@@ -202,7 +202,7 @@ pnpm exec harnessimo init && pnpm exec harnessimo check
 | Файл инструкций разросся в 600-строчное руководство | `instructions` |
 | Агент правит то, что его оценивает | `locked` |
 
-Подробно: [Внедрение в существующий репозиторий](ADOPTING.md).
+Подробно: [Внедрение в существующий репозиторий](GUIDE.md#adopting).
 
 ## Любой агент, любая модель
 
@@ -309,7 +309,6 @@ harnessimo hooks install           # быстрые проверки перед 
 - [Сценарии](USE-CASES.md) — семь ситуаций и то, как он работает сам после установки
 - [SDD](SDD.md) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: что взято, что оставлено, где реализовано и как пользоваться
 - [Стандарт](STANDARD.md) — почему существует каждое правило
-- [Внедрение в существующий репозиторий](ADOPTING.md)
 - [Как участвовать](https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md)
 
 ## Разработка

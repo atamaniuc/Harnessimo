@@ -201,7 +201,7 @@ Turn on one check, make it green, commit. Then the next one.
 | The agent file is a 600-line manual | `instructions` |
 | An agent editing what grades it | `locked` |
 
-Details: [Adopting an existing repo](ADOPTING.md).
+Details: [Adopting an existing repo](GUIDE.md#adopting).
 
 ## Any agent, any model
 
@@ -308,7 +308,6 @@ header.
 - [Use cases](USE-CASES.md) — seven situations, and how it runs itself once installed
 - [SDD](SDD.md) — OpenSpec, Agent OS, Spec Kit, BMAD, HDD, TDD: what was taken from each, what was left, where every piece is implemented and how to use it
 - [Why each rule exists](STANDARD.md)
-- [Adopting an existing repo](ADOPTING.md)
 - [Contributing](https://github.com/atamaniuc/Harnessimo/blob/main/CONTRIBUTING.md)
 
 ## Development

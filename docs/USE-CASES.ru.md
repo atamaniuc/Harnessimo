@@ -318,4 +318,4 @@ harnessimo: proof markers ok · tracks ok · task gate ok · queue ok
 ---
 
 Дальше: [что взято из OpenSpec, Spec Kit, BMAD и остальных](SDD.md) ·
-[внедрение в существующий репозиторий](ADOPTING.md)
+[внедрение в существующий репозиторий](GUIDE.ru.md#adopting)

@@ -32,19 +32,20 @@ for (const locale of locales) {
   });
 }
 
-// The page that tells people to pin a version drifted in two directions at
+// The section that tells people to pin a version drifted in two directions at
 // once: the English copy said 0.4.1 and the Russian 0.4.3, while the registry
-// served something else again. A version in an instruction is a claim, and
+// served something else again. It lives in the guide since the adoption page
+// merged into it. A version in an instruction is a claim, and
 // this repository's whole argument is that claims get checked.
 //
 // USE-CASES keeps its own version numbers on purpose — that page tells the
 // story of a release that went wrong, and rewriting its history to match the
 // current version would be a lie of a different kind.
-test("the version the adoption guide tells people to pin is the current one", () => {
+test("the version the guide tells people to pin is the current one", () => {
   const { version } = JSON.parse(
     readFileSync(join(ROOT, "package.json"), "utf8"),
   ) as { version: string };
-  for (const page of ["docs/ADOPTING.md", "docs/ADOPTING.ru.md"]) {
+  for (const page of ["docs/GUIDE.md", "docs/GUIDE.ru.md"]) {
     const pinned = [...readFileSync(join(ROOT, page), "utf8").matchAll(/harnessimo@(\d+\.\d+\.\d+)/g)];
     assert.ok(pinned.length > 0, `${page} no longer shows a version to pin`);
     for (const [, found] of pinned) {
