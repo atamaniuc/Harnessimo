@@ -115,7 +115,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ## After adoption
 
-- Cut a tag and pin it: `pnpm add -D github:atamaniuc/Harnessimoimo#v0.1.0`. Tracking `main`
+- Cut a tag and pin it: `pnpm add -D github:atamaniuc/Harnessimo#v0.3.0`. Tracking `main`
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

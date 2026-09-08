@@ -56,18 +56,20 @@ failure — instead of a cheerful summary of things that did not happen.
 You write a claim once and attach its evidence:
 
 ```markdown
-Every rule in here is enforced by a command. <!-- proof: docs/STANDARD.md -->
-Run them all with `npm run check`. <!-- proof: npm run check -->
+Totals round per currency, not per line.   <!-- proof: docs/<a-file>.md -->
+Check it yourself with `make verify`.     <!-- proof: make <a-target> -->
 ```
 
-Delete that document, or rename the script, and the build says so:
+(Real markers name a real path; the angle brackets above are only so this page's own
+examples are not checked as claims.) Delete the document, or rename the target, and the
+build says so:
 
 ```
 FAIL  proof markers
-  README.md:31  docs/STANDARD.md
+  README.md:31  docs/ARCHITECTURE.md
       no such file
-  README.md:32  npm run check
-      no npm run command named "check"
+  README.md:32  make verify
+      no make command named "verify"
 ```
 
 **Turn on:** `docs`. Add the documents that may never drift to `docs.mustCarryProof` — those
@@ -103,7 +105,7 @@ is. The next session gets it handed over at startup rather than re-reading the r
 ```
 $ harnessimo brief
 == specs/TRACKS.md (live work tracks — load a track's handoff first) ==
-- Retrieval quality — [handoff](specs/0004-retrieval/handoff.md) — active, next: T3 recall eval
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
 - Hosted deploy — none — blocked (on an API token)
 ```
 
@@ -122,8 +124,8 @@ only after that command exits 0 — and `--reverify` re-runs every one of them i
 
 ```
 FAIL  queue
-  "rls-proof" claims passing but its verification fails now
-    command: npm test -- rls
+  "checkout-totals" claims passing but its verification fails now
+    command: npm test -- checkout
     fix:  fix the regression, or the claim was never true
 ```
 
@@ -161,7 +163,7 @@ it.
 
 ```
 FAIL  clean exit
-  src/features/agent/tools.ts:88   debugger
+  src/checkout/totals.ts:88        debugger
   .harness/4-state/PROGRESS.md     unchanged while 412 lines of code moved
     fix:  write down where this got to, or the next session starts blind
 ```
@@ -191,25 +193,25 @@ same weight. A harness that overstates its own coverage is the failure it exists
 ```
 $ harnessimo brief
 == specs/TRACKS.md (live work tracks — load a track's handoff first) ==
-- Retrieval quality — [handoff](specs/0004-retrieval/handoff.md) — active, next: T3 recall eval
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
 
 == work queue ==
-active: rag-eval-set — 50 pairs measure recall@k and MRR over the wiki
-  verify with: harnessimo queue verify rag-eval-set
+active: checkout-totals — an order total matches the sum of its lines, in every currency
+  verify with: harnessimo queue verify checkout-totals
 
 == enforced here ==
 proof, tracks, tasks, queue, coldStart, cleanExit
 
 # ... the agent works ...
 
-$ harnessimo queue verify rag-eval-set
-running: pnpm exec vitest run packages/rag/test/eval.test.ts
+$ harnessimo queue verify checkout-totals
+running: npm test -- checkout
   ✓ 12 tests passed
-rag-eval-set: passing — evidence recorded
+checkout-totals: passing — evidence recorded
 
-$ git commit -m "feat(rag): recall@5 eval set (0004)"
+$ git commit -m "feat(checkout): per-currency rounding (0007)"
 harnessimo: proof markers ok · tracks ok · task gate ok · queue ok
-[main 4f1a2b9] feat(rag): recall@5 eval set (0004)
+[main 4f1a2b9] feat(checkout): per-currency rounding (0007)
 ```
 
 The commit went through because the checks passed, not because anybody said it was done.

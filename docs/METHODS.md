@@ -69,7 +69,7 @@ current truth about the system, not a pile of historical documents.
 
 ```bash
 harnessimo init          # writes specs/TRACKS.md, TRACKS-LOG.md and the two templates
-cp specs/spec.template.md specs/0004-retrieval/spec.md
+cp specs/spec.template.md specs/0007-checkout/spec.md
 harnessimo tracks        # the index must resolve and carry statuses
 ```
 
@@ -159,13 +159,13 @@ Point the gate at whatever the generator produced:
 Then a tick has to carry its evidence:
 
 ```markdown
-- [x] T3 Retrieval returns only rows the caller may see
+- [x] T3 Totals round per currency, not per line
       <!-- proof: tests/<file>.spec.ts#<the test name> -->
 ```
 
 ```
 FAIL  task gate
-  specs/0004-retrieval/tasks.md:14  T3 is checked but names no proof
+  specs/0007-checkout/tasks.md:14  T3 is checked but names no proof
 ```
 
 Only live tracks are gated, so adopting this does not require going back through every
@@ -205,16 +205,16 @@ Each item is a story with the command that closes it:
 
 ```json
 {
-  "id": "rls-proof",
-  "behavior": "A non-owner org receives zero rows from every table.",
-  "verification": "npm test -- rls",
+  "id": "checkout-totals",
+  "behavior": "An order total matches the sum of its lines, in every currency.",
+  "verification": "npm test -- checkout",
   "state": "not_started"
 }
 ```
 
 ```bash
 harnessimo queue status              # what is in flight, what is waiting
-harnessimo queue verify rls-proof    # activates it, runs the command, records the outcome
+harnessimo queue verify checkout-totals   # activates it, runs the command, records the outcome
 harnessimo check --reverify          # CI re-runs every item claiming to pass
 ```
 
@@ -259,7 +259,7 @@ harnessimo brief                   # the same output, on demand
 
 ```
 == specs/TRACKS.md (live work tracks — load a track's handoff first) ==
-- Retrieval quality — [handoff](specs/0004-retrieval/handoff.md) — active, next: T3 recall eval
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
 - Hosted deploy — none — blocked (on an API token)
 ```
 
@@ -282,7 +282,7 @@ because the command it runs is the test you already have.
 **How to use it**
 
 ```json
-{ "id": "invoice-totals", "verification": "npm test -- invoices", "state": "not_started" }
+{ "id": "cart-merge", "verification": "npm test -- cart", "state": "not_started" }
 ```
 
 That is the whole integration. The value added is not another test framework: it is that the
@@ -337,13 +337,13 @@ So the proof marker is the one part that is not borrowed. A claim names its evid
 build resolves it:
 
 ```markdown
-Metrics are reconciled against the provider's own total. <!-- proof: docs/<your-doc>.md -->
-Run it with `make verify`. <!-- proof: make <target> -->
+Totals round per currency, not per line.   <!-- proof: docs/<a-file>.md -->
+Check it yourself with `make verify`.     <!-- proof: make <a-target> -->
 ```
 
 ```
 FAIL  proof markers
-  README.md:31  docs/RECONCILIATION.md
+  README.md:31  docs/ARCHITECTURE.md
       no such file
 ```
 

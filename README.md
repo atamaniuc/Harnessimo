@@ -46,8 +46,8 @@ build breaks. <!-- proof: src/proof.mjs:checkTarget -->
 
 ```
 FAIL  queue
-  "rls-proof" claims passing but its verification fails now
-    command: npm test -- rls
+  "checkout-totals" claims passing but its verification fails now
+    command: npm test -- checkout
     fix:  fix the regression, or the claim was never true
 ```
 
@@ -60,11 +60,11 @@ one stopped. Now it gets handed the answer at startup:
 ```
 $ harnessimo brief
 == specs/TRACKS.md (live work tracks — load a track's handoff first) ==
-- Retrieval quality — [handoff](specs/0004-retrieval/handoff.md) — active, next: T3 recall eval
+- Checkout totals — [handoff](specs/0007-checkout/handoff.md) — active, next: T3 currency rounding
 
 == work queue ==
-active: rls-proof — a non-owner org receives zero rows from every table
-  verify with: harnessimo queue verify rls-proof
+active: checkout-totals — an order total matches the sum of its lines, in every currency
+  verify with: harnessimo queue verify checkout-totals
 
 == enforced here ==
 proof, tracks, tasks, queue, coldStart, cleanExit
