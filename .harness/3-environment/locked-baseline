@@ -5,5 +5,6 @@
 # strictly and add the release job; to add the typecheck job; and now for the
 # TypeScript migration, which changes how every job runs the tool and adds a
 # build the release must verify. Widening what an agent may change is a
-# decision, and this line is where the decision is recorded.
-a57c86131c46834d453f33907972edc45dfd8c88
+# decision, and this line is where the decision is recorded. The fifth move
+# adds publish.yml and changes how the release ships the package.
+3d54e0719708b8506eb0d08f89b0969256a4712f
