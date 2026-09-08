@@ -134,3 +134,34 @@ properties, because Node must be able to strip every file that `tsc` compiles.
 **Rejected:** keeping `.mjs` with richer JSDoc plus a generated `.d.ts`. It closes the
 same gap, and was in place for an afternoon, but it spends annotation syntax on what the
 language does natively and leaves the checker optional.
+
+---
+
+## 2026-09-08 — Publishing authenticates by OIDC, and stores nothing
+
+The package is published from GitHub Actions through npm's trusted publishing:
+npmjs verifies a short-lived OIDC token minted for that run, matched against a publisher
+configured on the package — repository `atamaniuc/Harnessimo`, workflow `publish.yml`.
+There is no npm token in the repository, in the secrets, or in the workflow.
+
+**Why:** a stored publish token outlives the job it was made for, works from anywhere, and
+is one leaked log away from someone else publishing under this name. This session is itself
+the argument: a token was pasted into a chat to get the first release out, which burned it
+immediately. The OIDC token cannot be reused — it is scoped to one repository, one workflow
+file, one run, and expires in minutes.
+
+**What it costs:** the workflow filename is part of the credential. Renaming `publish.yml`,
+or moving the publish step into another workflow, breaks publishing until the trusted
+publisher is updated to match. That is the right way round, and it is written into the
+workflow's own header so the next person renaming it finds out before CI does.
+
+**Two settings this depends on, both on the package rather than here:** the trusted
+publisher must allow `npm publish` and not only `npm stage publish` — the default permits
+staging alone, and a direct publish fails with `OIDC permission denied` until it is granted.
+And publishing access is set to require two-factor authentication and disallow tokens, so
+the trusted workflow is the only way in.
+
+**Rejected:** staged publishing, where each release waits for a maintainer to approve it on
+npmjs. It is stricter, and for a one-person project it is a manual step per release that
+would eventually be skipped by publishing another way — which is worse than not having it.
+
