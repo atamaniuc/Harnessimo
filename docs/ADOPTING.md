@@ -47,7 +47,7 @@ Later examples write `harnessimo …` on its own: prefix it with your runner —
 its log, and templates for a spec and a handoff), and `harnessimo.config.json`. The scaffolded
 harness passes its own check immediately, so the first green run costs nothing and every
 later red one means something.
-<!-- proof: test/cli.test.mjs#init scaffolds a working harness that immediately passes its own check -->
+<!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
 
 Then, in order:
 
@@ -82,7 +82,7 @@ harnessimo doctor
 
 and compare, line by line. `doctor` reports what is configured, never what is aspirational,
 so the diff between those two lists is the real work.
-<!-- proof: test/cli.test.mjs#doctor reports what is enforced and what is not, without overstating -->
+<!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
 
 ### 2. Translate, one section at a time
 
@@ -113,7 +113,7 @@ project-specific parts:
 ```ts
 import { verifyProofs, createResolver } from "harnessimo";
 ```
-<!-- proof: src/index.mjs -->
+<!-- proof: src/index.ts -->
 
 The test for whether the migration worked is not that the wrapper disappeared. It is that
 the *rule* exists once.

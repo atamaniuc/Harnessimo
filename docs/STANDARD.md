@@ -24,7 +24,7 @@ So the design principle is: **move every judgement about "done" out of prose and
 something that exits non-zero.** Lecture 09 calls this *«экстернализировать суждение о
 завершении»* — externalising the completion judgement — on the grounds that
 *«современные нейронные сети систематически сверх-уверены»*.
-<!-- proof: src/queue.mjs:checkQueue -->
+<!-- proof: src/queue.ts:checkQueue -->
 
 ## Where each check comes from
 
@@ -54,7 +54,7 @@ The entry file is a router: what the project is, how to run it, how to check it,
 to topical documents.
 
 The only way a router stays a router is if something fails when it stops being one, so the
-line limit is a check rather than a note. <!-- proof: src/cleanexit.mjs:instructionProblems -->
+line limit is a check rather than a note. <!-- proof: src/cleanexit.ts:instructionProblems -->
 
 The rule that makes this layer worth having is **labelling**: every constraint states
 whether a command fails on it, or whether it is caught in review. In this repository four of
@@ -68,7 +68,7 @@ triggered on `main` while the branch was still called `master`.
 
 The Definition of Ready and the Definition of Done live here, referenced and never copied.
 The decidable parts are enforced at the two moments they matter: when an item is started,
-and when it is closed. <!-- proof: src/readiness.mjs:readiness -->
+and when it is closed. <!-- proof: src/readiness.ts:readiness -->
 
 ## Layer 2 — Tools *(«подсистема инструментов» — the knife rack)*
 
@@ -104,7 +104,7 @@ Two details that only appear once this runs in anger:
   condition. A harness without a stop condition is not a harness.
 - **Nested calls degrade.** An item whose verification invokes the harness would recurse
   until killed, so a nested run checks invariants only.
-  <!-- proof: bin/harnessimo.mjs:HARNESS_REVERIFY -->
+  <!-- proof: src/cli.ts:HARNESS_REVERIFY -->
 
 ## Layer 3 — Environment *(«подсистема среды» — the stove)*
 
@@ -117,7 +117,7 @@ its own work. Every documented reward hack broke this invariant — the agent ed
 removed the instrumentation its checker depended on. So the files defining the acceptance
 signal are placed out of the loop's reach, and the reach is enforced by a command rather
 than an instruction, because instructions get optimised away.
-<!-- proof: src/locked.mjs:lockedViolations -->
+<!-- proof: src/locked.ts:lockedViolations -->
 
 The baseline exists because the commit that creates a protected file necessarily touches it.
 Moving it forward widens what the system may change, which is a human decision.
@@ -152,7 +152,7 @@ anything. `harnessimo brief` prints what a session should read first, and
 `harnessimo hooks install --agent` wires it to the agent's SessionStart hook, so the state
 arrives whether or not anyone remembers to fetch it. Same argument as every gate here,
 applied to reading rather than to finishing: take the judgement away from the party with an
-incentive to skip it. <!-- proof: src/brief.mjs:briefText -->
+incentive to skip it. <!-- proof: src/brief.ts:briefText -->
 
 It earns its keep immediately by making stale state loud: run against this repository the
 first time, it showed a track index still calling finished work active. A file nobody opens
@@ -183,7 +183,7 @@ The third level is the one most projects skip and the one that catches what the 
 are blind to: something that works only because of state on this machine
 ([lecture 10](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-10-why-end-to-end-testing-changes-results/)).
 `harnessimo cold-start` clones the project into an empty directory and runs the documented
-commands there. <!-- proof: src/coldstart.mjs:coldStartProblems -->
+commands there. <!-- proof: src/coldstart.ts:coldStartProblems -->
 
 It is also the honest test of the documentation, which is
 [lecture 03](https://walkinglabs.github.io/learn-harness-engineering/ru/lectures/lecture-03-why-the-repository-must-become-the-system-of-record/)'s
@@ -202,7 +202,7 @@ in three minutes any more.
 The build and the tests are the project's own gate. What `harnessimo clean-exit` adds is the
 part a build is blind to: debug leftovers that compile perfectly, and a progress file that
 was not touched while the code around it changed.
-<!-- proof: src/cleanexit.mjs:debrisProblems -->
+<!-- proof: src/cleanexit.ts:debrisProblems -->
 
 Two deliberate choices:
 
@@ -233,7 +233,7 @@ flowchart LR
 All three rules are machine-checked, because **a handoff that lies is worse than no
 handoff** — the next session trusts it. A track line with no status, a link to a deleted
 handoff, or any document elsewhere still pointing at one, fails the gate.
-<!-- proof: src/tracks.mjs:checkHandoffRefs -->
+<!-- proof: src/tracks.ts:checkHandoffRefs -->
 
 The "what not to load" section is the part that is easy to skip and pays for the practice on
 its own: a fresh session's budget goes on whatever you failed to rule out.
@@ -251,7 +251,7 @@ checker:
 
 That is deliberate. A second, divergent notion of "verified" is how a project ends up with a
 gate that agrees with itself and disagrees with reality.
-<!-- proof: src/tasks.mjs:checkTaskGate -->
+<!-- proof: src/tasks.ts:checkTaskGate -->
 
 ## What is deliberately not here
 

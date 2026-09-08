@@ -63,10 +63,10 @@ current truth about the system, not a pile of historical documents.
 
 | Piece | File | Check | Config |
 |---|---|---|---|
-| The track index resolves and every track carries a status | `src/tracks.mjs` | `harnessimo tracks` | `tracks.file`, `tracks.log` |
+| The track index resolves and every track carries a status | `src/tracks.ts` | `harnessimo tracks` | `tracks.file`, `tracks.log` |
 | The `specs/` shape, the spec and handoff templates | `templates/specs/` | written by `init` | `tracks.specsDir` |
 
-<!-- proof: src/tracks.mjs:checkTracks -->
+<!-- proof: src/tracks.ts:checkTracks -->
 
 **How to use it**
 
@@ -102,10 +102,10 @@ every prompt, and kept separate from the specs they shape.
 
 | Piece | File | Check | Config |
 |---|---|---|---|
-| The instruction file stays a router | `src/cleanexit.mjs` | `harnessimo instructions` | `instructions.limits` |
+| The instruction file stays a router | `src/cleanexit.ts` | `harnessimo instructions` | `instructions.limits` |
 | Where the standards live | `templates/.harness/1-instructions/` | written by `init` | — |
 
-<!-- proof: src/cleanexit.mjs:instructionProblems -->
+<!-- proof: src/cleanexit.ts:instructionProblems -->
 
 **How to use it**
 
@@ -143,10 +143,10 @@ The limit is the enforcement. A rule that says "keep it short" and never fails i
 
 | Piece | File | Check | Config |
 |---|---|---|---|
-| A ticked box must name a check that passes | `src/tasks.mjs` | `harnessimo tasks` | `tracks.gateTasks`, `tracks.taskFile` |
-| A claim in a document must name its evidence | `src/proof.mjs` | `harnessimo proof` | `docs.roots`, `docs.commands` |
+| A ticked box must name a check that passes | `src/tasks.ts` | `harnessimo tasks` | `tracks.gateTasks`, `tracks.taskFile` |
+| A claim in a document must name its evidence | `src/proof.ts` | `harnessimo proof` | `docs.roots`, `docs.commands` |
 
-<!-- proof: src/tasks.mjs:verifyTaskGates -->
+<!-- proof: src/tasks.ts:verifyTaskGates -->
 
 **How to use it**
 
@@ -196,11 +196,11 @@ testing) that produce durable artifacts instead of chat.
 
 | Piece | File | Check | Config |
 |---|---|---|---|
-| Only a passing command moves an item to `passing` | `src/queue.mjs` | `harnessimo queue verify <id>` | `queue.file` |
-| Every passing claim is re-run | `src/queue.mjs` | `harnessimo check --reverify` | `queue.timeoutMinutes` |
-| WIP limit and the review backlog | `src/readiness.mjs` | `harnessimo queue activate <id>` | `wip_limit` in the queue file |
+| Only a passing command moves an item to `passing` | `src/queue.ts` | `harnessimo queue verify <id>` | `queue.file` |
+| Every passing claim is re-run | `src/queue.ts` | `harnessimo check --reverify` | `queue.timeoutMinutes` |
+| WIP limit and the review backlog | `src/readiness.ts` | `harnessimo queue activate <id>` | `wip_limit` in the queue file |
 
-<!-- proof: src/queue.mjs:verifyItem --> <!-- proof: src/readiness.mjs:readiness -->
+<!-- proof: src/queue.ts:verifyItem --> <!-- proof: src/readiness.ts:readiness -->
 
 **How to use it**
 
@@ -247,11 +247,11 @@ boundary in a written handoff rather than in someone's head.
 
 | Piece | File | Check | Config |
 |---|---|---|---|
-| A dead handoff link, or a track with no status, fails | `src/tracks.mjs` | `harnessimo tracks` | `tracks.file` |
-| The next session is handed the state at startup | `src/brief.mjs` | `harnessimo brief` | — |
-| The hook that runs it without anyone remembering | `src/hooks.mjs` | `harnessimo hooks install --agent` | — |
+| A dead handoff link, or a track with no status, fails | `src/tracks.ts` | `harnessimo tracks` | `tracks.file` |
+| The next session is handed the state at startup | `src/brief.ts` | `harnessimo brief` | — |
+| The hook that runs it without anyone remembering | `src/hooks.ts` | `harnessimo hooks install --agent` | — |
 
-<!-- proof: src/tracks.mjs:checkHandoffRefs --> <!-- proof: src/brief.mjs:briefText -->
+<!-- proof: src/tracks.ts:checkHandoffRefs --> <!-- proof: src/brief.ts:briefText -->
 
 **How to use it**
 
@@ -312,11 +312,11 @@ everything in the engineering infrastructure outside the model's weights.
 | Piece | File | Check | Config |
 |---|---|---|---|
 | The five directories, with starter documents | `templates/.harness/` | written by `init` | — |
-| The scoring surfaces are out of an agent's reach | `src/locked.mjs` | `harnessimo locked` | `locked.paths`, `locked.baseline` |
-| No debris, and progress written down | `src/cleanexit.mjs` | `harnessimo clean-exit` | `cleanExit.*` |
-| A fresh clone runs from the repository alone | `src/coldstart.mjs` | `harnessimo cold-start` | `coldStart.commands` |
+| The scoring surfaces are out of an agent's reach | `src/locked.ts` | `harnessimo locked` | `locked.paths`, `locked.baseline` |
+| No debris, and progress written down | `src/cleanexit.ts` | `harnessimo clean-exit` | `cleanExit.*` |
+| A fresh clone runs from the repository alone | `src/coldstart.ts` | `harnessimo cold-start` | `coldStart.commands` |
 
-<!-- proof: src/locked.mjs:lockedViolations --> <!-- proof: src/coldstart.mjs:coldStartProblems -->
+<!-- proof: src/locked.ts:lockedViolations --> <!-- proof: src/coldstart.ts:coldStartProblems -->
 
 **How to use it**
 
@@ -350,10 +350,10 @@ FAIL  proof markers
       no such file
 ```
 
-Implemented in `src/proof.mjs`, run by `harnessimo proof`, configured under `docs`.
+Implemented in `src/proof.ts`, run by `harnessimo proof`, configured under `docs`.
 `docs.mustCarryProof` names the documents that must carry at least one marker, so a rewrite
 cannot quietly drop the evidence along with the claim.
-<!-- proof: src/proof.mjs:verifyProofs -->
+<!-- proof: src/proof.ts:verifyProofs -->
 
 ---
 
@@ -361,7 +361,7 @@ cannot quietly drop the evidence along with the claim.
 
 No personas, no prompt templates, no opinion on how a spec should be written or how big a
 story should be. There is no runtime, no daemon and no dependency. The rules are plain
-functions over strings; `src/resolver.mjs` and `bin/harnessimo.mjs` are the only files that
+functions over strings; `src/resolver.ts` and `src/cli.ts` are the only files that
 touch the disk.
 
 Pick the system you like from the list above. This is the part that tells you the truth about

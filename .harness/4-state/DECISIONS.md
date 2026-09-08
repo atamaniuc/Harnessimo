@@ -32,8 +32,8 @@ first transitive advisory.
 
 ## 2026-09-07 — The rules are pure; one file touches the world
 
-`src/*.mjs` are functions over strings and in-memory trees. `src/resolver.mjs` and
-`bin/harnessimo.mjs` are the filesystem and process edge.
+`src/*.ts` are functions over strings and in-memory trees. `src/resolver.ts` and
+`src/cli.ts` are the filesystem and process edge.
 
 **Why:** a rule that needs a fixture tree to test is a rule that stops being tested. The
 whole rule layer runs in under a second against in-memory objects, and the wiring gets its
@@ -88,3 +88,32 @@ go through one `trackLines` helper.
 
 **Found by:** the end-to-end test that runs `harnessimo init` and then `harnessimo check`, which
 is the test most worth having.
+
+---
+
+## 2026-09-07 — TypeScript, with nothing between the source and running it
+
+The package is written in TypeScript (7, strict, `noUncheckedIndexedAccess`) and ships
+compiled JavaScript with generated declarations.
+
+**Why:** it had two descriptions of the same functions — JSDoc in `src/`, and a
+hand-written `types/index.d.ts` — and they had already drifted in sixteen signatures.
+Three of those were wrong rather than cosmetic, including a parameter documented as a
+number that is a map, and a nullable field the annotation denied. Nothing could catch
+that, because tests check behaviour and the two files were never compared. One source
+settles it.
+
+**The cost that was not paid:** a build step between an author and running the code.
+Sources import each other with `.ts` specifiers, so Node's type stripping runs them as
+they are — `npm test` and `node src/cli.ts check` still need no install, which is what
+keeps the cold-start check honest. `tsc` rewrites those specifiers to `.js` when it emits
+`dist/`, and `prepare` builds that on a git install, so a consumer installing from a tag
+gets JavaScript and declarations without knowing any of this.
+
+**Cost, accepted:** two devDependencies, a `dist/` to build before publishing, and
+`erasableSyntaxOnly` as a permanent restriction — no enums, no namespaces, no parameter
+properties, because Node must be able to strip every file that `tsc` compiles.
+
+**Rejected:** keeping `.mjs` with richer JSDoc plus a generated `.d.ts`. It closes the
+same gap, and was in place for an afternoon, but it spends annotation syntax on what the
+language does natively and leaves the checker optional.

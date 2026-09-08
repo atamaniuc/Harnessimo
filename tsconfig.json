@@ -1,26 +1,39 @@
 {
   "$comment": [
-    "There is no TypeScript in this package and there is not going to be: it ships",
-    "as the .mjs files you see, with no build step, which is what makes installing it",
-    "from a git tag and running it from a fresh clone work with nothing installed.",
+    "One configuration for checking everything, and tsconfig.build.json for what ships.",
     "",
-    "This file exists so `npm run typecheck` can read the JSDoc that is already there",
-    "and tell us when an annotation has drifted from the code. It found two on the day",
-    "it was added: a parameter documented as a number that is a map, and a config type",
-    "missing three of its sections. Both were wrong in the types consumers import.",
+    "The source is written with .ts import specifiers so Node can run it directly through",
+    "its own type stripping — `node src/cli.ts` needs nothing installed — while",
+    "rewriteRelativeImportExtensions makes the emitted JavaScript import .js. That is what",
+    "keeps `npm test` honest on a clean checkout, which is the property the cold-start",
+    "check measures.",
     "",
-    "noImplicitAny stays off on purpose. The rules pass around plain objects parsed",
-    "from JSON and Markdown; turning it on produces a hundred annotations that make",
-    "the callbacks noisier without making one of them safer."
+    "erasableSyntaxOnly is not decoration: it fails the build on syntax Node cannot strip",
+    "(enums, namespaces, parameter properties), so the two ways of running this cannot",
+    "diverge."
   ],
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": true,
     "target": "es2023",
+    "lib": ["es2023"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "types": ["node"]
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+
+    "skipLibCheck": true,
+    "noEmit": true
   },
-  "include": ["src/**/*.mjs", "bin/**/*.mjs"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
 }

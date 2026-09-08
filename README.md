@@ -55,7 +55,7 @@ FAIL  proof markers
 ```
 
 Every claim in your docs names the file, test or command behind it. Delete that, and the
-build breaks. <!-- proof: src/proof.mjs:checkTarget -->
+build breaks. <!-- proof: src/proof.ts:checkTarget -->
 
 **A task marked done that nobody re-ran.** It sat at `passing` with made-up evidence.
 
@@ -67,7 +67,7 @@ FAIL  queue
 ```
 
 Only the tool writes `passing`, and only after the task's own command exits 0. CI re-runs
-every one of them. <!-- proof: src/queue.mjs:checkQueue -->
+every one of them. <!-- proof: src/queue.ts:checkQueue -->
 
 **A session that starts blind.** The agent reopens half the repo to work out where the last
 one stopped. Now it gets handed the answer at startup:
@@ -87,7 +87,7 @@ not enforced: locked, instructions
 ```
 
 One command wires that into your agent: `harnessimo hooks install --agent`.
-<!-- proof: src/brief.mjs:briefText -->
+<!-- proof: src/brief.ts:briefText -->
 
 ## All eight checks
 
@@ -104,7 +104,7 @@ One command wires that into your agent: `harnessimo hooks install --agent`.
 
 `harnessimo doctor` prints which of these are on — and which are off. Nothing is switched on
 that you didn't ask for.
-<!-- proof: test/cli.test.mjs#doctor reports what is enforced and what is not, without overstating -->
+<!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
 
 ## Starting a new project
 
@@ -114,7 +114,7 @@ pnpm exec harnessimo init && pnpm exec harnessimo check
 
 `init` looks at what you already have — Makefile or Taskfile, source layout, migrations, CI
 — and writes a config from it. **The first run is green**, so the first red one means
-something. <!-- proof: test/detect.test.mjs#strict mode is off until a document actually carries a marker -->
+something. <!-- proof: test/detect.test.ts#strict mode is off until a document actually carries a marker -->
 
 You also get `.harness/` (rules, tools, environment, state, feedback) and `specs/` (work
 tracks and handoffs) scaffolded.
@@ -172,19 +172,21 @@ This repo runs all eight checks on itself, including from a fresh clone.
 ## Development
 
 ```bash
-npm test          # 105 tests, no install needed — the package has no dependencies
+npm test          # 105 tests, no install — Node runs the TypeScript directly
 npm run check     # tests, then this repo's own checks
-npm run typecheck # tsc over the JSDoc (needs npm i first — dev-only)
+npm run typecheck # tsc, strict, over src and test (needs npm i first)
+npm run build     # what a consumer installs: dist/, with declarations
 ```
 
-Rules live in `src/` as plain functions; `src/resolver.mjs` and `bin/harnessimo.mjs` are the
-only files that touch the disk. <!-- proof: test/cli.test.mjs -->
+TypeScript, strict, ESM, no runtime dependencies. Rules live in `src/` as pure functions
+over strings and in-memory trees; `src/resolver.ts` and `src/cli.ts` are the only files that
+touch the disk. <!-- proof: test/cli.test.ts -->
 
-It ships as the `.mjs` files you see. There is no build step and no TypeScript to compile,
-which is what makes installing it from a git tag and running it from a fresh clone work with
-nothing installed — the types consumers import are hand-written in `types/index.d.ts`, and a
-test fails when they drift from the real exports.
-<!-- proof: test/types.test.mjs -->
+There is no build step in the way of running it: sources import each other as `.ts`, so
+Node's own type stripping runs them as they are — which is why `npm test` needs nothing
+installed and the cold-start check still measures the repository rather than npm. `tsc`
+emits `dist/` for consumers, rewriting those specifiers to `.js`, and a git install builds
+it through `prepare`. <!-- proof: test/types.test.ts -->
 
 ## License
 

@@ -93,7 +93,7 @@ harnessimo.config.json  which checks you asked for
 
 The scaffold passes its own check immediately, so your first green run costs nothing —
 and every red one after that means something.
-<!-- proof: test/cli.test.mjs#init scaffolds a working harness that immediately passes its own check -->
+<!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
 
 Then run:
 
@@ -167,7 +167,7 @@ flowchart LR
 
 The index is machine-checked, because **a handoff that lies is worse than no handoff** —
 the next session trusts it. A line with no status, or one linking a handoff that was
-deleted, fails the gate. <!-- proof: src/tracks.mjs:checkHandoffRefs -->
+deleted, fails the gate. <!-- proof: src/tracks.ts:checkHandoffRefs -->
 
 The "what NOT to load" section is the half everyone skips and the one that pays for the
 practice: a fresh session's budget goes on whatever you failed to rule out.

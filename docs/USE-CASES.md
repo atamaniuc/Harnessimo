@@ -66,7 +66,7 @@ flowchart LR
 
 This is the difference between a rule and a harness. A rule in `AGENTS.md` — *"verify before
 you claim done"* — is obeyed on the runs you are watching. A hook is obeyed on the run at
-3am that nobody sees. <!-- proof: src/hooks.mjs:hookScript -->
+3am that nobody sees. <!-- proof: src/hooks.ts:hookScript -->
 
 **Autonomy is the payoff.** An agent can only be left alone as far as something other than
 the agent decides when the work is finished. Once these three touchpoints exist, a long
@@ -100,7 +100,7 @@ FAIL  proof markers
 
 **Turn on:** `docs`. Add the documents that may never drift to `docs.mustCarryProof` — those
 must carry at least one marker, so a rewrite cannot quietly drop the evidence.
-<!-- proof: src/proof.mjs:verifyProofs -->
+<!-- proof: src/proof.ts:verifyProofs -->
 
 ## 2. "Works on my machine" — and only there
 
@@ -117,7 +117,7 @@ FAIL  cold start
 ```
 
 **Turn on:** `coldStart`, listing `requiredFiles`, `entryDocs` and the `commands` a newcomer
-runs. <!-- proof: src/coldstart.mjs:coldStartProblems -->
+runs. <!-- proof: src/coldstart.ts:coldStartProblems -->
 
 ## 3. A feature that takes four sessions
 
@@ -138,7 +138,7 @@ $ harnessimo brief
 The index is machine-checked, because a handoff that lies is worse than no handoff: a track
 with no status, or a link to a handoff someone deleted, fails the gate.
 
-**Turn on:** `tracks`. <!-- proof: src/tracks.mjs:checkHandoffRefs -->
+**Turn on:** `tracks`. <!-- proof: src/tracks.ts:checkHandoffRefs -->
 
 ## 4. "Done" that stopped being true
 
@@ -157,7 +157,7 @@ FAIL  queue
 
 Editing `state` by hand is not a shortcut; it is the thing this check catches.
 
-**Turn on:** `queue`. <!-- proof: src/queue.mjs:checkQueue -->
+**Turn on:** `queue`. <!-- proof: src/queue.ts:checkQueue -->
 
 ## 5. An agent that edits its own exam
 
@@ -176,7 +176,7 @@ This is drift detection in CI, not a sandbox — it catches the honest case, whi
 common one.
 
 **Turn on:** `locked`, with `paths`, a `baseline` and your `agentTrailer`.
-<!-- proof: src/locked.mjs:lockedViolations -->
+<!-- proof: src/locked.ts:lockedViolations -->
 
 ## 6. The long unattended run
 
@@ -195,7 +195,7 @@ FAIL  clean exit
 ```
 
 **Turn on:** `cleanExit`. The `progressThreshold` keeps a one-line fix from tripping it.
-<!-- proof: src/cleanexit.mjs:progressProblems -->
+<!-- proof: src/cleanexit.ts:progressProblems -->
 
 ## 7. "What does this repo actually enforce?"
 
@@ -210,7 +210,7 @@ $ harnessimo doctor
 
 A check you did not configure is reported as *not enforced*, in the same output, with the
 same weight. A harness that overstates its own coverage is the failure it exists to prevent.
-<!-- proof: test/cli.test.mjs#doctor reports what is enforced and what is not, without overstating -->
+<!-- proof: test/cli.test.ts#doctor reports what is enforced and what is not, without overstating -->
 
 ---
 

@@ -55,15 +55,15 @@
     ],
     "commands": [
       "npm test",
-      "node bin/harnessimo.mjs check"
+      "node src/cli.ts check"
     ]
   },
   "cleanExit": {
     "$comment": "console.log is deliberately not a marker here: this is a command-line tool and its output is the product. A project picks the markers that mean 'unfinished' in its own code.",
     "scan": [
       "src",
-      "bin",
-      "test"
+      "test",
+      "scripts"
     ],
     "markers": [
       "TODO",
@@ -75,14 +75,14 @@
       ".skip("
     ],
     "allow": [
-      "test/cleanexit.test.mjs",
-      "src/cleanexit.mjs"
+      "test/cleanexit.test.ts",
+      "src/cleanexit.ts"
     ],
     "progressFile": ".harness/4-state/PROGRESS.md",
     "codePrefixes": [
       "src/",
-      "bin/",
-      "test/"
+      "test/",
+      "scripts/"
     ]
   },
   "instructions": {

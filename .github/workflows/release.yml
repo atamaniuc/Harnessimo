@@ -34,7 +34,15 @@ jobs:
       - name: The commit being tagged passes its own checks
         run: |
           npm test
-          node bin/harnessimo.mjs check --reverify
+          node src/cli.ts check --reverify
+      # A tag is what consumers install from, and they install the compiled
+      # output. Tagging a commit whose build is broken would be discovered by
+      # them rather than here.
+      - name: And its build is what a consumer would install
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node dist/cli.js check
       - uses: actions/github-script@v7
         with:
           script: |

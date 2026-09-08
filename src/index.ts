@@ -1,0 +1,14 @@
+// Public API, for a project that wants a rule inside its own test suite rather
+// than only at the command line.
+export { checkTarget, findMarkers, isSyntaxExample, verifyProofs } from "./proof.ts";
+export { checkTracks, checkHandoffRefs, liveTrackSpecDirs, trackLines } from "./tracks.ts";
+export { checkTaskGate, verifyTaskGates, taskBlocks } from "./tasks.ts";
+export { readiness, doneness, formatViolations } from "./readiness.ts";
+export { activate, checkQueue, verifyItem, formatStatus, findItem, HarnessError } from "./queue.ts";
+export { lockedViolations, formatLockedViolations } from "./locked.ts";
+export { coldStartProblems } from "./coldstart.ts";
+export { debrisProblems, progressProblems, instructionProblems, DEFAULT_MARKERS } from "./cleanexit.ts";
+export { hookScript, hookStatus, HOOK_PATH, HOOKS_DIR } from "./hooks.ts";
+export { briefText, briefJson, handoffPaths, mergeSessionStartHook, sectionOf } from "./brief.ts";
+export { loadConfig, enabledChecks, ConfigError } from "./config.ts";
+export { createResolver, collectDocs, collectFiles, readAll } from "./resolver.ts";

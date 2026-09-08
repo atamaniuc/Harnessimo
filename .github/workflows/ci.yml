@@ -3,10 +3,13 @@ name: CI
 # Every job runs the same commands a developer runs. There is no CI-only
 # script, so there is no "works locally, fails in CI".
 #
-#   check       the rules and the wiring, on every supported Node version
-#   typecheck   tsc --checkJs over the JSDoc: an annotation that drifted from
-#               its signature is wrong in the types consumers import, and no
-#               test here would catch it
+#   check       the rules and the wiring, on every supported Node version,
+#               run straight from the TypeScript sources through Node's own
+#               type stripping — no install, no build
+#   typecheck   tsc over everything, strict: the types are the contract, and a
+#               test suite does not check them
+#   build       the compiled package works, not just the sources: it builds,
+#               it packs, and the CLI runs from what a consumer would install
 #   self-host   this repository's own gates, including re-verification of
 #               every queue claim — a state edited by hand fails here
 #   session-hygiene  an agent commit did not touch the files defining success,
@@ -37,23 +40,48 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
-      # No install step: the package has no dependencies, by rule. If this
-      # line ever needs `npm ci`, CONSTRAINTS #1 was broken.
+      # No install step: the package has no runtime dependencies, by rule, and
+      # Node runs the TypeScript sources directly. If this line ever needs
+      # `npm ci`, CONSTRAINTS #1 was broken.
       - run: npm test
 
   typecheck:
-    name: the JSDoc typechecks
+    name: the types check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      # The one job that installs anything, and only devDependencies:
-      # typescript and @types/node. Nothing ships with the package — CONSTRAINTS
-      # #1 is about runtime dependencies, and `dependencies` is still absent.
+      # The jobs that install anything install only devDependencies:
+      # typescript and @types/node. Nothing ships with the package —
+      # CONSTRAINTS #1 is about runtime dependencies, and `dependencies` is
+      # still absent.
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
+
+  build:
+    name: the compiled package runs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      # What a consumer actually gets: the compiled CLI, from a packed tarball,
+      # checking this repository. A build that emits files nobody runs is not
+      # evidence of anything.
+      - run: node dist/cli.js check
+      - name: The tarball installs and runs
+        run: |
+          npm pack --silent
+          mkdir -p "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer"
+          npm init -y >/dev/null
+          npm i --no-audit --no-fund "$GITHUB_WORKSPACE"/harnessimo-*.tgz
+          npx harnessimo help
+          node --input-type=module -e "import { checkTarget } from 'harnessimo'; if (typeof checkTarget !== 'function') process.exit(1)"
 
   self-host:
     name: the harness on itself
@@ -66,8 +94,8 @@ jobs:
       # --reverify re-runs every item claiming to pass, so a hand-edited state
       # is caught rather than trusted. This is the check that makes the queue's
       # evidence evidence.
-      - run: node bin/harnessimo.mjs check --reverify
-      - run: node bin/harnessimo.mjs doctor
+      - run: node src/cli.ts check --reverify
+      - run: node src/cli.ts doctor
 
   session-hygiene:
     name: locked surfaces and clean exit
@@ -87,13 +115,13 @@ jobs:
       - name: An agent commit may not touch the files that define success
         run: |
           BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
-          node bin/harnessimo.mjs locked "$BASE" HEAD
+          node src/cli.ts locked "$BASE" HEAD
       # Lecture 12: the debris a build compiles happily, and a progress file
       # that went stale while the code around it changed.
       - name: The session left a clean state
         run: |
           BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
-          node bin/harnessimo.mjs clean-exit "$BASE" HEAD
+          node src/cli.ts clean-exit "$BASE" HEAD
 
   cold-start:
     name: a fresh clone verifies itself
@@ -105,4 +133,4 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: node bin/harnessimo.mjs cold-start
+      - run: node src/cli.ts cold-start

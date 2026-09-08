@@ -11,13 +11,13 @@ npm test        # every rule, plus the CLI against real repositories in a temp d
 npm run check   # the tests, then this repository's own gates
 ```
 
-No install step: the package has no dependencies, by rule. Node >= 22.
+No install step to run those: the package has no runtime dependencies, by rule, and Node
+(>= 22) runs the TypeScript sources through its own type stripping.
 
-`npm run typecheck` is the one thing that does need `npm i` — it runs `tsc --checkJs` over
-the JSDoc that is already in `src/`, and it is dev-only: `typescript` and `@types/node` are
-devDependencies, nothing ships with the package. It is worth running before a push, because
-an annotation that has drifted from its signature is wrong in the types consumers import
-and no test would catch it.
+`npm run typecheck` and `npm run build` are the two that need `npm i` — `typescript` and
+`@types/node` are devDependencies and nothing ships with the package. Run the typecheck
+before a push: it is strict, the types are the package's published contract, and no test
+here checks them.
 
 ## The three rules a change has to meet
 
@@ -25,7 +25,7 @@ and no test would catch it.
    no harness, and zero dependencies is what makes the cold-start test measure the
    repository rather than a package registry.
 2. **Rules stay pure.** Everything in `src/` is a function over strings and in-memory
-   trees; `src/resolver.mjs` and `bin/harnessimo.mjs` are the only code that touches the
+   trees; `src/resolver.ts` and `src/cli.ts` are the only code that touches the
    world. A rule that needs a fixture tree to test is a rule that stops being tested.
 3. **A rule ships with a test proving it fires on bad input.** A rule with no failing test
    is an assumption wearing a rule's clothes.

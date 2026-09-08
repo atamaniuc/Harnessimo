@@ -1,23 +1,24 @@
 # Tools
 
 Everything this repository runs, and everything it offers other repositories, is the same
-command line: `bin/harnessimo.mjs`.
+command line: `src/cli.ts`.
 
 ```
 npm test                     the rules, against in-memory trees and real fixtures on disk
 npm run check                the tests, then this repository's own gates
-node bin/harnessimo.mjs doctor  what is actually enforced here
-node bin/harnessimo.mjs queue status
-node bin/harnessimo.mjs hooks status   # is the pre-commit hook wired up at all
+node src/cli.ts doctor  what is actually enforced here
+node src/cli.ts queue status
+node src/cli.ts hooks status   # is the pre-commit hook wired up at all
 ```
 
 The hook here runs the same fast gates before a commit lands. It is checked in
 at `.githooks/pre-commit`, so it is a reviewed file rather than a local artifact
 somebody has to be told about.
 
-There is no build step and no install step. `node --test test/*.test.mjs` runs on a clean
-checkout, because the package has no dependencies — which is what makes the cold-start
-test here mean something rather than measure npm.
+No install step to run any of it: `node --test test/*.test.ts` works on a clean checkout,
+because the package has no runtime dependencies and Node strips the types itself. That is
+what makes the cold-start test here mean something rather than measure npm. Building
+`dist/` for consumers is a separate job that does install the two devDependencies.
 
 ## Why the queue is a command and not a file you edit
 

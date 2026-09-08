@@ -13,8 +13,8 @@ assume. It is a dependency other repositories install, and it is governed by its
 ```
 npm test        # the rules and the wiring; no install step, the package has no dependencies
 npm run check   # the tests, then this repository's own gates
-node bin/harnessimo.mjs doctor    # what is enforced here
-node bin/harnessimo.mjs help      # every command
+node src/cli.ts doctor    # what is enforced here
+node src/cli.ts help      # every command
 ```
 
 Eight checks: `proof`, `tracks`, `tasks`, `queue`, `locked`, `cold-start`, `clean-exit`,
@@ -28,7 +28,7 @@ Node >= 22. There is nothing to provision and no key to configure.
 ## Layout
 
 ```
-bin/harnessimo.mjs   the command line: the only place that runs processes
+src/cli.ts   the command line: the only place that runs processes
 src/              the rules, as pure functions — no filesystem except resolver.mjs
 test/             one test file per rule, plus cli.test.mjs against real directories
 templates/        what `harnessimo init` writes into a consuming repository
@@ -51,7 +51,7 @@ starts in minutes.
 ## Working rules
 
 - **WIP = 1.** One queue item active at a time. Enforced.
-- **Never edit `state` or `evidence` by hand.** Run `node bin/harnessimo.mjs queue verify <id>`;
+- **Never edit `state` or `evidence` by hand.** Run `node src/cli.ts queue verify <id>`;
   CI re-runs every passing claim, so a hand-written state is detected rather than trusted.
 - **Never add a runtime dependency.** See `.harness/1-instructions/CONSTRAINTS.md` #1.
 - **A rule ships with a test proving it fires on bad input.** A rule with no failing test is

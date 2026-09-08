@@ -1,6 +1,6 @@
 {
   "name": "harnessimo",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Eight checks that stop an AI coding agent from calling unfinished work done: proof markers over documentation, a re-verified work queue, work tracks and handoffs, locked scoring surfaces and a cold-start test. Zero dependencies, no build step, any language.",
   "keywords": [
     "harness",
@@ -22,55 +22,60 @@
     "node": ">=22"
   },
   "bin": {
-    "harnessimo": "bin/harnessimo.mjs"
+    "harnessimo": "./dist/cli.js"
   },
   "exports": {
     ".": {
-      "types": "./types/index.d.ts",
-      "default": "./src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./proof": {
-      "types": "./types/index.d.ts",
-      "default": "./src/proof.mjs"
+      "types": "./dist/proof.d.ts",
+      "default": "./dist/proof.js"
     },
     "./tracks": {
-      "types": "./types/index.d.ts",
-      "default": "./src/tracks.mjs"
+      "types": "./dist/tracks.d.ts",
+      "default": "./dist/tracks.js"
     },
     "./tasks": {
-      "types": "./types/index.d.ts",
-      "default": "./src/tasks.mjs"
+      "types": "./dist/tasks.d.ts",
+      "default": "./dist/tasks.js"
     },
     "./queue": {
-      "types": "./types/index.d.ts",
-      "default": "./src/queue.mjs"
+      "types": "./dist/queue.d.ts",
+      "default": "./dist/queue.js"
     },
     "./readiness": {
-      "types": "./types/index.d.ts",
-      "default": "./src/readiness.mjs"
+      "types": "./dist/readiness.d.ts",
+      "default": "./dist/readiness.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
     }
   },
   "files": [
-    "bin",
-    "src",
-    "types",
+    "dist",
     "templates",
     "schema",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "check": "node --test test/*.test.mjs && node bin/harnessimo.mjs check",
-    "typecheck": "tsc -p tsconfig.json && node scripts/declarations-carry-types.mjs"
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "node scripts/prepare.mjs",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "check": "node --test test/*.test.ts && node src/cli.ts check",
+    "harnessimo": "node src/cli.ts"
   },
   "homepage": "https://atamaniuc.github.io/Harnessimo/",
   "bugs": {
     "url": "https://github.com/atamaniuc/Harnessimo/issues"
   },
-  "types": "./types/index.d.ts",
+  "types": "./dist/index.d.ts",
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "typescript": "^5.9.0"
+    "@types/node": "^22.20.1",
+    "typescript": "^7.0.2"
   }
 }
