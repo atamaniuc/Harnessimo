@@ -174,5 +174,9 @@ How much of this repository's work is watched while it happens. A floor, not a s
 | `maxWorking` | integer | Lane agents working at once (default 3). `herd plan` and `herd up` never start more, counting the ones already running. |
 | `staggerSeconds` | number | Seconds between two agent starts (default 20), so their first requests do not hit the rate limit together. |
 | `agentKind` | string | The herdr agent kind each lane agent is started as, via `herdr agent start --kind` (default `claude`). |
-| `agentArgs` | array of string | Arguments passed to every lane agent, e.g. `["--model", "sonnet"]`. Default none. |
+| `agentArgs` | array of string | Arguments passed to every lane agent after the role's own flags, e.g. `["--model", "sonnet"]`. A `--model` or `--effort` here wins over the role's for that flag. Default none. |
+| `defaultRole` | string | The role a lane agent plays unless `laneRoles` names another (default `implementer`). Its model and effort come from `.claude/agents/<role>.md`, passed as `--model` and `--effort` when the agent starts. |
+| `laneRoles` | object | Lane slug to role name, for a lane that is not an implementer's, e.g. `{ "billing-review": "architect" }`. |
+| `roles` | object | Role name to `{ model, effort }`, used where the role's file is missing or names neither. The file wins. Sonnet gets `high` effort when nothing says otherwise. |
+| `panesPerTab` | integer | Panes in one herdr tab, the coordinator's included (default 4). `herd up` fills the current tab to this many, then opens a new tab, named for its first lane, for the rest. |
 | `backoffSeconds` | array of number | Waits before each retry after a rate-limit error (429), in seconds (default `[60, 120, 240]`). Written into every kickoff prompt. |

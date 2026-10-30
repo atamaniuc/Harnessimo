@@ -36,6 +36,25 @@ the bug. A rename, a test, a doc fix is throughput.
 Reasoning effort follows the same line: low for lookups and mechanical edits whose result
 checks itself, high for the one piece that needs more thought than the work around it.
 
+### The role's model reaches a pane agent as a launch flag
+
+The model in a role file is read by Claude Code for a *subagent*. A lane agent that
+`harnessimo herd up` starts in a herdr pane is a top-level session, which never reads it, so
+`up` reads the role's file itself and starts the agent with `--model <m> --effort <e>`
+(`implementer` → sonnet, `architect` → opus, `scout` → haiku). Sonnet agents run at `high`
+effort unless the role's `effort:` or `herd.roles` says otherwise. Details, precedence and the
+fallbacks: [Agent teams and herdr](TEAMS.md#the-role-sets-the-model--as-a-launch-flag).
+<!-- proof: test/herd.test.ts#a role's launch flags come from its file: sonnet gets high effort without being told -->
+
+**Never change a running agent's model with `/model` or `/effort`.** Both save the choice as
+the user's global default in `~/.claude/settings.json`, which changes every other session
+they have open. Stop the agent and start it with the flags instead.
+
+**The coordinator does the routine herdr work itself** — opening panes, starting agents, sending
+prompts that are self-contained and use absolute paths, since a side worktree may not contain
+the coordination files. The owner is never handed a manual step for it. A tab holds at most four
+panes, the coordinator's included; `herd up` opens a new tab for the rest.
+
 ## Fan out when streams are independent
 
 Two tasks are independent when neither reads what the other writes. Those run in parallel,

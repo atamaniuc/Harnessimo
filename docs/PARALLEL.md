@@ -115,7 +115,9 @@ For worktrees beside the repository rather than inside `.claude/`, `harnessimo w
 `remove` bring it back and refuse to drop unmerged or uncommitted work. Which streams to fan
 out, which model takes each, and how reviews are batched: [Routing work](ROUTING.md). One
 herdr pane, worktree and agent per lane, and agent teams inside one lane:
-[Agent teams and herdr](TEAMS.md).
+[Agent teams and herdr](TEAMS.md). For readability a herdr tab holds at most four panes, the
+coordinator's included; `herd up` fills the current tab and opens a new one for further agents.
+<!-- proof: test/herd.test.ts#agents fill the coordinator's tab to the cap, then each new tab to the same cap -->
 <!-- proof: test/cli.test.ts#worktree add makes a checkout beside the repository, on its branch, with the install run -->
 
 ## What this deliberately does not do

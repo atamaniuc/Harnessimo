@@ -483,12 +483,22 @@ const fs = require("node:fs");
 const argv = process.argv.slice(2);
 fs.appendFileSync(process.env.HERDR_LOG, JSON.stringify(argv) + "\\n");
 const [group, verb] = argv;
-const answers = {
-  "worktree open": { result: { workspace: { workspace_id: "w2" }, root_pane: { pane_id: "w2:p1" } } },
-  "pane split": { result: { pane: { pane_id: "w1:p9" } } },
-  "agent list": JSON.parse(process.env.HERDR_AGENTS || '{"result":{"agents":[]}}'),
+// Ids count up from 10 so each pane a call makes is told apart in the log.
+const counter = require("node:path").join(require("node:path").dirname(process.env.HERDR_LOG), "n");
+const next = () => {
+  const n = Number(fs.existsSync(counter) ? fs.readFileSync(counter, "utf8") : 10);
+  fs.writeFileSync(counter, String(n + 1));
+  return n;
 };
-process.stdout.write(JSON.stringify(answers[group + " " + verb] || { result: {} }));
+const answers = {
+  "pane current": () => ({ result: { pane: { pane_id: "w1:p5", tab_id: "w1:t2" } } }),
+  "tab list": () => JSON.parse(process.env.HERDR_TABS || '{"result":{"tabs":[{"tab_id":"w1:t2","pane_count":1}]}}'),
+  "pane split": () => ({ result: { pane: { pane_id: "w1:p" + next() } } }),
+  "tab create": () => { const n = next(); return { result: { tab: { tab_id: "w1:t" + n }, root_pane: { pane_id: "w1:p" + n } } }; },
+  "agent list": () => JSON.parse(process.env.HERDR_AGENTS || '{"result":{"agents":[]}}'),
+};
+const answer = answers[group + " " + verb];
+process.stdout.write(JSON.stringify(answer ? answer() : { result: {} }));
 `;
 
 const HERD_TRACKS =
@@ -497,8 +507,9 @@ const HERD_TRACKS =
   "- **Api** — [handoff](specs/0002-api/handoff.md) — active, 2026-10-30, next: T1\n" +
   "- **Ranking** — [handoff](specs/0003-ranking/handoff.md) — active, 2026-10-30, next: T1\n";
 
-function herdRepo(herd: Record<string, unknown>) {
+function herdRepo(herd: Record<string, unknown>, extra: Record<string, string> = {}) {
   const made = repo({
+    ...extra,
     "harnessimo.config.json": JSON.stringify({
       tracks: { file: "specs/TRACKS.md", log: "specs/TRACKS-LOG.md" },
       worktree: { install: [] },
@@ -515,7 +526,7 @@ function herdRepo(herd: Record<string, unknown>) {
   const log = join(bin, "calls.log");
   // Only the fake bin and node's own directory: a real herdr on the
   // developer's PATH must never be the one these tests drive.
-  const env = { ...process.env, PATH: `${bin}:${dirname(process.execPath)}:/usr/bin:/bin`, HERDR_LOG: log, HERDR_ENV: "1" };
+  const env = { ...process.env, PATH: `${bin}:${dirname(process.execPath)}:/usr/bin:/bin`, HERDR_LOG: log, HERDR_ENV: "1", HERDR_TAB_ID: "w1:t2" };
   const calls = (): string[][] =>
     existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l) as string[]) : [];
   return {
@@ -557,15 +568,165 @@ test("herd up opens a worktree per lane and starts a named agent with its kickof
     assert.equal(up.status, 0, up.out);
     assert.ok(existsSync(`${dir}-search`), "the lane's worktree exists beside the repository");
     const made = calls();
-    const open = made.find((c) => c[0] === "worktree" && c[1] === "open")!;
-    assert.ok(open.some((a) => a.endsWith("-search")) && open.includes("--no-focus"), JSON.stringify(open));
+    const open = made.find((c) => c[0] === "pane" && c[1] === "split")!;
+    assert.deepEqual(open.slice(0, 5), ["pane", "split", "--current", "--direction", "right"]);
+    assert.ok(open[open.indexOf("--cwd") + 1]!.endsWith("-search") && open.includes("--no-focus"), JSON.stringify(open));
+    assert.ok(!made.some((c) => c[0] === "worktree"), "a lane goes in a pane of this tab, not a workspace of its own");
     const start = made.find((c) => c[0] === "agent" && c[1] === "start")!;
-    assert.deepEqual(start.slice(0, 7), ["agent", "start", "search", "--kind", "claude", "--pane", "w2:p1"]);
-    assert.deepEqual(start.slice(-3), ["--", "--model", "sonnet"]);
+    assert.deepEqual(start.slice(0, 7), ["agent", "start", "search", "--kind", "claude", "--pane", "w1:p10"]);
+    // The explicit model wins over the (missing) role file; sonnet's default effort still applies.
+    assert.deepEqual(start.slice(-5), ["--", "--effort", "high", "--model", "sonnet"]);
     const prompt = made.find((c) => c[0] === "agent" && c[1] === "prompt")!;
     assert.equal(prompt[2], "search");
     assert.match(prompt[3]!, /specs\/0001-search\/handoff\.md/);
     assert.ok(!made.some((c) => c[0] === "pane" && c[1] === "close"), "herd never closes a pane");
+  } finally {
+    cleanup();
+  }
+});
+
+const ROLE_FILES = {
+  ".claude/agents/implementer.md": "---\nname: implementer\nmodel: sonnet\n---\n\nBody.\n",
+  ".claude/agents/architect.md": "---\nname: architect\nmodel: opus\neffort: xhigh\n---\n\nBody.\n",
+  ".claude/agents/scout.md": "---\nname: scout\nmodel: haiku\n---\n\nBody.\n",
+};
+
+test("herd up starts an implementer lane on its role's model: --model sonnet --effort high, never /model", () => {
+  const { dir, env, calls, cleanup } = herdRepo({}, ROLE_FILES);
+  try {
+    const plan = runEnv(dir, { ...env, HERDR_ENV: "" }, "herd", "plan");
+    assert.match(plan.out, /search\s+implementer\s+--model sonnet --effort high\s+\(model: \.claude\/agents\/implementer\.md; effort: default for sonnet\)/);
+    const up = runEnv(dir, env, "herd", "up", "search");
+    assert.equal(up.status, 0, up.out);
+    assert.match(up.out, /started  search in w1:p10 .* as implementer: --model sonnet --effort high in this tab/);
+    const made = calls();
+    const start = made.find((c) => c[0] === "agent" && c[1] === "start")!;
+    assert.deepEqual(start, ["agent", "start", "search", "--kind", "claude", "--pane", "w1:p10", "--timeout", "60000", "--", "--model", "sonnet", "--effort", "high"]);
+    // The kickoff is the only text sent to the agent: a model is never switched by typing into the session.
+    const sent = made.filter((c) => c[0] === "agent" && c[1] === "prompt").map((c) => c[3]!);
+    assert.ok(sent.length === 1 && !sent.some((t) => /^\/(model|effort)\b/.test(t)), JSON.stringify(sent));
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd up gives a lane its configured role: architect from its file, effort from the frontmatter", () => {
+  const { dir, env, calls, cleanup } = herdRepo({ laneRoles: { api: "architect" } }, ROLE_FILES);
+  try {
+    const up = runEnv(dir, env, "herd", "up");
+    assert.equal(up.status, 0, up.out);
+    const starts = calls().filter((c) => c[0] === "agent" && c[1] === "start");
+    assert.deepEqual(starts.map((c) => [c[2], ...c.slice(c.indexOf("--") + 1)]), [
+      ["search", "--model", "sonnet", "--effort", "high"],
+      ["api", "--model", "opus", "--effort", "xhigh"],
+    ]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd up with a role that has no file falls back to herd.roles, and warns when nothing names a model", () => {
+  const withFallback = herdRepo({ roles: { implementer: { model: "sonnet", effort: "medium" } } });
+  try {
+    const up = runEnv(withFallback.dir, withFallback.env, "herd", "up", "search");
+    assert.equal(up.status, 0, up.out);
+    const start = withFallback.calls().find((c) => c[1] === "start")!;
+    assert.deepEqual(start.slice(start.indexOf("--") + 1), ["--model", "sonnet", "--effort", "medium"]);
+  } finally {
+    withFallback.cleanup();
+  }
+  const bare = herdRepo({});
+  try {
+    const plan = runEnv(bare.dir, { ...bare.env, HERDR_ENV: "" }, "herd", "plan");
+    assert.match(plan.out, /warn  role implementer names no model[\s\S]*run on the default model[\s\S]*fix:/);
+    const up = runEnv(bare.dir, bare.env, "herd", "up", "search");
+    assert.equal(up.status, 0, up.out);
+    const start = bare.calls().find((c) => c[1] === "start")!;
+    assert.equal(start.indexOf("--") + 1, start.length, "no flags: the warning was the whole point");
+  } finally {
+    bare.cleanup();
+  }
+});
+
+test("herd up refuses an effort claude would not accept, before starting anything", () => {
+  const { dir, env, calls, cleanup } = herdRepo({}, {
+    ".claude/agents/implementer.md": "---\nname: implementer\nmodel: sonnet\neffort: turbo\n---\n",
+  });
+  try {
+    const up = runEnv(dir, env, "herd", "up");
+    assert.equal(up.status, 1);
+    assert.match(up.out, /role implementer: effort "turbo"[\s\S]*fix:/);
+    assert.ok(!calls().some((c) => c[1] === "start"), "nothing was started");
+  } finally {
+    cleanup();
+  }
+});
+
+const splits = (made: string[][]): string[][] =>
+  made.filter((c) => (c[0] === "pane" && c[1] === "split") || (c[0] === "tab" && c[1] === "create"));
+
+test("herd up fills this tab to the cap, coordinator included, then opens a tab named for the lane", () => {
+  // The coordinator's tab already holds 3 panes: one free place, then a new tab.
+  const tabs = JSON.stringify({ result: { tabs: [{ tab_id: "w1:t2", pane_count: 3 }] } });
+  const { dir, env, calls, cleanup } = herdRepo({}, ROLE_FILES);
+  try {
+    const plan = runEnv(dir, { ...env, HERDR_TABS: tabs }, "herd", "plan");
+    assert.match(plan.out, /at most 4 panes each \(herd\.panesPerTab\); this tab holds 3, coordinator included\n/);
+    assert.match(plan.out, /search .*→ this tab\n/);
+    assert.match(plan.out, /api .*→ new tab "api"\n/);
+    assert.equal(calls().filter((c) => c[0] === "agent" && c[1] === "start").length, 0, "plan starts nothing");
+    const up = runEnv(dir, { ...env, HERDR_TABS: tabs }, "herd", "up");
+    assert.equal(up.status, 0, up.out);
+    const [first, second] = splits(calls());
+    assert.deepEqual(first!.slice(0, 5), ["pane", "split", "--current", "--direction", "down"]);
+    assert.deepEqual(second!.slice(0, 2), ["tab", "create"]);
+    assert.equal(second![second!.indexOf("--label") + 1], "api");
+    assert.ok(second![second!.indexOf("--cwd") + 1]!.endsWith("-api"));
+    // The agent for the lane in the new tab starts in that tab's root pane, not in this tab's.
+    const starts = calls().filter((c) => c[0] === "agent" && c[1] === "start");
+    assert.deepEqual(starts.map((c) => [c[2], c[c.indexOf("--pane") + 1]]), [["search", "w1:p10"], ["api", "w1:p11"]]);
+    assert.match(up.out, /started  api in w1:p11 .* in new tab "api"/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("with room in this tab agents split it: the first to the right, the next below the newest pane", () => {
+  const { dir, env, calls, cleanup } = herdRepo({ panesPerTab: 4 }, ROLE_FILES);
+  try {
+    const up = runEnv(dir, env, "herd", "up");
+    assert.equal(up.status, 0, up.out);
+    const made = splits(calls());
+    assert.deepEqual(made.map((c) => c.slice(0, 5)), [
+      ["pane", "split", "--current", "--direction", "right"],
+      ["pane", "split", "--pane", "w1:p10", "--direction"],
+    ]);
+    assert.equal(made[1]![5], "down");
+    assert.ok(!made.some((c) => c[0] === "tab"), "two agents and a coordinator fit in four");
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd.panesPerTab moves the cap: at 2 the coordinator's tab has room for one agent", () => {
+  const { dir, env, calls, cleanup } = herdRepo({ panesPerTab: 2 }, ROLE_FILES);
+  try {
+    const up = runEnv(dir, env, "herd", "up");
+    assert.equal(up.status, 0, up.out);
+    assert.deepEqual(splits(calls()).map((c) => c.slice(0, 2).join(" ")), ["pane split", "tab create"]);
+    const bad = runEnv(dir, env, "herd", "plan");
+    assert.equal(bad.status, 0, bad.out);
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd plan outside herdr assumes the coordinator is alone in its tab, and says so", () => {
+  const { dir, env, cleanup } = herdRepo({}, ROLE_FILES);
+  try {
+    const plan = runEnv(dir, { ...env, HERDR_ENV: "" }, "herd", "plan");
+    assert.match(plan.out, /this tab holds 1, coordinator included \(assumed: not inside a herdr pane\)/);
+    assert.match(plan.out, /→ this tab/);
   } finally {
     cleanup();
   }

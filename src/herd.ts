@@ -21,13 +21,32 @@ export const HERD_DEFAULTS = {
   staggerSeconds: 20,
   /** The herdr agent kind each lane agent is started as (`herdr agent start --kind`). */
   agentKind: "claude",
-  /** Arguments passed to the agent after `--`. */
+  /** Arguments passed to the agent after `--`. A `--model` or `--effort` here wins over the role's. */
   agentArgs: [] as string[],
+  /** The role a lane agent plays unless `laneRoles` says otherwise: its model comes from `.claude/agents/<role>.md`. */
+  defaultRole: "implementer",
+  /** Lane slug → role, for the lane that is not an implementer's. */
+  laneRoles: {} as Record<string, string>,
+  /** Role → model and effort, for when the role's file is missing or silent. The file wins. */
+  roles: {} as Record<string, RoleSetting>,
+  /** Panes in one herdr tab, the coordinator's included. More agents than fit go to a new tab. */
+  panesPerTab: 4,
   /** The wait before each re-prompt after a rate-limit error, in seconds. */
   backoffSeconds: [60, 120, 240] as number[],
 };
 
 export type HerdSettings = typeof HERD_DEFAULTS;
+
+/** What a role is launched with. Either half may be absent. */
+export interface RoleSetting {
+  model?: string;
+  effort?: string;
+}
+
+/** The values `claude --effort` takes. */
+export const EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"];
+
+const ROLE_NAME = /^[a-z][a-z0-9_-]*$/;
 
 /** Settings that would make `herd` misbehave rather than merely differ. */
 export function herdSettingsProblems(herd: HerdSettings, file = "harnessimo.config.json"): Problem[] {
@@ -41,9 +60,33 @@ export function herdSettingsProblems(herd: HerdSettings, file = "harnessimo.conf
   if (typeof herd.staggerSeconds !== "number" || !(herd.staggerSeconds >= 0)) {
     bad("staggerSeconds", "must be a number of seconds, 0 or more");
   }
+  if (!Number.isInteger(herd.panesPerTab) || herd.panesPerTab < 1) {
+    bad("panesPerTab", "must be a whole number of at least 1 — a tab with no room puts every agent in the dark");
+  }
   if (typeof herd.agentKind !== "string" || !herd.agentKind) bad("agentKind", "must name a herdr agent kind, e.g. \"claude\"");
   if (!Array.isArray(herd.agentArgs) || herd.agentArgs.some((a) => typeof a !== "string")) {
     bad("agentArgs", "must be a list of strings");
+  }
+  if (typeof herd.defaultRole !== "string" || !ROLE_NAME.test(herd.defaultRole)) {
+    bad("defaultRole", "must be a role name that is a file name under .claude/agents, e.g. \"implementer\"");
+  }
+  const table = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+  if (!table(herd.laneRoles) || Object.values(herd.laneRoles).some((r) => typeof r !== "string" || !ROLE_NAME.test(r))) {
+    bad("laneRoles", "must map lane slugs to role names, e.g. { \"search\": \"architect\" }");
+  }
+  if (!table(herd.roles)) {
+    bad("roles", "must map role names to { model, effort }");
+  } else {
+    for (const [role, setting] of Object.entries(herd.roles)) {
+      const s = setting as Record<string, unknown> | null;
+      if (!ROLE_NAME.test(role) || !table(s)) {
+        bad("roles", `"${role}" must be a role name mapped to { model, effort }`);
+      } else if (s.model !== undefined && (typeof s.model !== "string" || !/^\S+$/.test(s.model))) {
+        bad("roles", `${role}.model must be a model name such as "sonnet"`);
+      } else if (s.effort !== undefined && !EFFORT_LEVELS.includes(String(s.effort))) {
+        bad("roles", `${role}.effort must be one of ${EFFORT_LEVELS.join(", ")}`);
+      }
+    }
   }
   if (
     !Array.isArray(herd.backoffSeconds) ||
@@ -53,6 +96,203 @@ export function herdSettingsProblems(herd: HerdSettings, file = "harnessimo.conf
     bad("backoffSeconds", "must be a non-empty list of positive numbers, e.g. [60, 120, 240]");
   }
   return problems;
+}
+
+// ---- the role a lane agent plays, and the model that role runs on
+//
+// Model routing lives in `.claude/agents/<role>.md`, which Claude Code reads
+// for a *subagent*. A lane agent in a herdr pane is a top-level session and
+// never reads it, so it ran on the default model whatever the role said.
+// `herd up` therefore reads the role's file itself and passes the answer as
+// launch flags. Flags, not `/model` or `/effort` typed into the running
+// session: those save the choice as the user's global default and change every
+// other session they have open.
+
+/** Where a role's definition lives, relative to the repository root. */
+export function roleFilePath(role: string): string {
+  return `.claude/agents/${role}.md`;
+}
+
+/** The role a lane plays: its own entry in `laneRoles`, else `defaultRole`. */
+export function roleFor(slug: string, settings: Pick<HerdSettings, "defaultRole" | "laneRoles">): string {
+  return settings.laneRoles[slug] ?? settings.defaultRole;
+}
+
+/** The `key: value` lines of a file's leading `---` block. Nothing else in the file is read. */
+export function frontmatterOf(text: string): Record<string, string> {
+  const block = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1];
+  const out: Record<string, string> = {};
+  for (const line of block?.split(/\r?\n/) ?? []) {
+    const m = /^([A-Za-z][\w-]*):[ \t]*(.*?)[ \t]*$/.exec(line);
+    if (m) out[m[1]!] = m[2]!.replace(/^(["'])(.*)\1$/, "$2");
+  }
+  return out;
+}
+
+/** Sonnet agents run at high effort unless told otherwise; no other model has a default. */
+export function defaultEffort(model: string | null): string | null {
+  return model && /sonnet/i.test(model) ? "high" : null;
+}
+
+export interface Launch {
+  role: string;
+  model: string | null;
+  effort: string | null;
+  /** Where each value came from, for the plan to show. */
+  modelFrom: string;
+  effortFrom: string;
+  /** What follows `--` in `herdr agent start`: the role's flags, then `herd.agentArgs`. */
+  args: string[];
+  /** The launch works but is probably not what was meant. */
+  warnings: string[];
+  /** The launch cannot be built. */
+  problems: string[];
+}
+
+/** The value `--flag value` or `--flag=value` gives in `args`, or undefined when the flag is absent. */
+function explicit(args: string[], flag: string): string | undefined {
+  const at = args.findIndex((a) => a === flag || a.startsWith(`${flag}=`));
+  if (at === -1) return undefined;
+  return args[at]!.startsWith(`${flag}=`) ? args[at]!.slice(flag.length + 1) : (args[at + 1] ?? "");
+}
+
+/**
+ * The flags a lane agent starts with.
+ *
+ * Per value, the first of these that names one: `herd.agentArgs` (explicit and
+ * fleet-wide, so it wins and the role's value is dropped — rejecting the
+ * conflict would break every repository that already sets `--model` there),
+ * the role file's frontmatter, `herd.roles[role]`, and for effort the default
+ * of the model. A role with no model anywhere launches without `--model`, and
+ * the plan says so.
+ */
+export function launchFor({
+  role,
+  roleFile,
+  fallback = {},
+  agentArgs,
+}: {
+  role: string;
+  /** The role file's text, or null when there is none. */
+  roleFile: string | null;
+  fallback?: RoleSetting;
+  agentArgs: string[];
+}): Launch {
+  const file = roleFile === null ? {} : frontmatterOf(roleFile);
+  const path = roleFilePath(role);
+  const warnings: string[] = [];
+  const problems: string[] = [];
+
+  const pick = (key: "model" | "effort"): { value: string | null; from: string; own: boolean } => {
+    const given = explicit(agentArgs, `--${key}`);
+    if (given !== undefined) return { value: given || null, from: "herd.agentArgs", own: false };
+    const fromFile = file[key];
+    // `inherit` means "the parent's model"; a pane agent has no parent, so it names nothing.
+    if (fromFile && !(key === "model" && fromFile === "inherit")) return { value: fromFile, from: path, own: true };
+    const fromConfig = fallback[key];
+    if (fromConfig) return { value: fromConfig, from: `herd.roles.${role}`, own: true };
+    return { value: null, from: roleFile === null ? `${path} is missing` : `${path} has no ${key}`, own: true };
+  };
+
+  const model = pick("model");
+  let effort = pick("effort");
+  if (effort.value === null && effort.own) {
+    const byModel = defaultEffort(model.value);
+    if (byModel) effort = { value: byModel, from: `default for ${model.value}`, own: true };
+  }
+  if (effort.value !== null && !EFFORT_LEVELS.includes(effort.value)) {
+    problems.push(
+      `role ${role}: effort "${effort.value}" (${effort.from}) is not one of ${EFFORT_LEVELS.join(", ")}\n` +
+        `  fix:  correct it there — \`/effort\` in a running session saves a global default and is not the fix`,
+    );
+  }
+  if (model.value === null && model.own) {
+    warnings.push(
+      `role ${role} names no model (${model.from}), so its lane agents run on the default model\n` +
+        `  fix:  add \`model:\` to ${path}, or set herd.roles.${role}.model in harnessimo.config.json`,
+    );
+  }
+
+  const args = [
+    ...(model.own && model.value ? ["--model", model.value] : []),
+    ...(effort.own && effort.value ? ["--effort", effort.value] : []),
+    ...agentArgs,
+  ];
+  return { role, model: model.value, effort: effort.value, modelFrom: model.from, effortFrom: effort.from, args, warnings, problems };
+}
+
+/** One line of the plan for a lane: its role, its flags, and where each came from. */
+export function launchLine(slug: string, launch: Launch, placement?: Placement): string {
+  const flags = launch.args.length > 0 ? launch.args.join(" ") : "(no flags)";
+  const from = [`model: ${launch.modelFrom}`, `effort: ${launch.effortFrom}`].join("; ");
+  const where = placement ? `  → ${placementText(placement)}` : "";
+  return `  ${slug.padEnd(20)} ${launch.role.padEnd(12)} ${flags}   (${from})${where}`;
+}
+
+// ---- where each agent's pane goes
+//
+// A tab of more than a few panes stops being readable: every pane gets a
+// sliver and nobody looks at any of them. So a tab holds `panesPerTab` panes —
+// the coordinator's included — and the agents that do not fit open a new tab,
+// itself filled to the same cap.
+
+export interface Placement {
+  slug: string;
+  /** 0 is the tab the coordinator is in; 1, 2… are new tabs, in order. */
+  tab: number;
+  /** The new tab's label (its first lane); null for the coordinator's tab. */
+  label: string | null;
+  /** The pane's position in its tab. 0 is a new tab's root pane; in the coordinator's tab it is the coordinator. */
+  slot: number;
+}
+
+/**
+ * Where each lane's pane goes. `occupied` is how many panes the coordinator's
+ * tab already holds, the coordinator's included.
+ */
+export function placeLanes(slugs: string[], { occupied, capacity }: { occupied: number; capacity: number }): Placement[] {
+  const out: Placement[] = [];
+  let tab = 0;
+  let slot = Math.max(occupied, 1);
+  let label: string | null = null;
+  for (const slug of slugs) {
+    if (slot >= capacity) {
+      tab += 1;
+      slot = 0;
+      label = slug;
+    }
+    out.push({ slug, tab, label, slot });
+    slot += 1;
+  }
+  return out;
+}
+
+/** The placement as the plan shows it. */
+export function placementText(p: Placement): string {
+  return p.tab === 0 ? "this tab" : p.slot === 0 ? `new tab "${p.label}"` : `tab "${p.label}"`;
+}
+
+/** How a pane at `slot` is made: split which pane, in which direction. The first split of a tab goes right, the rest down. */
+export function splitDirection(slot: number): "right" | "down" {
+  return slot <= 1 ? "right" : "down";
+}
+
+/** The tab a `herdr pane current` answer names. */
+export function tabIdFrom(response: unknown): string | null {
+  const result = obj(obj(response)?.result) ?? obj(response);
+  const id = obj(result?.pane)?.tab_id ?? obj(result?.tab)?.tab_id;
+  return typeof id === "string" && id ? id : null;
+}
+
+/** The panes a tab holds, from a `herdr tab list` answer; null when the tab is not in it. */
+export function tabPaneCount(response: unknown, tabId: string): number | null {
+  const result = obj(obj(response)?.result) ?? obj(response);
+  const tabs = Array.isArray(result?.tabs) ? (result.tabs as unknown[]) : [];
+  for (const raw of tabs) {
+    const t = obj(raw);
+    if (t?.tab_id === tabId && typeof t.pane_count === "number") return t.pane_count;
+  }
+  return null;
 }
 
 /** A lane as the herd sees it. */

@@ -1,6 +1,6 @@
 # Harnessimo — full documentation for machine readers
 
-Version 0.12.0. Generated from docs/ by scripts/llms-txt.ts; do not edit.
+Version 0.13.0. Generated from docs/ by scripts/llms-txt.ts; do not edit.
 Published at https://atamaniuc.github.io/Harnessimo/llms.txt — the same pages, in the order a person would meet them.
 
 Every section below is one page of the site. The heading names the page and the
@@ -984,7 +984,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.12.0` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.13.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one
@@ -1177,7 +1177,11 @@ How much of this repository's work is watched while it happens. A floor, not a s
 | `maxWorking` | integer | Lane agents working at once (default 3). `herd plan` and `herd up` never start more, counting the ones already running. |
 | `staggerSeconds` | number | Seconds between two agent starts (default 20), so their first requests do not hit the rate limit together. |
 | `agentKind` | string | The herdr agent kind each lane agent is started as, via `herdr agent start --kind` (default `claude`). |
-| `agentArgs` | array of string | Arguments passed to every lane agent, e.g. `["--model", "sonnet"]`. Default none. |
+| `agentArgs` | array of string | Arguments passed to every lane agent after the role's own flags, e.g. `["--model", "sonnet"]`. A `--model` or `--effort` here wins over the role's for that flag. Default none. |
+| `defaultRole` | string | The role a lane agent plays unless `laneRoles` names another (default `implementer`). Its model and effort come from `.claude/agents/<role>.md`, passed as `--model` and `--effort` when the agent starts. |
+| `laneRoles` | object | Lane slug to role name, for a lane that is not an implementer's, e.g. `{ "billing-review": "architect" }`. |
+| `roles` | object | Role name to `{ model, effort }`, used where the role's file is missing or names neither. The file wins. Sonnet gets `high` effort when nothing says otherwise. |
+| `panesPerTab` | integer | Panes in one herdr tab, the coordinator's included (default 4). `herd up` fills the current tab to this many, then opens a new tab, named for its first lane, for the rest. |
 | `backoffSeconds` | array of number | Waits before each retry after a rate-limit error (429), in seconds (default `[60, 120, 240]`). Written into every kickoff prompt. |
 
 ==============================================================================
@@ -1620,7 +1624,9 @@ For worktrees beside the repository rather than inside `.claude/`, `harnessimo w
 `remove` bring it back and refuse to drop unmerged or uncommitted work. Which streams to fan
 out, which model takes each, and how reviews are batched: [Routing work](ROUTING.md). One
 herdr pane, worktree and agent per lane, and agent teams inside one lane:
-[Agent teams and herdr](TEAMS.md).
+[Agent teams and herdr](TEAMS.md). For readability a herdr tab holds at most four panes, the
+coordinator's included; `herd up` fills the current tab and opens a new one for further agents.
+<!-- proof: test/herd.test.ts#agents fill the coordinator's tab to the cap, then each new tab to the same cap -->
 <!-- proof: test/cli.test.ts#worktree add makes a checkout beside the repository, on its branch, with the install run -->
 
 ## What this deliberately does not do
@@ -1670,6 +1676,25 @@ the bug. A rename, a test, a doc fix is throughput.
 
 Reasoning effort follows the same line: low for lookups and mechanical edits whose result
 checks itself, high for the one piece that needs more thought than the work around it.
+
+### The role's model reaches a pane agent as a launch flag
+
+The model in a role file is read by Claude Code for a *subagent*. A lane agent that
+`harnessimo herd up` starts in a herdr pane is a top-level session, which never reads it, so
+`up` reads the role's file itself and starts the agent with `--model <m> --effort <e>`
+(`implementer` → sonnet, `architect` → opus, `scout` → haiku). Sonnet agents run at `high`
+effort unless the role's `effort:` or `herd.roles` says otherwise. Details, precedence and the
+fallbacks: [Agent teams and herdr](TEAMS.md#the-role-sets-the-model--as-a-launch-flag).
+<!-- proof: test/herd.test.ts#a role's launch flags come from its file: sonnet gets high effort without being told -->
+
+**Never change a running agent's model with `/model` or `/effort`.** Both save the choice as
+the user's global default in `~/.claude/settings.json`, which changes every other session
+they have open. Stop the agent and start it with the flags instead.
+
+**The coordinator does the routine herdr work itself** — opening panes, starting agents, sending
+prompts that are self-contained and use absolute paths, since a side worktree may not contain
+the coordination files. The owner is never handed a manual step for it. A tab holds at most four
+panes, the coordinator's included; `herd up` opens a new tab for the rest.
 
 ## Fan out when streams are independent
 
@@ -1805,15 +1830,57 @@ only alone, because nothing shows it does not collide.
 
 `up` must run inside a herdr pane (`HERDR_ENV=1`); elsewhere it fails and says so. For each
 lane it makes the worktree exactly as `harnessimo worktree add` does — install step included —
-opens it in herdr, starts the agent named after the lane slug, waits `herd.staggerSeconds`
+opens a pane in it, starts the agent named after the lane slug, waits `herd.staggerSeconds`
 between starts, and sends a one-line kickoff: read `AGENTS.md`, load the handoff, work the
 tasks inside `## Owns`, run the checks, commit, back off on a 429.
 <!-- proof: test/cli.test.ts#herd up opens a worktree per lane and starts a named agent with its kickoff -->
 
-Each lane agent is `claude`, started with `herdr agent start --kind claude` (`herd.agentKind`,
-`herd.agentArgs`), so herdr knows it as an agent and reports its state. `up` without lane names
+Each lane agent is `claude`, started with `herdr agent start --kind claude` (`herd.agentKind`),
+so herdr knows it as an agent and reports its state. `up` without lane names
 starts every lane `plan` allows and leaves the held ones.
 <!-- proof: test/cli.test.ts#herd up starts every runnable lane, staggered, and leaves the held one -->
+
+### The role sets the model — as a launch flag
+
+A lane agent plays a role (`herd.defaultRole`, `implementer`; `herd.laneRoles` for the lane that
+is not one), and `up` starts it on that role's model. The model and `effort:` are read from
+`.claude/agents/<role>.md` and passed as `herdr agent start … -- --model sonnet --effort high`:
+
+```
+$ harnessimo herd plan
+each starts as (lane, role, flags after `herdr agent start … --`, tab):
+  search               implementer  --model sonnet --effort high   (model: .claude/agents/implementer.md; effort: default for sonnet)  → this tab
+```
+
+The reason is that routing in a role file is read by Claude Code for a *subagent*. A pane agent
+is a top-level session and never reads it, so before this it ran on the default model whatever
+the role said.
+
+- **Where a value comes from**, first match: an explicit `--model`/`--effort` in
+  `herd.agentArgs` (it wins for that flag; the plan names it as the source), the role's
+  frontmatter, `herd.roles.<role>` (the fallback for a missing or silent file), and for
+  effort only, **`high` for Sonnet**. A role that names no model anywhere starts with no
+  `--model` and `plan` and `up` warn about it.
+- **Never `/model` or `/effort` in a running session.** Both save the choice as the user's
+  global default in `~/.claude/settings.json`, changing every other session they have open. To
+  change an agent's model, stop it and start it with the flags.
+- **The coordinator does the routine herdr work itself**: opening panes, starting agents,
+  sending prompts. A prompt to a pane agent is self-contained and uses absolute paths, because
+  a side worktree may not contain the coordination files. The owner is never handed a manual
+  step for any of it.
+<!-- proof: test/cli.test.ts#herd up starts an implementer lane on its role's model: --model sonnet --effort high, never /model -->
+<!-- proof: test/herd.test.ts#an explicit --model or --effort in herd.agentArgs wins for that flag only, and is not doubled -->
+
+### At most four panes per tab
+
+A tab of more than four panes is unreadable, so `herd.panesPerTab` (default 4) caps it,
+**the coordinator's pane included**. `up` fills the coordinator's tab to the cap — the first
+agent splits to the right, the next ones below the newest pane — then opens a new tab, named for
+its first lane and itself filled to the cap, for the rest. `plan` shows the tab each agent lands
+in (`→ this tab`, `→ new tab "billing"`). Outside herdr it assumes the coordinator is alone in
+its tab and says so.
+<!-- proof: test/cli.test.ts#herd up fills this tab to the cap, coordinator included, then opens a tab named for the lane -->
+<!-- proof: test/herd.test.ts#agents fill the coordinator's tab to the cap, then each new tab to the same cap -->
 
 When a lane is done: review it, `harnessimo worktree merge <slug>`, then
 `harnessimo worktree remove <slug>`. The main checkout keeps the shared state.

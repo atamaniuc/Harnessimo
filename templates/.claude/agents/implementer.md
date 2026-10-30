@@ -2,6 +2,7 @@
 name: implementer
 description: Writes code for exactly one lane, task by task, from its spec, tasks and handoff; runs the project's checks and quotes them. Never edits specs or architecture and never spawns other agents.
 model: sonnet
+effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
