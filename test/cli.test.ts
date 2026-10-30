@@ -382,6 +382,11 @@ function repo(files: Record<string, string>): { dir: string; git: (...a: string[
       encoding: "utf8",
     });
   git("init", "-q", "-b", "main");
+  // Repository-local, so the CLI's own merge commit has an author on a CI
+  // runner that has no global git identity.
+  git("config", "user.email", "t@example.com");
+  git("config", "user.name", "t");
+  git("config", "commit.gpgsign", "false");
   git("add", "-A");
   git("commit", "-qm", "init");
   const parent = dirname(dir);
