@@ -7,6 +7,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.13.0] — 2026-10-30
+
+A lane agent now starts on **the model of the role it plays**, and `herd up` keeps the
+herdr tabs readable. Found in a consumer project: the coordinator started lane agents in
+herdr panes with no model flags, so every one ran on the default model (Opus) although the
+project's routing said the implementer is Sonnet. That routing lived only in a subagent's
+frontmatter, which a top-level pane agent never reads.
+
+### Added
+
+- **`herd` reads the role's file and launches with its flags.** Each lane plays
+  `herd.defaultRole` (`implementer`) or its entry in `herd.laneRoles`; the model and the
+  `effort:` come from `.claude/agents/<role>.md` and reach the agent as
+  `herdr agent start … -- --model <m> --effort <e>`. `herd.roles` is the fallback where the
+  file is missing or silent; Sonnet runs at `--effort high` when nothing says otherwise.
+  `herd plan` shows each lane's role, its flags and where every value came from; a role that
+  names no model prints a warning instead of quietly using the default. An effort `claude`
+  would not accept stops `herd up` before anything starts.
+- **`herd.panesPerTab`** (default 4). `herd up` fills the coordinator's tab to the cap,
+  coordinator included, then opens a new tab — named for its first lane, itself filled to
+  the cap — for the rest. `herd plan` shows the tab each agent lands in.
+- **`effort: high`** in the `implementer` and `architect` role templates.
+- Docs (both languages): the model is a launch flag, never `/model` or `/effort`; the
+  coordinator does the routine herdr work itself; the four-pane tab.
+
+### Changed
+
+- **`herd up` no longer calls `herdr worktree open`.** That put every lane in a workspace of
+  its own, which made a tab limit meaningless; a lane's pane is now a split of the current
+  tab or the root pane of a new one, started in the lane's worktree (`--cwd`).
+- A `--model` or `--effort` in `herd.agentArgs` wins over the role's value for that flag. An
+  existing `agentArgs: ["--model", "sonnet"]` keeps working, and Sonnet's default effort now
+  rides along with it.
+
 ## [0.12.0] — 2026-10-30
 
 Two things, one principle — **rules serve the goal; switching goals is a normal path, not an
@@ -474,6 +508,7 @@ by hand because the tool could not say it.
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.13.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.13.0
 [0.12.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.12.0
 [0.11.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.11.0
 [0.10.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.1

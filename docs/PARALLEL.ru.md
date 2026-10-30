@@ -115,7 +115,10 @@ checkout, а основной checkout копию worktree не видит.
 возвращают его обратно и отказываются бросать невлитую или незакоммиченную работу. Какие
 потоки распараллеливать, какая модель берёт каждый и как собирать ревью в пакет —
 [«Маршрутизация работы»](ROUTING.ru.md). Панель herdr, worktree и агент на каждую
-lane и agent teams внутри одной lane — [«Agent teams и herdr»](TEAMS.ru.md).
+lane и agent teams внутри одной lane — [«Agent teams и herdr»](TEAMS.ru.md). Для читаемости
+вкладка herdr вмещает не больше четырёх панелей, считая панель координатора; `herd up`
+добивает текущую вкладку и открывает новую для остальных агентов.
+<!-- proof: test/herd.test.ts#agents fill the coordinator's tab to the cap, then each new tab to the same cap -->
 <!-- proof: test/cli.test.ts#worktree add makes a checkout beside the repository, on its branch, with the install run -->
 
 ## Чего здесь сознательно нет

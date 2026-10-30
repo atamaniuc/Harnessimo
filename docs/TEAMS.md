@@ -83,15 +83,57 @@ only alone, because nothing shows it does not collide.
 
 `up` must run inside a herdr pane (`HERDR_ENV=1`); elsewhere it fails and says so. For each
 lane it makes the worktree exactly as `harnessimo worktree add` does — install step included —
-opens it in herdr, starts the agent named after the lane slug, waits `herd.staggerSeconds`
+opens a pane in it, starts the agent named after the lane slug, waits `herd.staggerSeconds`
 between starts, and sends a one-line kickoff: read `AGENTS.md`, load the handoff, work the
 tasks inside `## Owns`, run the checks, commit, back off on a 429.
 <!-- proof: test/cli.test.ts#herd up opens a worktree per lane and starts a named agent with its kickoff -->
 
-Each lane agent is `claude`, started with `herdr agent start --kind claude` (`herd.agentKind`,
-`herd.agentArgs`), so herdr knows it as an agent and reports its state. `up` without lane names
+Each lane agent is `claude`, started with `herdr agent start --kind claude` (`herd.agentKind`),
+so herdr knows it as an agent and reports its state. `up` without lane names
 starts every lane `plan` allows and leaves the held ones.
 <!-- proof: test/cli.test.ts#herd up starts every runnable lane, staggered, and leaves the held one -->
+
+### The role sets the model — as a launch flag
+
+A lane agent plays a role (`herd.defaultRole`, `implementer`; `herd.laneRoles` for the lane that
+is not one), and `up` starts it on that role's model. The model and `effort:` are read from
+`.claude/agents/<role>.md` and passed as `herdr agent start … -- --model sonnet --effort high`:
+
+```
+$ harnessimo herd plan
+each starts as (lane, role, flags after `herdr agent start … --`, tab):
+  search               implementer  --model sonnet --effort high   (model: .claude/agents/implementer.md; effort: default for sonnet)  → this tab
+```
+
+The reason is that routing in a role file is read by Claude Code for a *subagent*. A pane agent
+is a top-level session and never reads it, so before this it ran on the default model whatever
+the role said.
+
+- **Where a value comes from**, first match: an explicit `--model`/`--effort` in
+  `herd.agentArgs` (it wins for that flag; the plan names it as the source), the role's
+  frontmatter, `herd.roles.<role>` (the fallback for a missing or silent file), and for
+  effort only, **`high` for Sonnet**. A role that names no model anywhere starts with no
+  `--model` and `plan` and `up` warn about it.
+- **Never `/model` or `/effort` in a running session.** Both save the choice as the user's
+  global default in `~/.claude/settings.json`, changing every other session they have open. To
+  change an agent's model, stop it and start it with the flags.
+- **The coordinator does the routine herdr work itself**: opening panes, starting agents,
+  sending prompts. A prompt to a pane agent is self-contained and uses absolute paths, because
+  a side worktree may not contain the coordination files. The owner is never handed a manual
+  step for any of it.
+<!-- proof: test/cli.test.ts#herd up starts an implementer lane on its role's model: --model sonnet --effort high, never /model -->
+<!-- proof: test/herd.test.ts#an explicit --model or --effort in herd.agentArgs wins for that flag only, and is not doubled -->
+
+### At most four panes per tab
+
+A tab of more than four panes is unreadable, so `herd.panesPerTab` (default 4) caps it,
+**the coordinator's pane included**. `up` fills the coordinator's tab to the cap — the first
+agent splits to the right, the next ones below the newest pane — then opens a new tab, named for
+its first lane and itself filled to the cap, for the rest. `plan` shows the tab each agent lands
+in (`→ this tab`, `→ new tab "billing"`). Outside herdr it assumes the coordinator is alone in
+its tab and says so.
+<!-- proof: test/cli.test.ts#herd up fills this tab to the cap, coordinator included, then opens a tab named for the lane -->
+<!-- proof: test/herd.test.ts#agents fill the coordinator's tab to the cap, then each new tab to the same cap -->
 
 When a lane is done: review it, `harnessimo worktree merge <slug>`, then
 `harnessimo worktree remove <slug>`. The main checkout keeps the shared state.

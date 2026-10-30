@@ -84,17 +84,59 @@ harnessimo herd status          # каждая lane рядом с состоян
 
 `up` должна работать внутри панели herdr (`HERDR_ENV=1`); в другом месте она падает и
 говорит об этом. Для каждой lane она делает worktree так же, как `harnessimo worktree add`, —
-вместе с шагом установки, — открывает его в herdr, запускает агента с именем по slug'у lane,
+вместе с шагом установки, — открывает в нём панель, запускает агента с именем по slug'у lane,
 ждёт `herd.staggerSeconds` между стартами и отправляет однострочный стартовый промпт:
 прочитать `AGENTS.md`, загрузить handoff, делать задачи внутри `## Owns`, гонять проверки,
 коммитить, отступать на 429.
 <!-- proof: test/cli.test.ts#herd up opens a worktree per lane and starts a named agent with its kickoff -->
 
 Каждый агент lane — это `claude`, запущенный через `herdr agent start --kind claude`
-(`herd.agentKind`, `herd.agentArgs`), поэтому herdr знает его как агента и сообщает его
+(`herd.agentKind`), поэтому herdr знает его как агента и сообщает его
 состояние. `up` без имён lane запускает все lane'ы, которые разрешает `plan`, и оставляет
 отложенные.
 <!-- proof: test/cli.test.ts#herd up starts every runnable lane, staggered, and leaves the held one -->
+
+### Модель задаёт роль — флагом запуска
+
+Агент lane играет роль (`herd.defaultRole`, по умолчанию `implementer`; `herd.laneRoles` — для
+lane, которая не implementer), и `up` запускает его на модели этой роли. Модель и `effort:`
+читаются из `.claude/agents/<role>.md` и передаются как
+`herdr agent start … -- --model sonnet --effort high`:
+
+```
+$ harnessimo herd plan
+each starts as (lane, role, flags after `herdr agent start … --`, tab):
+  search               implementer  --model sonnet --effort high   (model: .claude/agents/implementer.md; effort: default for sonnet)  → this tab
+```
+
+Причина: маршрутизацию из файла роли Claude Code читает для *сабагента*. Агент в панели — это
+сессия верхнего уровня, она файл не читает, поэтому раньше работала на модели по умолчанию,
+что бы ни говорила роль.
+
+- **Откуда берётся значение**, первое совпавшее: явный `--model`/`--effort` в
+  `herd.agentArgs` (для этого флага он главный, план называет его источником), frontmatter
+  роли, `herd.roles.<role>` (запас на случай отсутствующего или молчащего файла) и, только для
+  effort, **`high` для Sonnet**. Роль, нигде не назвавшая модель, стартует без `--model`, а
+  `plan` и `up` об этом предупреждают.
+- **Никогда `/model` и `/effort` в запущенной сессии.** Оба сохраняют выбор как глобальное
+  значение пользователя в `~/.claude/settings.json` и меняют все его остальные сессии. Чтобы
+  сменить модель агента, остановите его и запустите заново с флагами.
+- **Рутинную работу с herdr делает сам координатор**: открывает панели, запускает агентов,
+  отправляет промпты. Промпт агенту в панели самодостаточен и использует абсолютные пути —
+  в боковом worktree файлов координации может не быть. Владельцу ручные шаги не передают.
+<!-- proof: test/cli.test.ts#herd up starts an implementer lane on its role's model: --model sonnet --effort high, never /model -->
+<!-- proof: test/herd.test.ts#an explicit --model or --effort in herd.agentArgs wins for that flag only, and is not doubled -->
+
+### Не больше четырёх панелей во вкладке
+
+Вкладка больше чем с четырьмя панелями нечитаема, поэтому `herd.panesPerTab` (по умолчанию 4)
+ограничивает её, **считая панель координатора**. `up` добивает вкладку координатора до
+лимита — первый агент делит её вправо, следующие идут ниже самой новой панели, — затем
+открывает новую вкладку с именем её первой lane, тоже до лимита, для остальных. `plan`
+показывает вкладку каждого агента (`→ this tab`, `→ new tab "billing"`). Вне herdr он считает,
+что координатор во вкладке один, и говорит об этом.
+<!-- proof: test/cli.test.ts#herd up fills this tab to the cap, coordinator included, then opens a tab named for the lane -->
+<!-- proof: test/herd.test.ts#agents fill the coordinator's tab to the cap, then each new tab to the same cap -->
 
 Когда lane готова: ревью, `harnessimo worktree merge <slug>`, затем
 `harnessimo worktree remove <slug>`. Общее состояние держит основной checkout.

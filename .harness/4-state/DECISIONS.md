@@ -253,3 +253,67 @@ Resuming restores the gate and the fence, so a real overlap is caught when it be
 goal, and a gate that guesses is a gate nobody trusts); a `--force` to skip checks during a
 switch (a bypass by another name).
 
+
+---
+
+## 2026-10-30 — A lane agent starts on its role's model, as a launch flag
+
+`herd up` reads `.claude/agents/<role>.md`, takes `model:` and `effort:` from its frontmatter
+and starts the agent with `-- --model <m> --effort <e>` (0.13.0).
+
+**Why:** found in finverity, lane 0006. The coordinator started lane agents with no model
+flags, so all of them ran on the default model (Opus) although routing says the implementer
+is Sonnet. Role routing lived only in subagent frontmatter, and a pane agent is a top-level
+session that never reads it. Changing the model afterwards with `/model` or `/effort` is not
+the fix: both **save the choice as the user's global default** in `~/.claude/settings.json`,
+changing every other session they have open. So the model is a launch flag, and a running
+agent's model is changed by restarting it, never by typing into it.
+
+**Choices, recorded:**
+- Per value, the first that names it: `herd.agentArgs` → the role file → `herd.roles[role]` →
+  (effort only) the model's default, which exists for Sonnet alone (`high`). A role with no
+  model anywhere launches with no `--model` and `plan`/`up` print a warning; it does not fail,
+  because a repository that never ran `init` was working before this change.
+- **An explicit `--model`/`--effort` in `herd.agentArgs` wins** for that flag instead of
+  being rejected as a conflict. Rejecting would break every repository that follows the
+  documented `agentArgs: ["--model", "sonnet"]`, and the config is the owner's explicit,
+  fleet-wide word. The cost: such a repository keeps running every role on one model, and the
+  plan says `herd.agentArgs` is the source, so it is visible.
+- The effective model decides the default effort: an `agentArgs` model of `opus` does not
+  inherit the Sonnet role's `high`.
+- `model: inherit` names nothing for a pane agent — it has no parent to inherit from.
+- Unknown model names pass through (aliases and full ids both work); only `effort` is
+  validated, against `low|medium|high|xhigh|max`, and a bad one stops `up` before any start.
+- `effort:` goes in the `implementer` and `architect` templates. Not in `scout`: haiku has no
+  effort setting worth pinning.
+- Not done: `claude --agent <role>`, which would also load the role's body into the pane
+  agent. It is a larger change (the role bodies are written for teammates) and was not asked.
+
+**The coordinator does the routine herdr work itself** — opening panes, starting agents,
+sending self-contained prompts with absolute paths (a side worktree may not contain the
+coordination files) — and the owner is never handed a manual step for it. Written into TEAMS
+and ROUTING.
+
+---
+
+## 2026-10-30 — At most four panes per herdr tab
+
+`herd.panesPerTab` (default 4), coordinator included. `herd up` fills the current tab, then
+opens a new tab for further agents; `herd plan` shows where each agent lands (0.13.0).
+
+**Why:** an owner rule, for readability — past four, every pane is a sliver nobody looks at.
+
+**Choices, recorded:**
+- A new tab is filled to the same cap and named for **its first lane**; the other lanes in it
+  are told apart by their panes' labels. One tab per lane would have honoured "label = lane"
+  more literally but spent a tab on every agent.
+- The first split in a tab goes right, the rest below the newest pane, so the coordinator
+  keeps the left half and the agents stack on the right.
+- The occupancy is read from herdr (`tab list`, the caller's tab from `HERDR_TAB_ID` or
+  `pane current`). Outside herdr `plan` assumes the coordinator is alone and says it assumed.
+- `herdr worktree open` is no longer called: it made a workspace per lane, which a tab cap
+  cannot govern. The pane is a split or a tab root started with `--cwd <worktree>`.
+- A lane agent already running counts only by occupying a pane: the count is herdr's.
+
+**Rejected:** refusing to start when the tab is full (the point is to keep working); closing
+or rearranging panes the owner opened (herd never closes what it did not create).

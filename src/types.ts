@@ -203,8 +203,16 @@ export interface HerdConfig {
   staggerSeconds: number;
   /** herdr agent kind each lane agent is started as (`herdr agent start --kind`). */
   agentKind: string;
-  /** Arguments passed to the agent. */
+  /** Arguments passed to the agent; a `--model` or `--effort` here wins over the role's. */
   agentArgs: string[];
+  /** The role a lane agent plays unless `laneRoles` says otherwise. */
+  defaultRole: string;
+  /** Lane slug → role name. */
+  laneRoles: Record<string, string>;
+  /** Role → model and effort, used where the role's file is missing or silent. */
+  roles: Record<string, { model?: string; effort?: string }>;
+  /** Panes in one herdr tab, the coordinator's included; more agents open a new tab. */
+  panesPerTab: number;
   /** Waits before each re-prompt after a rate-limit error, in seconds. */
   backoffSeconds: number[];
 }

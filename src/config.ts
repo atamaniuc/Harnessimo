@@ -60,7 +60,17 @@ const SECTION_DEFAULTS = {
   // Spec 0011. Not a check: the command that opens and closes parallel streams.
   worktree: { prefix: "wt-", dir: "..", install: null },
   // Spec 0011. Not a check: `harnessimo herd`, lane agents in herdr panes.
-  herd: { maxWorking: 3, staggerSeconds: 20, agentKind: "claude", agentArgs: [], backoffSeconds: [60, 120, 240] },
+  herd: {
+    maxWorking: 3,
+    staggerSeconds: 20,
+    agentKind: "claude",
+    agentArgs: [],
+    defaultRole: "implementer",
+    laneRoles: {},
+    roles: {},
+    panesPerTab: 4,
+    backoffSeconds: [60, 120, 240],
+  },
 };
 
 export class ConfigError extends Error {}

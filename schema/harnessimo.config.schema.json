@@ -424,7 +424,37 @@
           "items": {
             "type": "string"
           },
-          "description": "Arguments passed to every lane agent, e.g. `[\"--model\", \"sonnet\"]`. Default none."
+          "description": "Arguments passed to every lane agent after the role's own flags, e.g. `[\"--model\", \"sonnet\"]`. A `--model` or `--effort` here wins over the role's for that flag. Default none."
+        },
+        "defaultRole": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "description": "The role a lane agent plays unless `laneRoles` names another (default `implementer`). Its model and effort come from `.claude/agents/<role>.md`, passed as `--model` and `--effort` when the agent starts."
+        },
+        "laneRoles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*$"
+          },
+          "description": "Lane slug to role name, for a lane that is not an implementer's, e.g. `{ \"billing-review\": \"architect\" }`."
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "model": { "type": "string" },
+              "effort": { "enum": ["low", "medium", "high", "xhigh", "max"] }
+            }
+          },
+          "description": "Role name to `{ model, effort }`, used where the role's file is missing or names neither. The file wins. Sonnet gets `high` effort when nothing says otherwise."
+        },
+        "panesPerTab": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Panes in one herdr tab, the coordinator's included (default 4). `herd up` fills the current tab to this many, then opens a new tab, named for its first lane, for the rest."
         },
         "backoffSeconds": {
           "type": "array",

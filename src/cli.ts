@@ -54,12 +54,21 @@ import {
   herdrEnvProblem,
   kickoffPrompt,
   laneStatus,
+  launchFor,
+  launchLine,
   paneIdFrom,
+  placeLanes,
+  placementText,
   planHerd,
+  roleFilePath,
+  roleFor,
+  splitDirection,
   statusRows,
+  tabIdFrom,
+  tabPaneCount,
   upProblems,
 } from "./herd.ts";
-import type { HerdLane, HerdSettings } from "./herd.ts";
+import type { HerdLane, HerdSettings, Launch } from "./herd.ts";
 import { agentContract, briefJson, briefText, handoffPaths, mergeHook, mergeSessionStartHook } from "./brief.ts";
 import { DEFAULT_WINDOW_MINUTES, decideRead, emptyState, ledger, ledgerReport } from "./tokens.ts";
 import { WORKTREE_DEFAULTS, addProblem, installCommands, mergeProblem, nameProblem, removeProblem, worktreeTarget } from "./worktree.ts";
@@ -1672,6 +1681,48 @@ function herdLanes(cfg: LoadedConfig): HerdLane[] {
   });
 }
 
+/**
+ * What each lane's agent starts with, from its role's file. A launch that cannot
+ * be built stops the command before anything is started: a half-started herd on
+ * the wrong model is the failure this exists to prevent.
+ */
+function herdLaunches(slugs: string[], settings: HerdSettings): Map<string, Launch> {
+  const launches = new Map<string, Launch>();
+  for (const slug of slugs) {
+    const role = roleFor(slug, settings);
+    const file = join(ROOT, roleFilePath(role));
+    launches.set(
+      slug,
+      launchFor({
+        role,
+        roleFile: existsSync(file) ? readFileSync(file, "utf8") : null,
+        fallback: settings.roles[role],
+        agentArgs: settings.agentArgs,
+      }),
+    );
+  }
+  const problems = [...launches.values()].flatMap((l) => l.problems);
+  if (problems.length > 0) die(`harnessimo: ${[...new Set(problems)].join("\n")}`);
+  return launches;
+}
+
+/**
+ * How many panes the coordinator's tab holds, the coordinator's included, and
+ * the tab's id. Outside herdr nothing can be asked, so the plan assumes the
+ * coordinator is alone in its tab and says so.
+ */
+function herdTab(fatal: boolean): { id: string | null; occupied: number; known: boolean } {
+  if (process.env.HERDR_ENV !== "1") return { id: null, occupied: 1, known: false };
+  const id = process.env.HERDR_TAB_ID || tabIdFrom(herdr(["pane", "current", "--current"], { fatal }));
+  const count = id ? tabPaneCount(herdr(["tab", "list"], { fatal }), id) : null;
+  return { id, occupied: count ?? 1, known: count !== null };
+}
+
+/** The launch warnings, once each, however many lanes share the role. */
+function launchWarnings(launches: Map<string, Launch>): string[] {
+  return [...new Set([...launches.values()].flatMap((l) => l.warnings))];
+}
+
 /** One herdr call, its JSON answer parsed. A failure names the call and what to read next. */
 function herdr(argv: string[], { fatal = true }: { fatal?: boolean } = {}): unknown {
   try {
@@ -1728,6 +1779,18 @@ function cmdHerd(): void {
     if (alreadyRunning.length > 0) ok(`\nalready running: ${alreadyRunning.join(", ")}`);
     ok(`\nrunnable now, side by side: ${plan.runnable.length > 0 ? plan.runnable.join(", ") : "(none)"}`);
     for (const h of plan.held) ok(`  held  ${h.slug} — ${h.reason}`);
+    if (plan.runnable.length > 0) {
+      const launches = herdLaunches(plan.runnable, settings);
+      const tab = herdTab(false);
+      const placements = placeLanes(plan.runnable, { occupied: tab.occupied, capacity: settings.panesPerTab });
+      ok(
+        `\ntabs: at most ${settings.panesPerTab} panes each (herd.panesPerTab); this tab holds ${tab.occupied}, coordinator included` +
+          (tab.known ? "" : " (assumed: not inside a herdr pane)"),
+      );
+      ok(`each starts as (lane, role, flags after \`herdr agent start … --\`, tab):`);
+      placements.forEach((p) => ok(launchLine(p.slug, launches.get(p.slug)!, p)));
+      for (const w of launchWarnings(launches)) ok(`\n  warn  ${w}`);
+    }
     ok(
       `\nstart them: harnessimo herd up   (${settings.staggerSeconds}s between starts;` +
         ` on a 429 wait ${settings.backoffSeconds.join("/")}s)`,
@@ -1748,6 +1811,11 @@ function cmdHerd(): void {
     return;
   }
 
+  const launches = herdLaunches(starting, settings);
+  for (const w of launchWarnings(launches)) ok(`  warn  ${w}`);
+  const placements = placeLanes(starting, { occupied: herdTab(true).occupied, capacity: settings.panesPerTab });
+  // The pane a tab's next split starts from: the caller's own for the coordinator's tab, the root pane for a new one.
+  const newest = new Map<number, string>();
   const registered = registeredWorktrees();
   const mainRoot = registered[0] ?? ROOT;
   const wt = { ...WORKTREE_DEFAULTS, ...(cfg.worktree ?? {}) };
@@ -1766,15 +1834,22 @@ function cmdHerd(): void {
         install: true,
       });
     }
-    const opened = herdr(["worktree", "open", "--cwd", ROOT, "--path", path, "--label", slug, "--no-focus"]);
-    const pane =
-      paneIdFrom(opened) ??
-      paneIdFrom(herdr(["pane", "split", "--current", "--direction", "right", "--cwd", path, "--no-focus"]));
-    if (!pane) die(`harnessimo: herdr opened ${path} but named no pane\n  fix:  herdr pane list, then start the agent by hand`);
+    const place = placements.find((p) => p.slug === slug)!;
+    let pane: string | null;
+    if (place.tab > 0 && place.slot === 0) {
+      pane = paneIdFrom(herdr(["tab", "create", "--cwd", path, "--label", place.label ?? slug, "--no-focus"]));
+    } else {
+      const from = newest.get(place.tab);
+      const target = from ? ["--pane", from] : ["--current"];
+      pane = paneIdFrom(herdr(["pane", "split", ...target, "--direction", splitDirection(place.slot), "--cwd", path, "--no-focus"]));
+    }
+    if (!pane) die(`harnessimo: herdr made a pane for ${path} but named none\n  fix:  herdr pane list, then start the agent by hand`);
+    newest.set(place.tab, pane);
 
-    herdr(["agent", "start", name, "--kind", settings.agentKind, "--pane", pane, "--timeout", "60000", "--", ...settings.agentArgs]);
+    const launch = launches.get(slug)!;
+    herdr(["agent", "start", name, "--kind", settings.agentKind, "--pane", pane, "--timeout", "60000", "--", ...launch.args]);
     herdr(["agent", "prompt", name, kickoffPrompt({ slug, lane: lane.lane, backoffSeconds: settings.backoffSeconds })]);
-    ok(`  started  ${name} in ${pane} (${path})`);
+    ok(`  started  ${name} in ${pane} (${path}) as ${launch.role}${launch.args.length > 0 ? `: ${launch.args.join(" ")}` : ""} in ${placementText(place)}`);
     if (index < starting.length - 1) sleepSeconds(settings.staggerSeconds);
   });
   ok(

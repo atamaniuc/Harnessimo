@@ -2,6 +2,7 @@
 name: architect
 description: Specs, ADRs, gate verdicts, and an independent fresh-context review of any diff touching money, concurrency, idempotency, security or data migrations. Use before closing a lane, for a batched review of a stream, and whenever an implementer escalates.
 model: opus
+effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 

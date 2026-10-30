@@ -81,6 +81,11 @@ decides how much of the nine a given run is held to (spec 0007).
 
 ## Settled recently
 
+- **0.13.0, role model routing and four-pane tabs.** `herd up` launches each lane agent with
+  `--model`/`--effort` read from its role's `.claude/agents/<role>.md` (config fallback
+  `herd.roles`, explicit `herd.agentArgs` wins); never `/model` or `/effort`, which save a
+  global default. At most `herd.panesPerTab` (4) panes per herdr tab, then a new tab. Recorded
+  in DECISIONS.
 - **0.12.0, agent teams and herdr (spec 0012).** `harnessimo herd plan|up|status`,
   `harnessimo hook task-completed`, a `.claude/settings.json` template with agent teams on, a
   `herd` config section, teammate sections in the agent roles, the TEAMS page and a README
