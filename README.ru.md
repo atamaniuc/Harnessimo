@@ -254,6 +254,39 @@ harnessimo hooks install           # быстрые проверки перед 
 
 Оба сценария подробно: [Сценарии](https://atamaniuc.github.io/Harnessimo/ru/REFERENCE/).
 
+## Как пользоваться этим хорошо
+
+`npx harnessimo init`, дальше ежедневный цикл: `harnessimo brief` → одна lane по её handoff'у →
+`harnessimo check` → коммит. [Гайд](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/)
+<!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
+
+**Несколько агентов.** [herdr](https://herdr.dev), менеджер рабочих пространств терминала для
+агентов, даёт каждой lane свой worktree и свой `claude` в панели: lane'ы не трогают файлы друг
+друга, а состояние каждого агента (idle, working, blocked, done) видно. **Agent teams** — лид
+Claude Code и несколько тиммейтов на общем списке задач — работают внутри одной lane; `init`
+включает их в `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`,
+`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`, гейт `TaskCompleted`).
+
+| Команда | Зачем |
+| --- | --- |
+| `harnessimo worktree add\|merge\|remove\|list <name>` | по checkout'у на поток, с безопасным вливанием |
+| `harnessimo herd plan\|up\|status` | какие lane'ы можно запустить; запуск в herdr; кто заблокирован |
+| `harnessimo hook task-completed` | задача команды не закрывается, пока `check` красный |
+<!-- proof: test/cli.test.ts#herd plan runs fenced lanes side by side and holds the one that overlaps -->
+
+**Сессия с командой:** `herdr`, панель в репозитории, затем `harnessimo herd plan`, `herd up`
+(worktree и агент на lane, с паузой 20 с), `herd status` — сначала заблокированные, потом merge.
+**Лимиты:** не больше 3 работающих агентов, Sonnet для работы, Opus для ревью; на 429 — пауза
+60/120/240 с, затем на одного агента меньше.
+
+**Смена цели** — обычное дело: `harnessimo track pause <slug> --reason "…"`, затем начните или
+возобновите следующую lane — и всё. Lane на паузе не гейтится, не огораживает и не протухает до `track resume`.
+<!-- proof: test/cli.test.ts#switching goals: pause with a reason, start the new lane on the same paths, and check stays green -->
+Подробности: [Agent teams и herdr](https://atamaniuc.github.io/Harnessimo/ru/TEAMS/),
+[Маршрутизация работы](https://atamaniuc.github.io/Harnessimo/ru/ROUTING/),
+[Адаптация правил](https://atamaniuc.github.io/Harnessimo/ru/ADAPTING/) — жёсткие границы не гнутся, процессное правило,
+мешающее цели, меняется с записью; выученное — в `DECISIONS.md`, `.claude/agents/` или во внешнюю [память](https://atamaniuc.github.io/Harnessimo/ru/MEMORY/).
+
 ## Почему этому можно доверять
 
 Каждый пункт здесь проверяем — единственный вид доверия, на который этот проект вправе
@@ -317,6 +350,7 @@ harnessimo hooks install           # быстрые проверки перед 
 | внедрить в репозиторий, где уже есть свои скрипты | [Гайд → внедрение](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#adopting) |
 | запустить несколько агентов на одном репозитории | [Больше одного агента](https://atamaniuc.github.io/Harnessimo/ru/PARALLEL/) |
 | отдать работу нужной модели, распараллелить по worktree | [Маршрутизация работы](https://atamaniuc.github.io/Harnessimo/ru/ROUTING/) |
+| вести lane'ы в панелях herdr и agent teams внутри lane, не упираясь в лимит | [Agent teams и herdr](https://atamaniuc.github.io/Harnessimo/ru/TEAMS/) |
 | понять, когда агент может поправить мешающее правило | [Адаптация правил](https://atamaniuc.github.io/Harnessimo/ru/ADAPTING/) |
 | подключить внешнюю память без второго источника истины | [Память](https://atamaniuc.github.io/Harnessimo/ru/MEMORY/) |
 | понять, почему правило вообще существует | [Стандарт](https://atamaniuc.github.io/Harnessimo/ru/STANDARD/) |

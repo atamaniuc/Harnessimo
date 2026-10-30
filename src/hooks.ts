@@ -142,3 +142,35 @@ export function agentGateScript() {
     ].join("\n") + "\n"
   );
 }
+
+/**
+ * Claude Code agent teams (spec 0011): a task does not close on a red check.
+ *
+ * A teammate marking a shared-list task completed is the team's "done", and
+ * the lead plans the next task on it. `TaskCompleted` reads exit 2 as "refuse
+ * the completion" and shows stderr to the teammate, so the refusal carries the
+ * failing lines and the fix — short, because the teammate reads every line.
+ *
+ * `TeammateIdle` is deliberately not wired the same way: it has no flag saying
+ * the hook already kept this teammate working, so a check the teammate cannot
+ * fix would hold it in a loop, spending the rate limit on nothing.
+ */
+export const TASK_COMPLETED_COMMAND = "npx --no-install harnessimo hook task-completed";
+
+export function taskCompletedOutcome({ status, report }: { status: number; report: string }): { code: number; stderr: string } {
+  if (status === 0) return { code: 0, stderr: "" };
+  const lines = report.split("\n").filter((l) => l.trim());
+  const failing = lines.filter((l) => !/^\s*ok\s/.test(l) && !/^harnessimo: (watched|reviewed|unattended) —/.test(l));
+  const shown = failing.slice(0, 20);
+  return {
+    code: 2,
+    stderr:
+      [
+        ...shown,
+        ...(failing.length > shown.length ? [`… ${failing.length - shown.length} more line(s): run \`harnessimo check\``] : []),
+        "",
+        "harnessimo: this task cannot be marked completed while `harnessimo check` is red.",
+        "  fix:  fix what is listed above, run `harnessimo check` until it is green, then complete the task again.",
+      ].join("\n") + "\n",
+  };
+}

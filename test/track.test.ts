@@ -14,6 +14,8 @@ import {
   withLine,
   withOutcome,
   withoutLane,
+  withStateNote,
+  withStatus,
 } from "../src/track.ts";
 
 test("the next number is one past the highest, not the lowest gap", () => {
@@ -97,4 +99,22 @@ test("a template is filled in without being rewritten", () => {
   assert.match(out, /^# 0007 — Checkout totals/);
   assert.match(out, /specs\/0007-<slug>\/spec\.md/, "every NNNN is filled, everything else is left alone");
   assert.match(out, /\*\*Status:\*\* proposed/, "the tool does not decide the status");
+});
+
+test("pausing rewrites the lane's status, date and reason and keeps its next step; resuming clears the reason", () => {
+  const index =
+    "# Work tracks\n\n- **Totals (spec 0003)** — [handoff](specs/0003-totals/handoff.md) — active, 2026-10-01, next: T2 rounding\n";
+  const paused = withStatus(index, "specs", "0003-totals", { status: "paused", reason: "owner switched (to billing)", date: "2026-10-30" });
+  assert.equal(paused.found, true);
+  assert.match(paused.text, /— paused \(owner switched to billing\), 2026-10-30, next: T2 rounding$/m);
+  const resumed = withStatus(paused.text, "specs", "0003-totals", { status: "active", date: "2026-11-02" });
+  assert.match(resumed.text, /— active, 2026-11-02, next: T2 rounding$/m);
+  assert.equal(withStatus(index, "specs", "0009-none", { status: "active", date: "x" }).found, false);
+});
+
+test("a state note lands at the top of the handoff's State, or makes the section", () => {
+  const handoff = "# Handoff\n\n## State\n\nT1 done.\n\n## First step\n\nT2.\n";
+  const noted = withStateNote(handoff, "- **Paused 2026-10-30:** switched goals.");
+  assert.ok(noted.indexOf("Paused") < noted.indexOf("T1 done."));
+  assert.match(withStateNote("# Handoff\n", "- note"), /## State\n\n- note\n$/);
 });

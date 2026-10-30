@@ -59,6 +59,28 @@ stream, and nothing merges unreviewed. The cadence changed; the gate did not.
 a way around `harnessimo locked`. It writes the exact diff and the command into its report,
 and the human applies it.
 
+## Switching goals
+
+Goals change mid-flight — to another lane, to harness work, to another branch — and that is a
+normal path, not an exception. The whole switch is one command and one new lane:
+
+```bash
+harnessimo track pause checkout-totals --reason "owner switched to billing"
+harnessimo track new billing        # or: harnessimo track resume <slug>
+```
+
+`pause` writes `paused (reason)` and today's date into the lane's line in `TRACKS.md` and a
+dated note at the top of its handoff's State, so a cold session resumes it in minutes. A lane
+paused **with a reason** is healthy: it is not task-gated, its `## Owns` no longer fences the
+lane that took over its paths, and it is never reported stale. `track resume` puts all three
+back — and if the new lane now overlaps it, `harnessimo tracks` says so then.
+<!-- proof: test/cli.test.ts#switching goals: pause with a reason, start the new lane on the same paths, and check stays green -->
+
+A pause with no reason gets no pass: that is the abandoned lane those rules exist for. Proof
+markers in a paused lane still have to resolve, and the queue's one-active-item cap still holds
+— raise `queue.maxActive` where goals switch mid-item, rather than marking work blocked that
+is not.
+
 ## What adapting is not
 
 - **Not silence.** An amendment nobody can find is a bypass. It lives in `DECISIONS.md`.

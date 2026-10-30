@@ -55,6 +55,7 @@ The work queue. State moves only through a passing verification, and CI re-runs 
 | `file` | string | The queue itself: every item, its state, and the command that verifies it. |
 | `timeoutMinutes` | number | A verification that runs longer than this is a failure with a stated cause, not a hang. |
 | `terminalByKind` | object | Where an item lands when its verification passes, per kind. |
+| `maxActive` | integer | How many queue items may be active at once (default 1). The queue file's `wip_limit` still applies when it is higher. Raise it where goals switch mid-item, rather than marking work blocked that is not. |
 
 ## `locked`
 
@@ -163,3 +164,15 @@ How much of this repository's work is watched while it happens. A floor, not a s
 | `prefix` | string | Branch prefix. `wt-` (the default) puts `worktree add search` on branch `wt-search`. |
 | `dir` | string | Where worktrees go, relative to the main checkout. `..` (the default) puts `<repo>-<name>` beside it. |
 | `install` | array or null | Commands run inside a fresh worktree, so its first commit can pass the pre-commit hook. Null (the default) takes the install step of `coldStart.commands`, such as `npm ci`; `[]` runs nothing. |
+
+## `herd`
+
+`harnessimo herd`: one herdr pane, one worktree and one agent per lane that can run now, started a few at a time to stay under API rate limits. Not a check — the command that plans and starts parallel lanes.
+
+| Key | Type | What it does |
+|---|---|---|
+| `maxWorking` | integer | Lane agents working at once (default 3). `herd plan` and `herd up` never start more, counting the ones already running. |
+| `staggerSeconds` | number | Seconds between two agent starts (default 20), so their first requests do not hit the rate limit together. |
+| `agentKind` | string | The herdr agent kind each lane agent is started as, via `herdr agent start --kind` (default `claude`). |
+| `agentArgs` | array of string | Arguments passed to every lane agent, e.g. `["--model", "sonnet"]`. Default none. |
+| `backoffSeconds` | array of number | Waits before each retry after a rate-limit error (429), in seconds (default `[60, 120, 240]`). Written into every kickoff prompt. |

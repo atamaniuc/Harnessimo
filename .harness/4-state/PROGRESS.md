@@ -81,6 +81,12 @@ decides how much of the nine a given run is held to (spec 0007).
 
 ## Settled recently
 
+- **0.12.0, agent teams and herdr (spec 0012).** `harnessimo herd plan|up|status`,
+  `harnessimo hook task-completed`, a `.claude/settings.json` template with agent teams on, a
+  `herd` config section, teammate sections in the agent roles, the TEAMS page and a README
+  quick guide. herdr owns the topology; teams work inside one lane. Goal switches are first
+  class: `track pause|resume`, `queue.maxActive`, paused-with-a-reason lanes not gated, fenced
+  or reported stale.
 - **0.11.0, the delivery kit (spec 0011).** `harnessimo worktree add|merge|remove|list`;
   `init` writes `.claude/agents/{architect,implementer,scout}.md` and the agent hooks; new
   pages ROUTING, ADAPTING and MEMORY. Principle written down: process rules serve the goal and

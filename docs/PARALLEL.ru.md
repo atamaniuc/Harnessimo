@@ -114,7 +114,8 @@ checkout, а основной checkout копию worktree не видит.
 создаёт `../<repo>-<name>` на своей ветке и выполняет шаг установки; `merge` и `remove`
 возвращают его обратно и отказываются бросать невлитую или незакоммиченную работу. Какие
 потоки распараллеливать, какая модель берёт каждый и как собирать ревью в пакет —
-[«Маршрутизация работы»](ROUTING.ru.md).
+[«Маршрутизация работы»](ROUTING.ru.md). Панель herdr, worktree и агент на каждую
+lane и agent teams внутри одной lane — [«Agent teams и herdr»](TEAMS.ru.md).
 <!-- proof: test/cli.test.ts#worktree add makes a checkout beside the repository, on its branch, with the install run -->
 
 ## Чего здесь сознательно нет

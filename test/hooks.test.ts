@@ -4,7 +4,15 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { AGENT_GATE_PATH, HOOK_PATH, agentGateScript, hookScript, hookStatus } from "../src/hooks.ts";
+import {
+  AGENT_GATE_PATH,
+  HOOK_PATH,
+  TASK_COMPLETED_COMMAND,
+  agentGateScript,
+  hookScript,
+  hookStatus,
+  taskCompletedOutcome,
+} from "../src/hooks.ts";
 
 test("the hook runs the fast gate and nothing slow", () => {
   const script = hookScript();
@@ -143,3 +151,28 @@ function runGate(dir: string, input: string): { status: number; stderr: string }
     return { status: error.status ?? 1, stderr: error.stderr ?? "" };
   }
 }
+
+// ---- spec 0011: agent teams
+
+test("a red check refuses the task's completion with exit 2 and the failing lines", () => {
+  const outcome = taskCompletedOutcome({
+    status: 1,
+    report: 'harnessimo: watched — a person\n\n  ok    proof markers  3 resolve\n  FAIL  work tracks\n    specs/TRACKS.md:3  x\n',
+  });
+  assert.equal(outcome.code, 2, "TaskCompleted reads exit 2 as: refuse, and show stderr");
+  assert.match(outcome.stderr, /FAIL  work tracks/);
+  assert.match(outcome.stderr, /specs\/TRACKS\.md:3/);
+  assert.doesNotMatch(outcome.stderr, /ok    proof markers/, "only what needs fixing");
+  assert.match(outcome.stderr, /fix:/);
+});
+
+test("a green check lets the task complete, silently", () => {
+  assert.deepEqual(taskCompletedOutcome({ status: 0, report: "all fine" }), { code: 0, stderr: "" });
+  assert.match(TASK_COMPLETED_COMMAND, /--no-install harnessimo hook task-completed$/);
+});
+
+test("a long report is cut short and says where the rest is", () => {
+  const report = Array.from({ length: 40 }, (_, i) => `  FAIL  line ${i}`).join("\n");
+  const { stderr } = taskCompletedOutcome({ status: 1, report });
+  assert.match(stderr, /20 more line\(s\)/);
+});

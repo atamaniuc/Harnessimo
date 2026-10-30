@@ -36,6 +36,7 @@ const ORDER = [
   "REFERENCE.md",
   "PARALLEL.md",
   "ROUTING.md",
+  "TEAMS.md",
   "ADAPTING.md",
   "MEMORY.md",
   "STANDARD.md",

@@ -7,6 +7,51 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.12.0] — 2026-10-30
+
+Two things, one principle — **rules serve the goal; switching goals is a normal path, not an
+exception.** Claude Code agent teams and herdr as the first-class way to run several agents on a harnessimo
+repository — and within the API rate limit. herdr owns the topology (one worktree, one pane,
+one agent per lane), because agent teams share the lead's checkout and cannot isolate a
+teammate; agent teams work inside one lane, on disjoint files.
+
+### Added
+
+- **`harnessimo herd plan|up|status`.** `plan` lists the lanes that can run now side by side —
+  active, dependencies closed, `## Owns` disjoint, within `herd.maxWorking` — and why the rest
+  wait. `up` (inside a herdr pane) makes each lane's worktree, opens it in herdr, starts an
+  agent named by the lane slug, staggers the starts and sends a kickoff prompt. Lane
+  agents are `claude`, started with `herdr agent start --kind claude` so herdr tracks their state. `status` lists every lane beside its
+  agent's state, blocked first. New `herd` section: `maxWorking` (3), `staggerSeconds` (20),
+  `agentKind`, `agentArgs`, `backoffSeconds` ([60, 120, 240]).
+- **`harnessimo hook task-completed`** — the `TaskCompleted` hook for agent teams: exit 2 with
+  the failing lines while `check` is red, so a shared-list task does not close on a claim.
+- **`init` writes `.claude/settings.json`** from a template when the project has none: agent
+  teams on, `teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`, the brief, the
+  Stop/SubagentStop gate and the `TaskCompleted` hook. An existing file is still merged into,
+  never replaced — `--force` included.
+- **Agent roles work as teammates.** Each template gains an "As a teammate" section and carries
+  its key rules itself, because a split-pane teammate gets the body instead of the default
+  system prompt.
+- **`doctor` reports herdr** on PATH and `HERDR_ENV` — informational, never failing.
+- **`harnessimo track pause <slug> --reason "…"` and `track resume <slug>`** — a goal switch
+  in one command. The lane's line gets `paused (reason)` and today's date, its handoff a dated
+  note at the top of State; `resume` restores `active`. A pause without a reason is refused.
+- **`queue.maxActive`** (default 1, as before) — how many queue items may be active at once,
+  for repositories that switch goals mid-item; the queue file's `wip_limit` still counts when
+  higher, and the `WIP limit reached` message now names the setting.
+- **Docs: Agent teams and herdr** (both languages) — the setup, the lead protocol and the
+  rate-limit protocol; a "Switching goals" section in Adapting rules; a "How to use it well"
+  quick guide in both READMEs.
+
+### Changed
+
+- **A lane paused with a reason is spared the rules for live work**: the task gate skips it,
+  its `## Owns` does not fence the lane that took over its paths, and the staleness rule never
+  reports it. A `paused` with no reason is treated as before — that is the abandoned lane those
+  rules are for. Proof markers in a paused lane still have to resolve; resuming puts the gate
+  and the fence back, so an overlap then fails `tracks`.
+
 ## [0.11.0] — 2026-10-30
 
 The delivery kit: what a repository running several agents in parallel wrote by hand, made
@@ -429,6 +474,7 @@ by hand because the tool could not say it.
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.12.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.12.0
 [0.11.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.11.0
 [0.10.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.1
 [0.10.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.0

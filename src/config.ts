@@ -32,7 +32,7 @@ const SECTION_DEFAULTS = {
     // Spec 0009. 0 means the rule is not asked for.
     staleAfterDays: 0,
   },
-  queue: { file: ".harness/4-state/feature_list.json", timeoutMinutes: 10, terminalByKind: { content: "awaiting_gates" } },
+  queue: { file: ".harness/4-state/feature_list.json", timeoutMinutes: 10, terminalByKind: { content: "awaiting_gates" }, maxActive: 1 },
   locked: { paths: [], baseline: ".harness/3-environment/locked-baseline", agentTrailer: "Co-Authored-By: Claude" },
   coldStart: { requiredFiles: [], entryDocs: [], commands: [] },
   cleanExit: {
@@ -59,6 +59,8 @@ const SECTION_DEFAULTS = {
   hooks: { before: [] }, // project commands the pre-commit hook runs before the gates
   // Spec 0011. Not a check: the command that opens and closes parallel streams.
   worktree: { prefix: "wt-", dir: "..", install: null },
+  // Spec 0011. Not a check: `harnessimo herd`, lane agents in herdr panes.
+  herd: { maxWorking: 3, staggerSeconds: 20, agentKind: "claude", agentArgs: [], backoffSeconds: [60, 120, 240] },
 };
 
 export class ConfigError extends Error {}
