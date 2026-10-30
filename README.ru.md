@@ -316,6 +316,9 @@ harnessimo hooks install           # быстрые проверки перед 
 | посмотреть ключ конфига | [Конфигурация](https://atamaniuc.github.io/Harnessimo/ru/CONFIGURATION/) |
 | внедрить в репозиторий, где уже есть свои скрипты | [Гайд → внедрение](https://atamaniuc.github.io/Harnessimo/ru/GUIDE/#adopting) |
 | запустить несколько агентов на одном репозитории | [Больше одного агента](https://atamaniuc.github.io/Harnessimo/ru/PARALLEL/) |
+| отдать работу нужной модели, распараллелить по worktree | [Маршрутизация работы](https://atamaniuc.github.io/Harnessimo/ru/ROUTING/) |
+| понять, когда агент может поправить мешающее правило | [Адаптация правил](https://atamaniuc.github.io/Harnessimo/ru/ADAPTING/) |
+| подключить внешнюю память без второго источника истины | [Память](https://atamaniuc.github.io/Harnessimo/ru/MEMORY/) |
 | понять, почему правило вообще существует | [Стандарт](https://atamaniuc.github.io/Harnessimo/ru/STANDARD/) |
 | задать короткий вопрос, который не баг | [FAQ](https://atamaniuc.github.io/Harnessimo/ru/FAQ/) |
 | починить прогон, который только что стал красным | [Что делать](https://atamaniuc.github.io/Harnessimo/ru/TROUBLESHOOTING/) |

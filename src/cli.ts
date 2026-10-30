@@ -48,6 +48,7 @@ import type { Level } from "./autonomy.ts";
 import { AGENT_GATE_PATH, HOOKS_DIR, HOOK_PATH, agentGateScript, hookScript, hookStatus } from "./hooks.ts";
 import { agentContract, briefJson, briefText, handoffPaths, mergeHook, mergeSessionStartHook } from "./brief.ts";
 import { DEFAULT_WINDOW_MINUTES, decideRead, emptyState, ledger, ledgerReport } from "./tokens.ts";
+import { WORKTREE_DEFAULTS, addProblem, installCommands, mergeProblem, nameProblem, removeProblem, worktreeTarget } from "./worktree.ts";
 import {
   fillTemplate,
   findLane,
@@ -817,6 +818,11 @@ function cmdInit() {
     },
   });
 
+  // The agent hooks are merged, not copied: a project that already has a
+  // .claude/settings.json keeps it untouched unless --force asks for the merge.
+  const settingsExisted = existsSync(join(ROOT, ".claude", "settings.json"));
+  if (settingsExisted && !force) skipped.push(".claude/settings.json");
+
   // The configuration is detected rather than templated. A template full of
   // paths the reader has to correct is how adoption stalls: the first run fails
   // on five settings nobody chose, and the honest response is to turn the tool
@@ -833,6 +839,12 @@ function cmdInit() {
     });
     writeFileSync(configPath, JSON.stringify(detected.config, null, 2) + "\n");
     written.push(CONFIG_FILE);
+  }
+
+  if (!settingsExisted || force) {
+    // Spec 0011: the brief at SessionStart and the gate at Stop/SubagentStop,
+    // so the agent templates written above arrive with the hooks they assume.
+    installAgentHooks(force);
   }
 
   ok(`harnessimo init: wrote ${written.length} file(s)`);
@@ -956,6 +968,91 @@ function cmdBrief() {
   return ok(text || "harnessimo: nothing to brief — no track index, queue or progress file configured");
 }
 
+/**
+ * The agent-side hooks: the brief at SessionStart, the gate at Stop and
+ * SubagentStop. Shared by `hooks install --agent` and `init`, so a repository
+ * adopting the tool gets the same wiring whichever door it came in by.
+ */
+function installAgentHooks(force: boolean): void {
+  // The agent-side hook: a session receives the harness state at startup
+  // instead of being trusted to go and read it.
+  const dir = join(ROOT, ".claude", "hooks");
+  const script = join(dir, "harnessimo-brief.sh");
+  const command = "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-brief.sh";
+  mkdirSync(dir, { recursive: true });
+  if (!existsSync(script) || force) {
+    writeFileSync(
+      script,
+      [
+        "#!/usr/bin/env sh",
+        "# Prints the harness state as SessionStart additionalContext.",
+        "# Written by `harnessimo hooks install --agent`. Read-only: no writes,",
+        "# no network, safe on startup, resume, clear and compact.",
+        "set -e",
+        'cd "${CLAUDE_PROJECT_DIR:-.}"',
+        "if [ -x node_modules/.bin/harnessimo ]; then",
+        '  exec node_modules/.bin/harnessimo brief --json',
+        "elif [ -f bin/harnessimo.mjs ]; then",
+        '  exec node bin/harnessimo.mjs brief --json',
+        "elif command -v harnessimo >/dev/null 2>&1; then",
+        '  exec harnessimo brief --json',
+        "fi",
+        "# No CLI, no context — and no noise on startup either.",
+        "exit 0",
+      ].join("\n") + "\n",
+      { mode: 0o755 },
+    );
+    ok("harnessimo: wrote .claude/hooks/harnessimo-brief.sh");
+  } else {
+    ok("harnessimo: .claude/hooks/harnessimo-brief.sh already exists (--force overwrites)");
+  }
+
+  const settingsPath = join(ROOT, ".claude", "settings.json");
+  let settings = {};
+  if (existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, "utf8")) as AgentSettings;
+    } catch (error) {
+      die(
+        `harnessimo: .claude/settings.json is not valid JSON (${(error as Error).message})\n` +
+          "  fix:  repair it before installing, so nothing here overwrites what it holds",
+      );
+    }
+  }
+  // The other half of the gate (spec 0006): a turn does not end on a claim.
+  // `brief` covers the start of a session and the pre-commit hook covers the
+  // start of a commit; between them an agent can finish a turn saying "done"
+  // with the checks red, and hand the work on before a commit ever happens.
+  const gate = join(ROOT, AGENT_GATE_PATH);
+  if (!existsSync(gate) || force) {
+    writeFileSync(gate, agentGateScript(), { mode: 0o755 });
+    ok(`harnessimo: wrote ${AGENT_GATE_PATH}`);
+  } else {
+    ok(`harnessimo: ${AGENT_GATE_PATH} already exists (--force overwrites)`);
+  }
+  const gateCommand = `$CLAUDE_PROJECT_DIR/${AGENT_GATE_PATH}`;
+
+  let settingsOut: AgentSettings = settings;
+  const wired: string[] = [];
+  for (const [event, cmd, meta] of [
+    ["SessionStart", command, { timeout: 10, statusMessage: "Loading harness state…" }],
+    // SubagentStop as well as Stop: in a parallel run the subagent is the
+    // one finishing a lane, and it is the turn nobody is watching.
+    ["Stop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
+    ["SubagentStop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
+  ] as const) {
+    const { settings: next, added } = mergeHook(settingsOut, event, cmd, meta);
+    settingsOut = next;
+    if (added) wired.push(event);
+  }
+  if (wired.length > 0) {
+    writeFileSync(settingsPath, JSON.stringify(settingsOut, null, 2) + "\n");
+    ok(`harnessimo: added ${wired.join(", ")} to .claude/settings.json`);
+  } else {
+    ok("harnessimo: .claude/settings.json already runs all of them");
+  }
+}
+
 function cmdHooks() {
   const sub = positional[0] ?? "status";
   const cfg = config();
@@ -975,83 +1072,7 @@ function cmdHooks() {
   }
 
   if (sub === "install" && flags.has("--agent")) {
-    // The agent-side hook: a session receives the harness state at startup
-    // instead of being trusted to go and read it.
-    const dir = join(ROOT, ".claude", "hooks");
-    const script = join(dir, "harnessimo-brief.sh");
-    const command = "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-brief.sh";
-    mkdirSync(dir, { recursive: true });
-    if (!existsSync(script) || flags.has("--force")) {
-      writeFileSync(
-        script,
-        [
-          "#!/usr/bin/env sh",
-          "# Prints the harness state as SessionStart additionalContext.",
-          "# Written by `harnessimo hooks install --agent`. Read-only: no writes,",
-          "# no network, safe on startup, resume, clear and compact.",
-          "set -e",
-          'cd "${CLAUDE_PROJECT_DIR:-.}"',
-          "if [ -x node_modules/.bin/harnessimo ]; then",
-          '  exec node_modules/.bin/harnessimo brief --json',
-          "elif [ -f bin/harnessimo.mjs ]; then",
-          '  exec node bin/harnessimo.mjs brief --json',
-          "elif command -v harnessimo >/dev/null 2>&1; then",
-          '  exec harnessimo brief --json',
-          "fi",
-          "# No CLI, no context — and no noise on startup either.",
-          "exit 0",
-        ].join("\n") + "\n",
-        { mode: 0o755 },
-      );
-      ok("harnessimo: wrote .claude/hooks/harnessimo-brief.sh");
-    } else {
-      ok("harnessimo: .claude/hooks/harnessimo-brief.sh already exists (--force overwrites)");
-    }
-
-    const settingsPath = join(ROOT, ".claude", "settings.json");
-    let settings = {};
-    if (existsSync(settingsPath)) {
-      try {
-        settings = JSON.parse(readFileSync(settingsPath, "utf8")) as AgentSettings;
-      } catch (error) {
-        die(
-          `harnessimo: .claude/settings.json is not valid JSON (${(error as Error).message})\n` +
-            "  fix:  repair it before installing, so nothing here overwrites what it holds",
-        );
-      }
-    }
-    // The other half of the gate (spec 0006): a turn does not end on a claim.
-    // `brief` covers the start of a session and the pre-commit hook covers the
-    // start of a commit; between them an agent can finish a turn saying "done"
-    // with the checks red, and hand the work on before a commit ever happens.
-    const gate = join(ROOT, AGENT_GATE_PATH);
-    if (!existsSync(gate) || flags.has("--force")) {
-      writeFileSync(gate, agentGateScript(), { mode: 0o755 });
-      ok(`harnessimo: wrote ${AGENT_GATE_PATH}`);
-    } else {
-      ok(`harnessimo: ${AGENT_GATE_PATH} already exists (--force overwrites)`);
-    }
-    const gateCommand = `$CLAUDE_PROJECT_DIR/${AGENT_GATE_PATH}`;
-
-    let settingsOut: AgentSettings = settings;
-    const wired: string[] = [];
-    for (const [event, cmd, meta] of [
-      ["SessionStart", command, { timeout: 10, statusMessage: "Loading harness state…" }],
-      // SubagentStop as well as Stop: in a parallel run the subagent is the
-      // one finishing a lane, and it is the turn nobody is watching.
-      ["Stop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
-      ["SubagentStop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
-    ] as const) {
-      const { settings: next, added } = mergeHook(settingsOut, event, cmd, meta);
-      settingsOut = next;
-      if (added) wired.push(event);
-    }
-    if (wired.length > 0) {
-      writeFileSync(settingsPath, JSON.stringify(settingsOut, null, 2) + "\n");
-      ok(`harnessimo: added ${wired.join(", ")} to .claude/settings.json`);
-    } else {
-      ok("harnessimo: .claude/settings.json already runs all of them");
-    }
+    installAgentHooks(flags.has("--force"));
     return ok(
       "\nA new session now starts with the live tracks, the head of each handoff,\n" +
         "what is in flight, and what this repository enforces — and a turn does not\n" +
@@ -1112,7 +1133,8 @@ usage: harnessimo <command> [options]
   guard read <path>      refuse a re-read of a file that has not changed (exit 2)
   agent                  the contract to paste into any agent's instruction file
   hooks <sub>            status | install [--agent] | uninstall — the gates, on commit
-  init [--force]         scaffold .harness/, specs/ and harnessimo.config.json
+  worktree <sub> <name>  add [--no-install] | merge | remove | list — one checkout per stream
+  init [--force]         scaffold .harness/, specs/, .claude/ agents and hooks, and harnessimo.config.json
 
 Configuration lives in harnessimo.config.json — run \`harnessimo init\` and it is written
 for you from what this repository already has. A section you leave out is a check that does
@@ -1346,6 +1368,125 @@ function closeTrack({
   ok(`\nharnessimo: lane ${number} is closed.`);
 }
 
+
+// ---- parallel worktrees (spec 0011)
+//
+// One checkout per independent stream, beside the main one, dependencies
+// installed. Every git question is asked here; every decision about the answer
+// is a pure function in src/worktree.ts.
+
+function gitIn(cwd: string, ...argv: string[]): string {
+  return execFileSync("git", argv, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+}
+
+function gitOk(cwd: string, ...argv: string[]): boolean {
+  try {
+    gitIn(cwd, ...argv);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function cmdWorktree(): void {
+  const sub = positional[0] ?? "list";
+  const name = positional[1];
+  if (!["add", "merge", "remove", "list"].includes(sub)) {
+    die(`harnessimo: unknown worktree subcommand "${sub}" (add | merge | remove | list)`, 2);
+  }
+
+  let porcelain: string;
+  try {
+    porcelain = gitIn(ROOT, "worktree", "list", "--porcelain");
+  } catch {
+    die("harnessimo: this is not a git repository\n  fix:  run it inside the checkout whose streams it manages");
+  }
+  // The first entry is always the main checkout, wherever this was run from:
+  // a worktree made from inside another worktree still goes beside the main one.
+  const registered = porcelain
+    .split("\n")
+    .filter((l) => l.startsWith("worktree "))
+    .map((l) => resolve(l.slice("worktree ".length)));
+  const mainRoot = registered[0] ?? ROOT;
+
+  if (sub === "list") return ok(gitIn(ROOT, "worktree", "list"));
+
+  const bad = nameProblem(name);
+  if (bad) die(`harnessimo: ${bad}`, 2);
+
+  const cfg = config();
+  const settings = { ...WORKTREE_DEFAULTS, ...(cfg.worktree ?? {}) };
+  const { path, branch } = worktreeTarget({ mainRoot, name: name!, prefix: settings.prefix, dir: settings.dir });
+  const branchExists = gitOk(ROOT, "rev-parse", "--verify", "--quiet", `refs/heads/${branch}`);
+  const isRegistered = registered.includes(resolve(path));
+  const dirty = (cwd: string): boolean => gitIn(cwd, "status", "--porcelain").length > 0;
+
+  if (sub === "add") {
+    const problem = addProblem({ path, branch, dirExists: existsSync(path), branchExists });
+    if (problem) die(`harnessimo: ${problem}`);
+    gitIn(ROOT, "worktree", "add", "-q", "-b", branch, path, "HEAD");
+    ok(`harnessimo: ${path} on branch ${branch}`);
+
+    const commands = flags.has("--no-install")
+      ? []
+      : installCommands(settings.install, cfg.coldStart?.commands ?? []);
+    for (const cmd of commands) {
+      try {
+        execSync(cmd, { cwd: path, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 15 * 60 * 1000 });
+        ok(`  ran  ${cmd}`);
+      } catch (caught) {
+        const error = caught as { stdout?: string; stderr?: string; status?: number };
+        console.error(lastLines([error.stdout, error.stderr].filter(Boolean).join("\n"), 20));
+        die(
+          `harnessimo: \`${cmd}\` failed in ${path} (exit ${error.status ?? "?"})\n` +
+            "  why:  the worktree exists, but its first commit would fail a hook that needs the install\n" +
+            `  fix:  run it yourself in ${path}, or start again: harnessimo worktree remove ${name}`,
+        );
+      }
+    }
+    if (commands.length === 0) ok("  no install step (set worktree.install, or declare one in coldStart.commands)");
+    return ok(`\nready. Work there, commit there, then: harnessimo worktree merge ${name}`);
+  }
+
+  if (sub === "merge") {
+    const problem = mergeProblem({
+      branch,
+      path,
+      current: gitOk(ROOT, "symbolic-ref", "-q", "HEAD") ? gitIn(ROOT, "rev-parse", "--abbrev-ref", "HEAD") : "",
+      branchExists,
+      worktreeDirty: isRegistered && existsSync(path) ? dirty(path) : false,
+      hereDirty: dirty(ROOT),
+    });
+    if (problem) die(`harnessimo: ${problem}`);
+    try {
+      gitIn(ROOT, "merge", "--no-ff", "--no-edit", branch);
+    } catch (caught) {
+      const error = caught as { stdout?: string; stderr?: string };
+      console.error([error.stdout, error.stderr].filter(Boolean).join("\n"));
+      die(
+        `harnessimo: merging ${branch} stopped on a conflict\n` +
+          "  fix:  resolve the files git lists, `git add` them and `git commit` — or `git merge --abort`",
+      );
+    }
+    return ok(`harnessimo: merged ${branch}. When the stream is finished: harnessimo worktree remove ${name}`);
+  }
+
+  // remove
+  const problem = removeProblem({
+    branch,
+    path,
+    registered: isRegistered,
+    branchExists,
+    dirty: isRegistered && existsSync(path) ? dirty(path) : false,
+    merged: branchExists ? gitOk(ROOT, "merge-base", "--is-ancestor", branch, "HEAD") : true,
+  });
+  if (problem) die(`harnessimo: ${problem}`);
+  if (isRegistered) gitIn(ROOT, "worktree", "remove", path);
+  else gitIn(ROOT, "worktree", "prune");
+  if (branchExists) gitIn(ROOT, "branch", "-d", branch);
+  return ok(`harnessimo: removed ${path}${branchExists ? ` and branch ${branch}` : ""}`);
+}
+
 switch (command) {
   case "check":
     cmdCheck();
@@ -1396,6 +1537,9 @@ switch (command) {
     break;
   case "guard":
     cmdGuard();
+    break;
+  case "worktree":
+    cmdWorktree();
     break;
   case "init":
     cmdInit();

@@ -7,6 +7,37 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.11.0] — 2026-10-30
+
+The delivery kit: what a repository running several agents in parallel wrote by hand, made
+general. One principle runs through all of it — **the rules exist to make fast, successful
+work possible, so the harness teaches an agent to adapt a process rule that defeats the goal,
+without ever leaving the hard bounds.**
+
+### Added
+
+- **`harnessimo worktree add|merge|remove|list <name>`** — one git worktree per independent
+  stream, at `../<repo>-<name>` on branch `wt-<name>`, with the install step run so its first
+  commit can pass the pre-commit hook. `merge` is `--no-ff` and refuses uncommitted work on
+  either side; `remove` refuses an unmerged branch or a dirty checkout and names the
+  deliberate git command for discarding. Configured by a new `worktree` section (`prefix`,
+  `dir`, `install`); without `install`, the install command in `coldStart.commands` is used.
+  A command, not a check — the count stays eleven.
+- **`init` writes three agent roles** into `.claude/agents/` — `architect` (strongest model,
+  fresh-context review of risky diffs, batched review gates), `implementer` (one lane, chained
+  tasks, gates captured whole with their exit code), `scout` (cheapest model, read-only) — and
+  wires the brief and the Stop/SubagentStop gate into `.claude/settings.json` when that file
+  does not exist yet. Every rule in the templates carries its _why_.
+- **Docs: Routing work, Adapting rules, Memory** (both languages). Routing: which model takes
+  which work, fanning out into worktrees, chained tasks, batched review, an orchestrator that
+  never idles. Adapting: **hard bounds** (locked surfaces, safety, never bypassing a check,
+  never faking evidence, what the owner reserved) are never bent; **process rules** that defeat
+  the stated goal are amended — scoped, recorded in `DECISIONS.md`, reversible, and never
+  through a locked file — with a three-step decision procedure and the real cases behind it.
+  Memory: the repository stays the source of truth; an external memory (MemPalace as the worked
+  example, no dependency) holds cross-project recall as atomic facts, and never secrets or
+  unverified claims.
+
 ## [0.10.1] — 2026-09-08
 
 ### Fixed
@@ -398,6 +429,7 @@ by hand because the tool could not say it.
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.11.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.11.0
 [0.10.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.1
 [0.10.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.10.0
 [0.9.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.9.1

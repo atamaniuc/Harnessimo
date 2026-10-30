@@ -363,6 +363,34 @@
           "description": "`watched` \u2014 a person is reading each step; the fast checks. `reviewed` \u2014 nobody watched the steps but a person will read the diff; adds re-verification and the locked-surface check. `unattended` \u2014 nobody looked at all; adds clean exit and cold start."
         }
       }
+    },
+    "worktree": {
+      "type": "object",
+      "description": "`harnessimo worktree`: one git worktree per independent stream of work, beside the main checkout, with its dependencies installed. Not a check \u2014 the command that opens, merges and removes parallel streams.",
+      "additionalProperties": false,
+      "properties": {
+        "$comment": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Branch prefix. `wt-` (the default) puts `worktree add search` on branch `wt-search`."
+        },
+        "dir": {
+          "type": "string",
+          "description": "Where worktrees go, relative to the main checkout. `..` (the default) puts `<repo>-<name>` beside it."
+        },
+        "install": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Commands run inside a fresh worktree, so its first commit can pass the pre-commit hook. Null (the default) takes the install step of `coldStart.commands`, such as `npm ci`; `[]` runs nothing."
+        }
+      }
     }
   }
 }

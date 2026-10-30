@@ -183,6 +183,16 @@ export interface HooksConfig {
   before: string[];
 }
 
+/** Parallel worktrees (spec 0011): where they go, what they are called, what runs in them. */
+export interface WorktreeConfig {
+  /** Branch prefix; `wt-` gives `wt-search` for `worktree add search`. */
+  prefix: string;
+  /** Parent directory, relative to the main checkout. ".." puts them beside it. */
+  dir: string;
+  /** Commands run in a fresh worktree. Null means the install step of coldStart.commands. */
+  install: string[] | null;
+}
+
 /** A configuration file, read and merged with the defaults of each declared section. */
 export interface LoadedConfig {
   root: string;
@@ -201,6 +211,7 @@ export interface LoadedConfig {
   tokens?: TokensConfig;
   autonomy?: AutonomyConfig;
   hooks?: HooksConfig;
+  worktree?: WorktreeConfig;
 }
 
 /** Which checks a configuration turns on. */

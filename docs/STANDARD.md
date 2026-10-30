@@ -288,6 +288,18 @@ That is deliberate. A second, divergent notion of "verified" is how a project en
 gate that agrees with itself and disagrees with reality.
 <!-- proof: src/tasks.ts:checkTaskGate -->
 
+## Rules an agent can adapt { #adapting }
+
+A rule written for one situation stalls an agent in the next. So the rules here come in two
+kinds. **Hard bounds** — locked surfaces, safety, never bypassing a check, never faking
+evidence, whatever the owner reserved — are never bent: the agent stops and asks. **Process
+rules** — task order, review cadence, settled-decision lists, tooling — serve the goal, and
+when one defeats it the agent amends it: scoped to a branch or lane, recorded in
+`DECISIONS.md`, reversible, and never by editing a locked surface. The checks are what make
+this safe: a process can change because the definition of done cannot.
+[Adapting rules](ADAPTING.md) has the procedure and the cases.
+<!-- proof: docs/ADAPTING.md -->
+
 ## What is deliberately not here
 
 - **Coverage thresholds.** They measure lines executed, not behaviour verified, and a team

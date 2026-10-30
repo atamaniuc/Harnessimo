@@ -4,6 +4,8 @@ Newest first. One or two sentences per track: what came out of it. Lasting decis
 [`.harness/4-state/DECISIONS.md`](../.harness/4-state/DECISIONS.md), not here; git carries
 the rest.
 
+- **Delivery kit: worktrees, model routing, memory (spec 0011)** — harnessimo worktree, three agent roles and their hooks written by init, and the routing, adapting and memory pages — the parallel-delivery kit one consumer wrote by hand, made general
+
 - **A line the code may not cross (spec 0010)** — A pattern that must not appear in a named part of the tree, with a required reason — the one generic rule both source repositories wrote by hand in three different spellings. Reported ten per rule before summarising, and this repository runs one on itself: an import in src/ that is neither a node: builtin nor relative is the runtime dependency its constraints forbid.
 
 - **A lane nobody has touched (spec 0009)** — A live track line older than tracks.staleAfterDays is reported with its age, and named as holding its fence when the lane declares paths. Spec 0006 deferred this for want of a clock; the date the index already carries turned out to be one. Off by default, and today is passed in rather than read.

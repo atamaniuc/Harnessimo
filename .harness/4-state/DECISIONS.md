@@ -190,3 +190,21 @@ closed list, deletion is refused for anything that does not look like scaffoldin
 (`tag-*`, `release-*`, `claude/*`, never `main` or `gh-pages`), and retagging demands a
 full commit sha. Publishing is deliberately not among them: it authenticates by OIDC and
 needs no token at all.
+
+---
+
+## 2026-10-30 — The delivery kit lives here, and process rules may be adapted
+
+`harnessimo worktree`, the three agent roles, the agent hooks in `init`, and the routing,
+adapting and memory pages (spec 0011).
+
+**Why:** a consumer repository wrote all of it by hand for a parallel delivery, and every
+repository running more than one agent needs the same pieces. Its agents also stalled on rules
+written for another situation, so the kit states which rules bend: process rules, scoped and
+recorded, when they defeat the stated goal — never the hard bounds.
+
+**Rejected:** a `--force` on `worktree remove` (discarding work stays a deliberate git
+command the message names); bundling a memory server (the pattern is vendor-neutral, and this
+package takes no dependency); making `worktree` a twelfth check (it decides nothing about
+whether work is finished).
+

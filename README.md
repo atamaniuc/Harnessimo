@@ -310,6 +310,9 @@ Every page answers one question. Find yours:
 | look up a config key | [Configuration](https://atamaniuc.github.io/Harnessimo/CONFIGURATION/) |
 | put this into a repo that already has its own scripts | [Guide → adopting](https://atamaniuc.github.io/Harnessimo/GUIDE/#adopting) |
 | run several agents against one repository | [More than one agent](https://atamaniuc.github.io/Harnessimo/PARALLEL/) |
+| route work to the right model, fan out into worktrees | [Routing work](https://atamaniuc.github.io/Harnessimo/ROUTING/) |
+| know when an agent may amend a rule that is in its way | [Adapting rules](https://atamaniuc.github.io/Harnessimo/ADAPTING/) |
+| connect an external memory without a second source of truth | [Memory](https://atamaniuc.github.io/Harnessimo/MEMORY/) |
 | understand why a rule exists at all | [The standard](https://atamaniuc.github.io/Harnessimo/STANDARD/) |
 | ask something short that is not a bug | [FAQ](https://atamaniuc.github.io/Harnessimo/FAQ/) |
 | fix a run that just went red | [Troubleshooting](https://atamaniuc.github.io/Harnessimo/TROUBLESHOOTING/) |

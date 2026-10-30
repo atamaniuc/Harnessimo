@@ -16,6 +16,9 @@ nav:
   - Configuration: CONFIGURATION.md
   - Reference: REFERENCE.md
   - More than one agent: PARALLEL.md
+  - Routing work: ROUTING.md
+  - Adapting rules: ADAPTING.md
+  - Memory: MEMORY.md
   - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
   - The standard: STANDARD.md
   - FAQ: FAQ.md
@@ -76,6 +79,10 @@ plugins:
             The standard: Стандарт
             FAQ: FAQ
             Troubleshooting: Что делать, когда сломалось
+            More than one agent: Больше одного агента
+            Routing work: Маршрутизация работы
+            Adapting rules: Адаптация правил
+            Memory: Память
             Contributing: Как участвовать
   - search
   - mermaid2

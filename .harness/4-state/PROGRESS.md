@@ -81,6 +81,11 @@ decides how much of the nine a given run is held to (spec 0007).
 
 ## Settled recently
 
+- **0.11.0, the delivery kit (spec 0011).** `harnessimo worktree add|merge|remove|list`;
+  `init` writes `.claude/agents/{architect,implementer,scout}.md` and the agent hooks; new
+  pages ROUTING, ADAPTING and MEMORY. Principle written down: process rules serve the goal and
+  may be amended scoped and recorded; hard bounds never bend.
+
 - **Code-graph / codebase-memory tools are not bundled** (see `DECISIONS.md`).
 - **The pitch leads with autonomy**: an agent runs unattended exactly as far as something
   other than the agent decides when the work is done.
@@ -100,4 +105,4 @@ decides how much of the nine a given run is held to (spec 0007).
 - None blocking. The one judgement call worth revisiting: `locked.paths` here covers CI
   and the constraints file only. Widening it is a human decision by design.
 
-_Last updated: 2026-09-08_
+_Last updated: 2026-10-30_

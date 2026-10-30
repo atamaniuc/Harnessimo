@@ -203,6 +203,59 @@
           "belongs": "GUIDE.md"
         }
       ]
+    },
+    "ROUTING.md": {
+      "answers": "Which agent and model takes which work, and when does work fan out in parallel?",
+      "profile": "user",
+      "owns": [
+        "the three roles and their models",
+        "fanning out into parallel worktrees",
+        "chained tasks and batched review",
+        "the orchestrator never idles",
+        "speed from parallelism, not shortcuts"
+      ],
+      "excludes": [
+        {
+          "heading": "A lane says what it owns",
+          "belongs": "PARALLEL.md"
+        },
+        {
+          "heading": "The decision procedure",
+          "belongs": "ADAPTING.md"
+        }
+      ]
+    },
+    "ADAPTING.md": {
+      "answers": "When may an agent change a rule that stands between it and the goal?",
+      "profile": "agent",
+      "owns": [
+        "hard bounds versus process rules",
+        "the decision procedure",
+        "scoped, recorded, reversible amendments",
+        "the worked cases"
+      ],
+      "excludes": [
+        {
+          "heading": "Three roles",
+          "belongs": "ROUTING.md"
+        }
+      ]
+    },
+    "MEMORY.md": {
+      "answers": "What belongs in an external memory, and what stays in the repository?",
+      "profile": "user",
+      "owns": [
+        "the repository as source of truth",
+        "what an external memory is for",
+        "the checkpoint pattern",
+        "what must never go into memory"
+      ],
+      "excludes": [
+        {
+          "heading": "Opening and closing a lane",
+          "belongs": "GUIDE.md"
+        }
+      ]
     }
   }
 }
