@@ -120,6 +120,32 @@ export function liveTrackSpecDirs(tracksText: string, specsDir: string = "specs"
 }
 
 /**
+ * Why a lane is paused, when its line says so: `paused (waiting on the API)` or
+ * `paused — waiting on the API`. Null when the line is not paused, or paused
+ * with no reason given.
+ *
+ * Spec 0012. Switching goals is a normal path, not an exception: a lane put
+ * down with a reason is healthy, and the rules that exist for live work —
+ * the task gate, the fences, the staleness rule — leave it alone. A pause with
+ * no reason is the abandoned lane those rules are for, so it gets no pass.
+ */
+export function pauseReason(line: string): string | null {
+  const after = line.slice(Math.max(0, line.indexOf("/handoff.md)")));
+  const m = /\bpaused\b\s*(?:\(([^)]*)\)|[—–:-]+\s*([^,]*))/i.exec(after);
+  const reason = (m?.[1] ?? m?.[2] ?? "").trim();
+  return reason || null;
+}
+
+/** Lane directories whose track line says paused, with a reason. */
+export function pausedTrackSpecDirs(tracksText: string, specsDir: string = "specs"): string[] {
+  const pattern = new RegExp(`\\((${specsDir}\\/[A-Za-z0-9_.-]+)\\/handoff\\.md\\)`);
+  return trackLines(tracksText).flatMap(({ text }) => {
+    const lane = pattern.exec(text)?.[1];
+    return lane && pauseReason(text) ? [lane] : [];
+  });
+}
+
+/**
  * Track lines nobody has refreshed.
  *
  * A lane abandoned mid-flight keeps its status, its next step and — once lanes
@@ -146,6 +172,8 @@ export function staleProblems(
   for (const { line, text: lineText } of trackLines(text)) {
     const stamp = /\b(\d{4}-\d{2}-\d{2})\b/.exec(lineText)?.[1];
     if (!stamp) continue; // a line with no date is the tracks check's business, not this one
+    // Paused with a reason is a decision someone wrote down, not neglect.
+    if (pauseReason(lineText)) continue;
     const age = daysBetween(stamp, today);
     if (age === null || age <= afterDays) continue;
 
@@ -158,7 +186,7 @@ export function staleProblems(
       reason:
         `last moved ${age} days ago, and still says it is live` +
         (fences ? " while holding the paths it declared" : "") +
-        `\n    fix:  update the line, mark it paused with what it is waiting on, or close the track`,
+        `\n    fix:  update the line, pause it with a reason (harnessimo track pause <slug> --reason "…"), or close the track`,
     });
   }
 

@@ -9,7 +9,7 @@
 // and "invalid" leaves them guessing.
 
 import { execFileSync, execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { accessSync, constants as fsConstants, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +27,7 @@ import {
   parseDependencies,
 } from "./claims.ts";
 import { verifyTaskGates } from "./tasks.ts";
-import { liveTrackSpecDirs } from "./tracks.ts";
+import { liveTrackSpecDirs, pausedTrackSpecDirs } from "./tracks.ts";
 import {
   HarnessError,
   activate,
@@ -45,7 +45,21 @@ import { thresholdProblems, unprotectedFloors } from "./thresholds.ts";
 import { detectConfig } from "./detect.ts";
 import { DEFAULT_LEVEL, MEANING, addedBy, effectiveLevel, levelProblem, required, unbacked } from "./autonomy.ts";
 import type { Level } from "./autonomy.ts";
-import { AGENT_GATE_PATH, HOOKS_DIR, HOOK_PATH, agentGateScript, hookScript, hookStatus } from "./hooks.ts";
+import { AGENT_GATE_PATH, HOOKS_DIR, HOOK_PATH, TASK_COMPLETED_COMMAND, agentGateScript, hookScript, hookStatus, taskCompletedOutcome } from "./hooks.ts";
+import {
+  HERD_DEFAULTS,
+  agentName,
+  agentsFrom,
+  herdSettingsProblems,
+  herdrEnvProblem,
+  kickoffPrompt,
+  laneStatus,
+  paneIdFrom,
+  planHerd,
+  statusRows,
+  upProblems,
+} from "./herd.ts";
+import type { HerdLane, HerdSettings } from "./herd.ts";
 import { agentContract, briefJson, briefText, handoffPaths, mergeHook, mergeSessionStartHook } from "./brief.ts";
 import { DEFAULT_WINDOW_MINUTES, decideRead, emptyState, ledger, ledgerReport } from "./tokens.ts";
 import { WORKTREE_DEFAULTS, addProblem, installCommands, mergeProblem, nameProblem, removeProblem, worktreeTarget } from "./worktree.ts";
@@ -58,6 +72,8 @@ import {
   slugProblem,
   withLine,
   withOutcome,
+  withStateNote,
+  withStatus,
   withoutLane,
 } from "./track.ts";
 import type {
@@ -92,7 +108,7 @@ const flags = new Set(args.filter((a) => a.startsWith("--")));
  * `check --autonomy reviewed` read "reviewed" as a filename before this
  * existed, and tried to open it.
  */
-const VALUED = new Set(["--autonomy", "--range", "--title", "--outcome", "--track"]);
+const VALUED = new Set(["--autonomy", "--range", "--title", "--outcome", "--track", "--reason"]);
 const positional = (() => {
   const rest: string[] = [];
   for (let i = 1; i < args.length; i++) {
@@ -241,7 +257,11 @@ function runTracks() {
       deps: parseDependencies(handoff),
     };
   });
-  problems.push(...checkClaims(lanes));
+  // Spec 0012: a fence guards work in flight. A lane paused with a reason has
+  // nobody editing behind it, so it does not fence a lane that took over the
+  // goal; resuming it puts the fence back, and an overlap then fails here.
+  const pausedLanes = new Set(pausedTrackSpecDirs(text, tracks.specsDir));
+  problems.push(...checkClaims(lanes.filter((lane) => !pausedLanes.has(lane.lane))));
 
   // Spec 0008. Collision is one half of working in parallel; ordering is the
   // other, and it costs rework rather than a merge conflict, which is why
@@ -329,20 +349,28 @@ function runTasks() {
   if (!resolver.fileExists(tracks.file)) return { problems: [], summary: "no track index, nothing to gate" };
   const tracksText = resolver.readFile(tracks.file);
   const files = readAll(ROOT, collectDocs(ROOT, docs).filter((p) => p.endsWith(`/${tracks.taskFile}`)));
+  // Spec 0012: a lane paused with a reason is gated again when it resumes, the
+  // way a closed lane is not gated at all. Its proof markers still resolve —
+  // that is the proof check's, and evidence is never optional.
+  const paused = new Set(pausedTrackSpecDirs(tracksText, tracks.specsDir));
   const problems = verifyTaskGates(files, tracksText, resolver, {
     specsDir: tracks.specsDir,
     taskFile: tracks.taskFile,
+    skip: paused,
   });
   // Count what was actually gated, not what was read. A summary that reports
   // every task list in the repository as "live" overstates the gate's reach —
   // the same defect this tool refuses everywhere else.
   const live = new Set(liveTrackSpecDirs(tracksText, tracks.specsDir));
-  const gated = files.filter((f) => live.has(f.path.slice(0, -(tracks.taskFile.length + 1))));
+  const gated = files.filter((f) => {
+    const dir = f.path.slice(0, -(tracks.taskFile.length + 1));
+    return live.has(dir) && !paused.has(dir);
+  });
   return {
     problems,
     summary:
       `checked boxes in ${gated.length} live task list(s) name a passing check` +
-      (files.length > gated.length ? ` (${files.length - gated.length} closed lane(s) not gated)` : ""),
+      (files.length > gated.length ? ` (${files.length - gated.length} closed or paused lane(s) not gated)` : ""),
   };
 }
 
@@ -367,6 +395,7 @@ function runQueueCheck({ reverify }: { reverify?: boolean } = {}): CheckResult {
   const nested = process.env.HARNESS_REVERIFY === "1";
   const doReverify = reverify && !nested;
   const problems = checkQueue(list, {
+    maxActive: withQueue.queue.maxActive,
     reverify: doReverify,
     runner: makeRunner(withQueue.queue.timeoutMinutes),
   }).map((text) => ({ file: withQueue.queue.file, line: 1, target: "(queue)", reason: text }));
@@ -639,6 +668,11 @@ function cmdDoctor() {
       "a re-read of an unchanged file is refused; `harnessimo budget` reports the cost",
   );
 
+  // Informational, like the read guard: whether lane agents can run in herdr
+  // panes here. None of it is a check, and none of it fails anything.
+  ok("\n  parallel agents (informational):");
+  for (const line of herdrEnvironment()) ok(`  ${line}`);
+
   const off = rows.filter(([, on]) => !on).length;
   ok(
     off === 0
@@ -656,10 +690,10 @@ function cmdQueue() {
   const id = positional[1];
   const list = readQueue(withQueue);
   try {
-    if (sub === "status") return ok(formatStatus(list));
+    if (sub === "status") return ok(formatStatus(list, withQueue.queue.maxActive));
     if (sub === "activate") {
       if (!id) die("harnessimo: `harnessimo queue activate <id>` needs an id");
-      const item = activate(list, id);
+      const item = activate(list, id, { maxActive: withQueue.queue.maxActive });
       writeQueue(withQueue, list);
       return ok(`active: ${id}\n  ${item.behavior}\n  verify with: harnessimo queue verify ${id}`);
     }
@@ -670,6 +704,7 @@ function cmdQueue() {
       ok(`running: ${before?.verification}\n`);
       const { item, ok: passed, output } = verifyItem(list, id, runner, {
         terminalByKind: withQueue.queue.terminalByKind,
+        maxActive: withQueue.queue.maxActive,
       });
       writeQueue(withQueue, list);
       if (!passed) {
@@ -796,6 +831,9 @@ function cmdInit() {
   const templates = join(PACKAGE_ROOT, "templates");
   const written = [];
   const skipped = [];
+  // Read before anything is copied: the template below is a settings.json too,
+  // and once copied it would look like the project's own.
+  const settingsExisted = existsSync(join(ROOT, ".claude", "settings.json"));
 
   // Everything except the configuration comes from the templates: the five
   // subsystems, the track index, the spec and handoff shapes.
@@ -807,6 +845,9 @@ function cmdInit() {
       const rel = dest.slice(ROOT.length + 1);
       // The configuration is written from this repository, not copied.
       if (rel === CONFIG_FILE) return false;
+      // A project's own settings are merged into, never replaced — not even by
+      // --force, which asks for the hooks, not for the loss of everything else.
+      if (rel === join(".claude", "settings.json") && settingsExisted) return false;
       // An existing file is never overwritten without --force: adopting the
       // harness must not silently rewrite rules a project already wrote.
       if (!force && existsSync(dest)) {
@@ -820,7 +861,6 @@ function cmdInit() {
 
   // The agent hooks are merged, not copied: a project that already has a
   // .claude/settings.json keeps it untouched unless --force asks for the merge.
-  const settingsExisted = existsSync(join(ROOT, ".claude", "settings.json"));
   if (settingsExisted && !force) skipped.push(".claude/settings.json");
 
   // The configuration is detected rather than templated. A template full of
@@ -1040,6 +1080,8 @@ function installAgentHooks(force: boolean): void {
     // one finishing a lane, and it is the turn nobody is watching.
     ["Stop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
     ["SubagentStop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
+    // Agent teams: a shared-list task does not close while the gates are red.
+    ["TaskCompleted", TASK_COMPLETED_COMMAND, { timeout: 180, statusMessage: "Running the harness gates before the task closes…" }],
   ] as const) {
     const { settings: next, added } = mergeHook(settingsOut, event, cmd, meta);
     settingsOut = next;
@@ -1128,12 +1170,14 @@ usage: harnessimo <command> [options]
   instructions           the instruction file is still a router, not a manual
   release                the version agrees across manifest, changelog and tags
   brief [--json] [--track <slug>]  what a session reads first; --track narrows it to one lane
-  track <sub> <slug>     new [--title] | close --outcome — open and close a lane
+  track <sub> <slug>     new [--title] | pause --reason | resume | close --outcome — a lane's life
   budget [--reset]       what this session read, and what it read twice
   guard read <path>      refuse a re-read of a file that has not changed (exit 2)
   agent                  the contract to paste into any agent's instruction file
   hooks <sub>            status | install [--agent] | uninstall — the gates, on commit
   worktree <sub> <name>  add [--no-install] | merge | remove | list — one checkout per stream
+  herd <sub> [lane…]     plan | up [lane…] | status — one herdr pane, worktree and agent per lane
+  hook task-completed    agent-teams hook: refuse a task's completion while check is red (exit 2)
   init [--force]         scaffold .harness/, specs/, .claude/ agents and hooks, and harnessimo.config.json
 
 Configuration lives in harnessimo.config.json — run \`harnessimo init\` and it is written
@@ -1257,10 +1301,12 @@ function trackPaths(): { specsDir: string; index: string; log: string } {
 function cmdTrack(): void {
   const sub = positional[0];
   const slug = positional[1];
-  if ((sub !== "new" && sub !== "close") || !slug) {
+  if (!["new", "close", "pause", "resume"].includes(sub ?? "") || !slug) {
     die(
       "harnessimo: usage —\n" +
         '  harnessimo track new <slug> [--title "..."]\n' +
+        '  harnessimo track pause <slug> --reason "why it stops, what it waits on"\n' +
+        "  harnessimo track resume <slug>\n" +
         '  harnessimo track close <slug> --outcome "what came out of it"',
     );
   }
@@ -1271,6 +1317,7 @@ function cmdTrack(): void {
   const lane = findLane(existing, slug);
 
   if (sub === "close") return closeTrack({ slug, lane, specsDir, index, log });
+  if (sub === "pause" || sub === "resume") return pauseTrack({ sub, slug, lane, specsDir, index });
 
   const bad = slugProblem(slug, specsDir);
   if (bad) die(`harnessimo: ${bad.target} — ${bad.reason}`);
@@ -1307,6 +1354,61 @@ function cmdTrack(): void {
   ok(
     `\nharnessimo: lane ${number} is open. Write the acceptance criteria first — a criterion\n` +
       "that cannot run does not exist, and the checks will hold you to that one.",
+  );
+}
+
+/**
+ * Spec 0012. Switching goals is a normal path: the lane being put down gets its
+ * status, today's date and the reason in the index, and a dated note at the top
+ * of its handoff's State, so a cold session resumes it in minutes. Nothing else
+ * is needed — paused lanes are not task-gated, fenced or reported stale.
+ */
+function pauseTrack({
+  sub,
+  slug,
+  lane,
+  specsDir,
+  index,
+}: {
+  sub: "pause" | "resume";
+  slug: string;
+  lane: string | undefined;
+  specsDir: string;
+  index: string;
+}): void {
+  if (!lane) die(`harnessimo: no lane with the slug "${slug}" in ${specsDir}/`);
+  const reason = flagValue("--reason")?.trim();
+  if (sub === "pause" && (!reason || reason.startsWith("--"))) {
+    die(
+      "harnessimo: a pause needs its reason — a lane put down without one is the abandoned lane the checks exist for\n" +
+        `  fix:  harnessimo track pause ${slug} --reason "why it stops, and what it waits on"`,
+    );
+  }
+  const indexPath = join(ROOT, index);
+  if (!existsSync(indexPath)) die(`harnessimo: no track index at ${index}`);
+  const date = new Date().toISOString().slice(0, 10);
+  const { text, found } = withStatus(readFileSync(indexPath, "utf8"), specsDir, lane, {
+    status: sub === "pause" ? "paused" : "active",
+    reason: sub === "pause" ? reason : undefined,
+    date,
+  });
+  if (!found) {
+    die(`harnessimo: ${index} has no line for ${specsDir}/${lane}\n  fix:  the lane is closed, or its line was removed by hand`);
+  }
+  writeFileSync(indexPath, text);
+  const handoffPath = join(ROOT, specsDir, lane, "handoff.md");
+  if (existsSync(handoffPath)) {
+    const note =
+      sub === "pause"
+        ? `- **Paused ${date}:** ${reason}. Resume with \`harnessimo track resume ${slug}\`; the next step below still stands.`
+        : `- **Resumed ${date}.** Re-read the State below; \`harnessimo tracks\` now fences this lane again.`;
+    writeFileSync(handoffPath, withStateNote(readFileSync(handoffPath, "utf8"), note));
+  }
+  ok(`  ~ ${index}${existsSync(handoffPath) ? `\n  ~ ${specsDir}/${lane}/handoff.md` : ""}`);
+  ok(
+    sub === "pause"
+      ? `\nharnessimo: ${slug} is paused. Start or resume the next goal; nothing else is needed.`
+      : `\nharnessimo: ${slug} is active again. Run \`harnessimo tracks\`: its fence counts again.`,
   );
 }
 
@@ -1388,6 +1490,64 @@ function gitOk(cwd: string, ...argv: string[]): boolean {
   }
 }
 
+/**
+ * Makes one worktree and runs its install step. Shared by `worktree add` and
+ * `herd up`, so a lane agent's checkout is exactly the one a person would get.
+ */
+function addWorktree({
+  name,
+  path,
+  branch,
+  branchExists,
+  settings,
+  cfg,
+  install,
+}: {
+  name: string;
+  path: string;
+  branch: string;
+  branchExists: boolean;
+  settings: typeof WORKTREE_DEFAULTS;
+  cfg: LoadedConfig;
+  install: boolean;
+}): void {
+  const problem = addProblem({ path, branch, dirExists: existsSync(path), branchExists });
+  if (problem) die(`harnessimo: ${problem}`);
+  gitIn(ROOT, "worktree", "add", "-q", "-b", branch, path, "HEAD");
+  ok(`harnessimo: ${path} on branch ${branch}`);
+
+  const commands = install ? installCommands(settings.install, cfg.coldStart?.commands ?? []) : [];
+  for (const cmd of commands) {
+    try {
+      execSync(cmd, { cwd: path, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 15 * 60 * 1000 });
+      ok(`  ran  ${cmd}`);
+    } catch (caught) {
+      const error = caught as { stdout?: string; stderr?: string; status?: number };
+      console.error(lastLines([error.stdout, error.stderr].filter(Boolean).join("\n"), 20));
+      die(
+        `harnessimo: \`${cmd}\` failed in ${path} (exit ${error.status ?? "?"})\n` +
+          "  why:  the worktree exists, but its first commit would fail a hook that needs the install\n" +
+          `  fix:  run it yourself in ${path}, or start again: harnessimo worktree remove ${name}`,
+      );
+    }
+  }
+  if (commands.length === 0) ok("  no install step (set worktree.install, or declare one in coldStart.commands)");
+}
+
+/** The main checkout and every registered worktree, main first. */
+function registeredWorktrees(): string[] {
+  let porcelain: string;
+  try {
+    porcelain = gitIn(ROOT, "worktree", "list", "--porcelain");
+  } catch {
+    die("harnessimo: this is not a git repository\n  fix:  run it inside the checkout whose streams it manages");
+  }
+  return porcelain
+    .split("\n")
+    .filter((l) => l.startsWith("worktree "))
+    .map((l) => resolve(l.slice("worktree ".length)));
+}
+
 function cmdWorktree(): void {
   const sub = positional[0] ?? "list";
   const name = positional[1];
@@ -1395,18 +1555,9 @@ function cmdWorktree(): void {
     die(`harnessimo: unknown worktree subcommand "${sub}" (add | merge | remove | list)`, 2);
   }
 
-  let porcelain: string;
-  try {
-    porcelain = gitIn(ROOT, "worktree", "list", "--porcelain");
-  } catch {
-    die("harnessimo: this is not a git repository\n  fix:  run it inside the checkout whose streams it manages");
-  }
   // The first entry is always the main checkout, wherever this was run from:
   // a worktree made from inside another worktree still goes beside the main one.
-  const registered = porcelain
-    .split("\n")
-    .filter((l) => l.startsWith("worktree "))
-    .map((l) => resolve(l.slice("worktree ".length)));
+  const registered = registeredWorktrees();
   const mainRoot = registered[0] ?? ROOT;
 
   if (sub === "list") return ok(gitIn(ROOT, "worktree", "list"));
@@ -1422,29 +1573,7 @@ function cmdWorktree(): void {
   const dirty = (cwd: string): boolean => gitIn(cwd, "status", "--porcelain").length > 0;
 
   if (sub === "add") {
-    const problem = addProblem({ path, branch, dirExists: existsSync(path), branchExists });
-    if (problem) die(`harnessimo: ${problem}`);
-    gitIn(ROOT, "worktree", "add", "-q", "-b", branch, path, "HEAD");
-    ok(`harnessimo: ${path} on branch ${branch}`);
-
-    const commands = flags.has("--no-install")
-      ? []
-      : installCommands(settings.install, cfg.coldStart?.commands ?? []);
-    for (const cmd of commands) {
-      try {
-        execSync(cmd, { cwd: path, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 15 * 60 * 1000 });
-        ok(`  ran  ${cmd}`);
-      } catch (caught) {
-        const error = caught as { stdout?: string; stderr?: string; status?: number };
-        console.error(lastLines([error.stdout, error.stderr].filter(Boolean).join("\n"), 20));
-        die(
-          `harnessimo: \`${cmd}\` failed in ${path} (exit ${error.status ?? "?"})\n` +
-            "  why:  the worktree exists, but its first commit would fail a hook that needs the install\n" +
-            `  fix:  run it yourself in ${path}, or start again: harnessimo worktree remove ${name}`,
-        );
-      }
-    }
-    if (commands.length === 0) ok("  no install step (set worktree.install, or declare one in coldStart.commands)");
+    addWorktree({ name: name!, path, branch, branchExists, settings, cfg, install: !flags.has("--no-install") });
     return ok(`\nready. Work there, commit there, then: harnessimo worktree merge ${name}`);
   }
 
@@ -1485,6 +1614,201 @@ function cmdWorktree(): void {
   else gitIn(ROOT, "worktree", "prune");
   if (branchExists) gitIn(ROOT, "branch", "-d", branch);
   return ok(`harnessimo: removed ${path}${branchExists ? ` and branch ${branch}` : ""}`);
+}
+
+// ---- a herd of lane agents (spec 0011)
+//
+// herdr owns the topology — one worktree, one pane and one agent per lane —
+// because agent teams cannot: teammates share the lead's checkout. Every
+// herdr call is made here; every decision about the answers is in src/herd.ts.
+
+/** Whether an executable of this name is on PATH. */
+function onPath(name: string): boolean {
+  for (const dir of (process.env.PATH ?? "").split(":").filter(Boolean)) {
+    try {
+      accessSync(join(dir, name), fsConstants.X_OK);
+      if (statSync(join(dir, name)).isFile()) return true;
+    } catch {
+      /* not here */
+    }
+  }
+  return false;
+}
+
+/** What `doctor` and `herd status` report about the herdr side. Informational: it fails nothing. */
+function herdrEnvironment(): string[] {
+  const yes = (b: boolean): string => (b ? "yes" : "no ");
+  return [
+    `  ${yes(onPath("herdr"))}  herdr on PATH                 lane agents in panes: harnessimo herd`,
+    `  ${yes(process.env.HERDR_ENV === "1")}  inside a herdr pane (HERDR_ENV=1)   herd up and herd status can reach herdr`,
+  ];
+}
+
+function herdSettings(cfg: LoadedConfig): HerdSettings {
+  const settings = { ...HERD_DEFAULTS, ...(cfg.herd ?? {}) } as HerdSettings;
+  const problems = herdSettingsProblems(settings);
+  if (problems.length > 0) die(`harnessimo: ${CONFIG_FILE} has herd settings that cannot work\n${formatProblems(problems)}`);
+  return settings;
+}
+
+/** The live lanes, with their status, fence and dependencies, in index order. */
+function herdLanes(cfg: LoadedConfig): HerdLane[] {
+  const tracks = requireSection(cfg, "tracks", 'add a "tracks" section naming the track index');
+  const indexPath = join(ROOT, tracks.file);
+  if (!existsSync(indexPath)) die(`harnessimo: no track index at ${tracks.file}\n  fix:  harnessimo init, or point tracks.file at it`);
+  const text = readFileSync(indexPath, "utf8");
+  const lines = trackLines(text);
+  return liveTrackSpecDirs(text, tracks.specsDir).map((lane) => {
+    const handoffPath = join(ROOT, lane, "handoff.md");
+    const handoff = existsSync(handoffPath) ? readFileSync(handoffPath, "utf8") : "";
+    const line = lines.find((l) => l.text.includes(`(${lane}/handoff.md)`))?.text ?? "";
+    return {
+      slug: lane.slice(tracks.specsDir.length + 6),
+      lane,
+      status: laneStatus(line),
+      owns: parseClaims(handoff).map((c) => c.path),
+      deps: parseDependencies(handoff).map((d) => d.path),
+    };
+  });
+}
+
+/** One herdr call, its JSON answer parsed. A failure names the call and what to read next. */
+function herdr(argv: string[], { fatal = true }: { fatal?: boolean } = {}): unknown {
+  try {
+    const out = execFileSync("herdr", argv, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    try {
+      return out.trim() ? JSON.parse(out) : {};
+    } catch {
+      return { text: out };
+    }
+  } catch (caught) {
+    const error = caught as { stderr?: string; code?: string };
+    const why = error.code === "ENOENT" ? "herdr is not on PATH" : (error.stderr ?? "").trim() || "it exited non-zero";
+    if (!fatal) return null;
+    die(
+      `harnessimo: herdr ${argv.slice(0, 2).join(" ")} failed: ${why}\n` +
+        "  why:  a failed or timed-out call does not prove nothing happened\n" +
+        "  fix:  look before retrying — herdr agent list, herdr agent read <name>",
+    );
+  }
+}
+
+function sleepSeconds(seconds: number): void {
+  if (seconds > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, seconds * 1000);
+}
+
+function cmdHerd(): void {
+  const sub = positional[0] ?? "plan";
+  if (!["plan", "up", "status"].includes(sub)) die(`harnessimo: unknown herd subcommand "${sub}" (plan | up | status)`, 2);
+  const cfg = config();
+  const settings = herdSettings(cfg);
+  const lanes = herdLanes(cfg);
+
+  if (sub === "status") {
+    const agents = process.env.HERDR_ENV === "1" ? agentsFrom(herdr(["agent", "list"], { fatal: false })) : [];
+    ok("herdr:");
+    for (const line of herdrEnvironment()) ok(line);
+    if (process.env.HERDR_ENV !== "1") ok("\n  not inside a herdr pane, so agent states are unknown here");
+    ok(`\nlanes (${lanes.length}), blocked first:`);
+    for (const row of statusRows(lanes, agents)) {
+      ok(`  ${row.state.padEnd(12)} ${row.slug.padEnd(24)} ${(row.pane || "-").padEnd(8)} ${row.next}`);
+    }
+    return;
+  }
+
+  const running =
+    process.env.HERDR_ENV === "1"
+      ? agentsFrom(herdr(["agent", "list"], { fatal: sub === "up" })).map((a) => a.name)
+      : [];
+  const alreadyRunning = lanes.filter((l) => running.includes(agentName(l.slug))).map((l) => l.slug);
+  const plan = planHerd(lanes, { maxWorking: settings.maxWorking, alreadyRunning });
+
+  if (sub === "plan") {
+    ok(`harnessimo herd: ${lanes.length} live lane(s), cap ${settings.maxWorking} working (herd.maxWorking)`);
+    if (alreadyRunning.length > 0) ok(`\nalready running: ${alreadyRunning.join(", ")}`);
+    ok(`\nrunnable now, side by side: ${plan.runnable.length > 0 ? plan.runnable.join(", ") : "(none)"}`);
+    for (const h of plan.held) ok(`  held  ${h.slug} — ${h.reason}`);
+    ok(
+      `\nstart them: harnessimo herd up   (${settings.staggerSeconds}s between starts;` +
+        ` on a 429 wait ${settings.backoffSeconds.join("/")}s)`,
+    );
+    return;
+  }
+
+  // up
+  const envProblem = herdrEnvProblem(process.env);
+  if (envProblem) die(`harnessimo: ${envProblem}`);
+  const requested = positional.slice(1);
+  const problems = upProblems(requested, plan, lanes.map((l) => l.slug));
+  if (problems.length > 0) die(`harnessimo: ${problems.join("\n")}`);
+  const starting = requested.length > 0 ? requested : plan.runnable;
+  if (starting.length === 0) {
+    ok("harnessimo herd: nothing can start now.");
+    for (const h of plan.held) ok(`  held  ${h.slug} — ${h.reason}`);
+    return;
+  }
+
+  const registered = registeredWorktrees();
+  const mainRoot = registered[0] ?? ROOT;
+  const wt = { ...WORKTREE_DEFAULTS, ...(cfg.worktree ?? {}) };
+  starting.forEach((slug, index) => {
+    const lane = lanes.find((l) => l.slug === slug)!;
+    const name = agentName(slug);
+    const { path, branch } = worktreeTarget({ mainRoot, name: slug, prefix: wt.prefix, dir: wt.dir });
+    if (!existsSync(path)) {
+      addWorktree({
+        name: slug,
+        path,
+        branch,
+        branchExists: gitOk(ROOT, "rev-parse", "--verify", "--quiet", `refs/heads/${branch}`),
+        settings: wt,
+        cfg,
+        install: true,
+      });
+    }
+    const opened = herdr(["worktree", "open", "--cwd", ROOT, "--path", path, "--label", slug, "--no-focus"]);
+    const pane =
+      paneIdFrom(opened) ??
+      paneIdFrom(herdr(["pane", "split", "--current", "--direction", "right", "--cwd", path, "--no-focus"]));
+    if (!pane) die(`harnessimo: herdr opened ${path} but named no pane\n  fix:  herdr pane list, then start the agent by hand`);
+
+    herdr(["agent", "start", name, "--kind", settings.agentKind, "--pane", pane, "--timeout", "60000", "--", ...settings.agentArgs]);
+    herdr(["agent", "prompt", name, kickoffPrompt({ slug, lane: lane.lane, backoffSeconds: settings.backoffSeconds })]);
+    ok(`  started  ${name} in ${pane} (${path})`);
+    if (index < starting.length - 1) sleepSeconds(settings.staggerSeconds);
+  });
+  ok(
+    `\nharnessimo herd: ${starting.length} lane agent(s) started. Watch them: harnessimo herd status` +
+      (plan.held.length > 0 ? `\n  still held: ${plan.held.map((h) => h.slug).join(", ")}` : ""),
+  );
+}
+
+/**
+ * Hooks for Claude Code agent teams. `task-completed` refuses a shared-list
+ * task's completion while the gates are red; the outcome is decided in
+ * src/hooks.ts, so the exit mapping is tested without a team.
+ */
+function cmdHook(): void {
+  const event = positional[0];
+  if (event !== "task-completed") {
+    die("harnessimo: usage — `harnessimo hook task-completed` (wired to TaskCompleted in .claude/settings.json)", 2);
+  }
+  let status = 0;
+  let report = "";
+  try {
+    report = execFileSync(process.execPath, [fileURLToPath(import.meta.url), "check"], {
+      cwd: process.env.CLAUDE_PROJECT_DIR || ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (caught) {
+    const error = caught as { status?: number; stdout?: string; stderr?: string };
+    status = error.status ?? 1;
+    report = `${error.stdout ?? ""}${error.stderr ?? ""}`;
+  }
+  const outcome = taskCompletedOutcome({ status, report });
+  if (outcome.stderr) process.stderr.write(outcome.stderr);
+  process.exit(outcome.code);
 }
 
 switch (command) {
@@ -1540,6 +1864,12 @@ switch (command) {
     break;
   case "worktree":
     cmdWorktree();
+    break;
+  case "herd":
+    cmdHerd();
+    break;
+  case "hook":
+    cmdHook();
     break;
   case "init":
     cmdInit();

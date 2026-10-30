@@ -32,6 +32,13 @@ test("a marker on a wrapped continuation line still belongs to its task", () => 
   assert.equal(taskBlocks(text).length, 1);
 });
 
+test("a lane paused with a reason is not gated until it resumes", () => {
+  const tracks = "- **A** — [handoff](specs/0001-live/handoff.md) — paused (switched goals), next: T1\n";
+  const files = [{ path: "specs/0001-live/tasks.md", text: "- [x] **T1** half done\n" }];
+  assert.equal(verifyTaskGates(files, tracks, resolver).length, 1, "without the skip it is gated, as before");
+  assert.deepEqual(verifyTaskGates(files, tracks, resolver, { skip: new Set(["specs/0001-live"]) }), []);
+});
+
 test("only task lists under a live track are gated", () => {
   const tracks = "- **A** — [handoff](specs/0001-live/handoff.md) — active, next: T1\n";
   const files = [

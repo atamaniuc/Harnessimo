@@ -17,6 +17,7 @@ nav:
   - Reference: REFERENCE.md
   - More than one agent: PARALLEL.md
   - Routing work: ROUTING.md
+  - Agent teams and herdr: TEAMS.md
   - Adapting rules: ADAPTING.md
   - Memory: MEMORY.md
   - SDD — what was taken from OpenSpec, Spec Kit, BMAD: SDD.md
@@ -81,6 +82,7 @@ plugins:
             Troubleshooting: Что делать, когда сломалось
             More than one agent: Больше одного агента
             Routing work: Маршрутизация работы
+            Agent teams and herdr: Agent teams и herdr
             Adapting rules: Адаптация правил
             Memory: Память
             Contributing: Как участвовать

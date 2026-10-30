@@ -84,8 +84,8 @@ export function checkTaskGate(text: string, filePath: string, resolver: Resolver
  * list every task list in the repository — only the live ones are checked.
  *
  */
-export function verifyTaskGates(files: { path: string, text: string }[], tracksText: string, resolver: Resolver, options: { specsDir?: string, taskFile?: string } = {}): Problem[] {
-  const { specsDir = "specs", taskFile = "tasks.md" } = options;
+export function verifyTaskGates(files: { path: string, text: string }[], tracksText: string, resolver: Resolver, options: { specsDir?: string, taskFile?: string, skip?: Set<string> } = {}): Problem[] {
+  const { specsDir = "specs", taskFile = "tasks.md", skip = new Set<string>() } = options;
   const liveDirs = new Set(liveTrackSpecDirs(tracksText, specsDir));
   const suffix = `/${taskFile}`;
   const problems = [];
@@ -93,6 +93,7 @@ export function verifyTaskGates(files: { path: string, text: string }[], tracksT
     if (!file.path.endsWith(suffix)) continue;
     const dir = file.path.slice(0, -suffix.length);
     if (!liveDirs.has(dir)) continue; // not a live track
+    if (skip.has(dir)) continue; // paused with a reason: gated again when it resumes
     problems.push(...checkTaskGate(file.text, file.path, resolver));
   }
   return problems;

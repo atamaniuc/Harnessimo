@@ -105,7 +105,12 @@ test("init writes the agent roles and the hooks they assume, and leaves existing
       assert.ok(existsSync(join(dir, ".claude", "agents", `${role}.md`)), `${role}.md was not written`);
     }
     const settings = readFileSync(join(dir, ".claude", "settings.json"), "utf8");
-    for (const event of ["SessionStart", "Stop", "SubagentStop"]) assert.match(settings, new RegExp(`"${event}"`));
+    for (const event of ["SessionStart", "Stop", "SubagentStop", "TaskCompleted"]) assert.match(settings, new RegExp(`"${event}"`));
+    const parsed = JSON.parse(settings) as { env: Record<string, string>; teammateMode: string; subagentPromptCacheTtl: string };
+    assert.equal(parsed.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, "1", "agent teams are on");
+    assert.equal(parsed.teammateMode, "auto");
+    assert.equal(parsed.subagentPromptCacheTtl, "1h");
+    assert.equal(settings.split("harnessimo-gate.sh").length - 1, 2, "the merge did not duplicate the template's hooks");
     assert.ok(existsSync(join(dir, ".claude", "hooks", "harnessimo-gate.sh")), "a Stop hook pointing at nothing");
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -464,5 +469,203 @@ test("a worktree name that would escape its directory is refused before git runs
     assert.match(bad.out, /cannot name a worktree/);
   } finally {
     cleanup();
+  }
+});
+
+// ---- spec 0011: a herd of lane agents in herdr panes
+//
+// herdr itself is not installed on a CI runner, and a test must not drive a
+// real terminal session. A fake `herdr` on PATH records every call and answers
+// with the JSON shapes herdr documents.
+
+const FAKE_HERDR = `#!/usr/bin/env node
+const fs = require("node:fs");
+const argv = process.argv.slice(2);
+fs.appendFileSync(process.env.HERDR_LOG, JSON.stringify(argv) + "\\n");
+const [group, verb] = argv;
+const answers = {
+  "worktree open": { result: { workspace: { workspace_id: "w2" }, root_pane: { pane_id: "w2:p1" } } },
+  "pane split": { result: { pane: { pane_id: "w1:p9" } } },
+  "agent list": JSON.parse(process.env.HERDR_AGENTS || '{"result":{"agents":[]}}'),
+};
+process.stdout.write(JSON.stringify(answers[group + " " + verb] || { result: {} }));
+`;
+
+const HERD_TRACKS =
+  "# Work tracks\n\n" +
+  "- **Search** — [handoff](specs/0001-search/handoff.md) — active, 2026-10-30, next: T1\n" +
+  "- **Api** — [handoff](specs/0002-api/handoff.md) — active, 2026-10-30, next: T1\n" +
+  "- **Ranking** — [handoff](specs/0003-ranking/handoff.md) — active, 2026-10-30, next: T1\n";
+
+function herdRepo(herd: Record<string, unknown>) {
+  const made = repo({
+    "harnessimo.config.json": JSON.stringify({
+      tracks: { file: "specs/TRACKS.md", log: "specs/TRACKS-LOG.md" },
+      worktree: { install: [] },
+      herd: { staggerSeconds: 0, ...herd },
+    }),
+    "specs/TRACKS.md": HERD_TRACKS,
+    "specs/TRACKS-LOG.md": "# Closed tracks\n",
+    "specs/0001-search/handoff.md": "# Handoff\n\n## Owns\n\n- src/search/\n",
+    "specs/0002-api/handoff.md": "# Handoff\n\n## Owns\n\n- src/api/\n",
+    "specs/0003-ranking/handoff.md": "# Handoff\n\n## Owns\n\n- src/search/rank.ts\n",
+  });
+  const bin = mkdtempSync(join(tmpdir(), "harness-bin-"));
+  writeFileSync(join(bin, "herdr"), FAKE_HERDR, { mode: 0o755 });
+  const log = join(bin, "calls.log");
+  // Only the fake bin and node's own directory: a real herdr on the
+  // developer's PATH must never be the one these tests drive.
+  const env = { ...process.env, PATH: `${bin}:${dirname(process.execPath)}:/usr/bin:/bin`, HERDR_LOG: log, HERDR_ENV: "1" };
+  const calls = (): string[][] =>
+    existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l) as string[]) : [];
+  return {
+    ...made,
+    env,
+    calls,
+    cleanup: () => {
+      made.cleanup();
+      rmSync(bin, { recursive: true, force: true });
+    },
+  };
+}
+
+function runEnv(dir: string, env: NodeJS.ProcessEnv, ...argv: string[]): { status: number; out: string } {
+  try {
+    return { status: 0, out: execFileSync(process.execPath, [CLI, ...argv], { cwd: dir, encoding: "utf8", env }) };
+  } catch (caught) {
+    const error = caught as { status?: number; stdout?: string; stderr?: string };
+    return { status: error.status ?? 1, out: `${error.stdout ?? ""}${error.stderr ?? ""}` };
+  }
+}
+
+test("herd plan runs fenced lanes side by side and holds the one that overlaps", () => {
+  const { dir, env, cleanup } = herdRepo({});
+  try {
+    const plan = runEnv(dir, { ...env, HERDR_ENV: "" }, "herd", "plan");
+    assert.equal(plan.status, 0, plan.out);
+    assert.match(plan.out, /runnable now, side by side: search, api/);
+    assert.match(plan.out, /held  ranking — its ## Owns overlaps search's/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd up opens a worktree per lane and starts a named agent with its kickoff", () => {
+  const { dir, env, calls, cleanup } = herdRepo({ agentArgs: ["--model", "sonnet"] });
+  try {
+    const up = runEnv(dir, env, "herd", "up", "search");
+    assert.equal(up.status, 0, up.out);
+    assert.ok(existsSync(`${dir}-search`), "the lane's worktree exists beside the repository");
+    const made = calls();
+    const open = made.find((c) => c[0] === "worktree" && c[1] === "open")!;
+    assert.ok(open.some((a) => a.endsWith("-search")) && open.includes("--no-focus"), JSON.stringify(open));
+    const start = made.find((c) => c[0] === "agent" && c[1] === "start")!;
+    assert.deepEqual(start.slice(0, 7), ["agent", "start", "search", "--kind", "claude", "--pane", "w2:p1"]);
+    assert.deepEqual(start.slice(-3), ["--", "--model", "sonnet"]);
+    const prompt = made.find((c) => c[0] === "agent" && c[1] === "prompt")!;
+    assert.equal(prompt[2], "search");
+    assert.match(prompt[3]!, /specs\/0001-search\/handoff\.md/);
+    assert.ok(!made.some((c) => c[0] === "pane" && c[1] === "close"), "herd never closes a pane");
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd up starts every runnable lane, staggered, and leaves the held one", () => {
+  const { dir, env, calls, cleanup } = herdRepo({});
+  try {
+    const up = runEnv(dir, env, "herd", "up");
+    assert.equal(up.status, 0, up.out);
+    const starts = calls().filter((c) => c[0] === "agent" && c[1] === "start");
+    assert.deepEqual(starts.map((c) => c[2]), ["search", "api"], "one per runnable lane, ranking held");
+    assert.match(up.out, /still held: ranking/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd up outside herdr fails with the fix, and refuses a lane the plan holds", () => {
+  const { dir, env, calls, cleanup } = herdRepo({});
+  try {
+    const outside = runEnv(dir, { ...env, HERDR_ENV: "" }, "herd", "up");
+    assert.equal(outside.status, 1);
+    assert.match(outside.out, /inside a herdr pane[\s\S]*fix:/);
+    const held = runEnv(dir, env, "herd", "up", "ranking");
+    assert.equal(held.status, 1);
+    assert.match(held.out, /ranking cannot start now/);
+    assert.ok(!calls().some((c) => c[1] === "start" || c[1] === "run"), "nothing was started");
+  } finally {
+    cleanup();
+  }
+});
+
+test("herd status joins herdr's agents with the lanes, blocked first", () => {
+  const { dir, env, cleanup } = herdRepo({});
+  try {
+    const agents = JSON.stringify({ result: { agents: [{ name: "search", pane_id: "w1:p2", state: "working" }, { name: "api", pane_id: "w1:p3", state: "blocked" }] } });
+    const status = runEnv(dir, { ...env, HERDR_AGENTS: agents }, "herd", "status");
+    assert.equal(status.status, 0, status.out);
+    const order = status.out.split("\n").filter((l) => /^\s+(blocked|working|not started)\s/.test(l)).map((l) => l.trim().split(/\s+/)[0]);
+    assert.deepEqual(order, ["blocked", "working", "not"]);
+    assert.match(status.out, /yes  herdr on PATH/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("hook task-completed exits 2 with the failure while check is red, and 0 when green", () => {
+  const green = fixture(BASE);
+  const red = fixture({ ...BASE, "README.md": "# Project\n\nRuns in CI. <!-- proof: make deploy -->\n" });
+  try {
+    assert.equal(run(green, "hook", "task-completed").status, 0);
+    const refused = run(red, "hook", "task-completed");
+    assert.equal(refused.status, 2, refused.out);
+    assert.match(refused.out, /no make command named "deploy"/);
+    assert.match(refused.out, /cannot be marked completed/);
+  } finally {
+    rmSync(green, { recursive: true, force: true });
+    rmSync(red, { recursive: true, force: true });
+  }
+});
+
+// ---- spec 0012: switching goals is a normal path, not an exception
+
+test("switching goals: pause with a reason, start the new lane on the same paths, and check stays green", () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const dir = fixture({
+    "harnessimo.config.json": JSON.stringify({ tracks: { file: "specs/TRACKS.md", log: "specs/TRACKS-LOG.md", staleAfterDays: 7 } }),
+    "specs/TRACKS.md":
+      "# Work tracks\n\n" +
+      "- **Totals (spec 0001)** — [handoff](specs/0001-totals/handoff.md) — active, 2020-01-01, next: T2 rounding\n" +
+      `- **Billing (spec 0002)** — [handoff](specs/0002-billing/handoff.md) — active, ${today}, next: T1\n`,
+    "specs/TRACKS-LOG.md": "# Closed tracks\n",
+    "specs/0001-totals/handoff.md": "# Handoff\n\n## Owns\n\n- src/checkout/\n\n## State\n\nT1 done.\n",
+    "specs/0001-totals/tasks.md": "- [x] **T1** half of the lane, ticked before the switch\n",
+    "specs/0002-billing/handoff.md": "# Handoff\n\n## Owns\n\n- src/checkout/billing.ts\n",
+  });
+  try {
+    const before = run(dir, "check");
+    assert.equal(before.status, 1, "two live lanes on one path, a stale line and an unproven box");
+    assert.match(before.out, /also claimed by/);
+
+    const bare = run(dir, "track", "pause", "totals");
+    assert.equal(bare.status, 1, "a pause needs its reason");
+    assert.match(bare.out, /--reason/);
+
+    const pause = run(dir, "track", "pause", "totals", "--reason", "owner switched to billing");
+    assert.equal(pause.status, 0, pause.out);
+    assert.match(readFileSync(join(dir, "specs/TRACKS.md"), "utf8"), new RegExp(`paused \\(owner switched to billing\\), ${today}, next: T2 rounding`));
+    assert.match(readFileSync(join(dir, "specs/0001-totals/handoff.md"), "utf8"), /## State\n\n- \*\*Paused [\d-]+:\*\* owner switched to billing/);
+
+    const during = run(dir, "check");
+    assert.equal(during.status, 0, `the goal switch itself must not turn anything red:\n${during.out}`);
+
+    const resume = run(dir, "track", "resume", "totals");
+    assert.equal(resume.status, 0, resume.out);
+    const after = run(dir, "check");
+    assert.equal(after.status, 1, "resumed, the fence and the gate apply again");
+    assert.match(after.out, /also claimed by/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

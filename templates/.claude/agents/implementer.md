@@ -56,3 +56,22 @@ recorded amendment in your report. The architect or the orchestrator decides.
 Blocked more than 3 attempts on one task, or facing an invariant or architecture question:
 stop, write the evidence (commands, output, hypothesis) into the handoff "State", and return
 saying "ESCALATE to architect". _Why: a fourth attempt at the same wall is budget, not progress._
+
+## As a teammate (Claude Code agent teams)
+
+When you run as a teammate this file may be your whole system prompt (a teammate in a
+tmux or iTerm2 split pane gets this body instead of the default prompt), so the
+rules that matter are written here rather than only in `AGENTS.md`.
+
+- **Claim from the shared task list**, one task at a time, and only a task whose dependencies
+  are completed. _Why: the list is file-locked so two teammates cannot claim one task; a task
+  taken out of order builds on work that is not there._
+- **Touch only your task's files** and the lane's `## Owns`. Another teammate shares this
+  checkout — there is no worktree between you. _Why: two teammates editing one file overwrite
+  each other silently._
+- **Mark the task completed only when `harnessimo check` is green**; the `TaskCompleted` hook
+  refuses it otherwise and shows you why. Then message the lead with the summary lines.
+- **On a rate-limit error (429) do not retry in a loop**: tell the lead and wait.
+  _Why: every retry spends the limit the other teammates are waiting on._
+- **Stop when your tasks are done.** Do not invent follow-up work. _Why: an idle teammate
+  still costs; the lead decides what comes next._

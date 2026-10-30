@@ -4,7 +4,8 @@
 deciding which model takes which work, when to fan out, and when to stop for review.
 **When should I read it?** When a single agent is no longer fast enough, or when an expensive
 model is doing cheap work. The collision rules for several agents live in
-[More than one agent](PARALLEL.md); when a rule is in the way, [Adapting rules](ADAPTING.md).
+[More than one agent](PARALLEL.md); when a rule is in the way, [Adapting rules](ADAPTING.md);
+running lanes in herdr panes and agent teams inside a lane, [Agent teams and herdr](TEAMS.md).
 
 ---
 

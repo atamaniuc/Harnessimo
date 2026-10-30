@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { FeatureList, QueueItem } from "../src/types.ts";
-import { activate, checkQueue, formatStatus, verifyItem, HarnessError } from "../src/queue.ts";
+import { activate, checkQueue, formatStatus, verifyItem, wipLimitOf, HarnessError } from "../src/queue.ts";
 
 const item = (over = {}) => ({
   id: "rls-proof",
@@ -79,4 +79,13 @@ test("re-verification of a claim that still holds reports nothing", () => {
 test("status prints the limits it enforces", () => {
   const out = formatStatus(list([item({ state: "active" })]));
   assert.match(out, /WIP 1\/1/);
+});
+
+test("queue.maxActive raises the cap where goals switch mid-item, and the cap still holds above it", () => {
+  const two = list([item({ id: "a", state: "active" }), item({ id: "b" }), item({ id: "c" })]);
+  assert.equal(activate(two, "b", { maxActive: 2 }).state, "active");
+  assert.throws(() => activate(two, "c", { maxActive: 2 }), /WIP limit reached[\s\S]*queue\.maxActive/);
+  assert.match(checkQueue(two, { maxActive: 1 }).join("\n"), /WIP limit exceeded: 2 active/);
+  assert.deepEqual(checkQueue(two, { maxActive: 2 }), []);
+  assert.equal(wipLimitOf(list([], { wip_limit: 3 }), 1), 3, "the file's own limit still counts when higher");
 });

@@ -113,7 +113,9 @@ same next number.
 For worktrees beside the repository rather than inside `.claude/`, `harnessimo worktree add
 <name>` makes `../<repo>-<name>` on its own branch and runs the install step; `merge` and
 `remove` bring it back and refuse to drop unmerged or uncommitted work. Which streams to fan
-out, which model takes each, and how reviews are batched: [Routing work](ROUTING.md).
+out, which model takes each, and how reviews are batched: [Routing work](ROUTING.md). One
+herdr pane, worktree and agent per lane, and agent teams inside one lane:
+[Agent teams and herdr](TEAMS.md).
 <!-- proof: test/cli.test.ts#worktree add makes a checkout beside the repository, on its branch, with the install run -->
 
 ## What this deliberately does not do

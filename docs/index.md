@@ -264,6 +264,40 @@ harnessimo hooks install           # the fast gates, before every commit
 
 Both flows in detail: [Use cases](REFERENCE.md).
 
+## How to use it well
+
+`npx harnessimo init`, then the daily loop: `harnessimo brief` → work one lane from its handoff
+→ `harnessimo check` → commit. [Guide](GUIDE.md)
+<!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
+
+**Several agents.** [herdr](https://herdr.dev), a terminal workspace manager for coding agents,
+gives each lane its own worktree and its own `claude` in a pane, so lanes cannot touch each
+other's files and every agent's state (idle, working, blocked, done) is visible. **Agent teams**
+— Claude Code's lead plus a few teammates on a shared task list — work inside one lane; `init`
+turns them on in `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`,
+`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`, a `TaskCompleted` gate).
+
+| Command | What for |
+| --- | --- |
+| `harnessimo worktree add\|merge\|remove\|list <name>` | one checkout per stream, merged back safely |
+| `harnessimo herd plan\|up\|status` | which lanes can run now; start them in herdr; who is blocked |
+| `harnessimo hook task-completed` | a team task cannot close while `check` is red |
+<!-- proof: test/cli.test.ts#herd plan runs fenced lanes side by side and holds the one that overlaps -->
+
+**A team session:** run `herdr`, open a pane in the repository, then `harnessimo herd plan`,
+`harnessimo herd up` (one worktree and agent per lane, 20 s apart), and `harnessimo herd status`
+— answer blocked agents first, merge finished lanes. **Rate limits:** at most 3 agents working,
+Sonnet for the work, Opus for reviews; on a 429 wait 60/120/240 s, then run one agent fewer.
+
+**Switching goals** is normal: `harnessimo track pause <slug> --reason "…"`, then start or resume
+the next lane — nothing else. A paused lane is not gated, fenced or nagged until `track resume`.
+<!-- proof: test/cli.test.ts#switching goals: pause with a reason, start the new lane on the same paths, and check stays green -->
+Depth: [Agent teams and herdr](TEAMS.md),
+[Routing work](ROUTING.md),
+[Adapting rules](ADAPTING.md) — hard bounds never bend,
+process rules that defeat the goal are amended and recorded, and lessons go to `DECISIONS.md`,
+`.claude/agents/` or an external [memory](MEMORY.md).
+
 ## Why you can trust it
 
 Every line here is checkable, which is the only kind of trust argument this project is
@@ -327,6 +361,7 @@ Every page answers one question. Find yours:
 | put this into a repo that already has its own scripts | [Guide → adopting](GUIDE.md#adopting) |
 | run several agents against one repository | [More than one agent](PARALLEL.md) |
 | route work to the right model, fan out into worktrees | [Routing work](ROUTING.md) |
+| run lanes in herdr panes and agent teams inside a lane, under the rate limit | [Agent teams and herdr](TEAMS.md) |
 | know when an agent may amend a rule that is in its way | [Adapting rules](ADAPTING.md) |
 | connect an external memory without a second source of truth | [Memory](MEMORY.md) |
 | understand why a rule exists at all | [The standard](STANDARD.md) |

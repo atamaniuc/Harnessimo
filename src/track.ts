@@ -108,3 +108,49 @@ export function outcomeEntry(title: string, number: string, outcome: string): st
 export function fillTemplate(template: string, { number, title }: { number: string; title: string }): string {
   return template.replace(/^# NNNN — <lane name>/m, `# ${number} — ${title}`).replace(/\bNNNN\b/g, number);
 }
+
+/**
+ * The index with one lane's status rewritten — `paused (reason)` or `active` —
+ * and its date moved to today. The next step is kept: it is what a cold session
+ * resumes from. Spec 0012.
+ */
+export function withStatus(
+  index: string,
+  specsDir: string,
+  lane: string,
+  { status, reason, date }: { status: "active" | "paused"; reason?: string; date: string },
+): { text: string; found: boolean } {
+  const needle = `${specsDir}/${lane}/handoff.md)`;
+  let found = false;
+  const text = index
+    .split("\n")
+    .map((line) => {
+      if (!line.startsWith("- ") || !line.includes(needle)) return line;
+      found = true;
+      const linkEnd = line.indexOf(needle) + needle.length;
+      const rest = line.slice(linkEnd);
+      const at = rest.search(/\b(active|paused|blocked)\b/);
+      const head = at === -1 ? `${line.slice(0, linkEnd)} — ` : line.slice(0, linkEnd) + rest.slice(0, at);
+      const next = /next:\s*(.+)$/.exec(rest)?.[1]?.trim();
+      const why = reason ? ` (${clean(reason)})` : "";
+      return `${head}${status}${why}, ${date}${next ? `, next: ${next}` : ""}`;
+    })
+    .join("\n");
+  return { text, found };
+}
+
+/** A reason fit for one line in parentheses. */
+function clean(reason: string): string {
+  return reason.replace(/[()]/g, "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * The handoff with a dated note at the top of its "State" section, so the
+ * session that resumes reads why the lane stopped before anything else there.
+ */
+export function withStateNote(handoff: string, note: string): string {
+  const lines = handoff.split("\n");
+  const at = lines.findIndex((line) => /^##\s+State\s*$/i.test(line));
+  if (at === -1) return `${handoff.replace(/\s*$/, "")}\n\n## State\n\n${note}\n`;
+  return [...lines.slice(0, at + 1), "", note, ...lines.slice(at + 1)].join("\n").replace(/\n{3,}/g, "\n\n");
+}

@@ -35,6 +35,16 @@ export class HarnessError extends Error {
   }
 }
 
+/**
+ * How many items may be active at once: the larger of the queue file's
+ * `wip_limit` and the configuration's `queue.maxActive`, never below one.
+ * Spec 0012: a goal switch mid-item should not force a fake "blocked" — a
+ * repository that switches goals often raises the cap instead.
+ */
+export function wipLimitOf(list: FeatureList, maxActive?: number): number {
+  return Math.max(1, list.wip_limit ?? 1, maxActive ?? 1);
+}
+
 const DEFAULT_TERMINAL: Record<string, string> = { code: "passing" };
 
 function terminalState(item: QueueItem, terminalByKind: Record<string, string>): string {
@@ -55,7 +65,7 @@ export function findItem(list: FeatureList, id: string): QueueItem {
 /**
  * Human-readable queue state, grouped by state with the limits spelled out.
  */
-export function formatStatus(list: FeatureList): string {
+export function formatStatus(list: FeatureList, maxActive?: number): string {
   const order = ["active", "blocked", "awaiting_gates", "not_started", "passing", "done"];
   const byState = new Map();
   for (const i of list.items) byState.set(i.state, [...(byState.get(i.state) ?? []), i]);
@@ -68,7 +78,7 @@ export function formatStatus(list: FeatureList): string {
   }
   const active = (byState.get("active") ?? []).length;
   const queued = (byState.get("awaiting_gates") ?? []).length;
-  lines.push(`\nWIP ${active}/${list.wip_limit ?? 1}   awaiting gates ${queued}/${list.review_queue_limit ?? "-"}`);
+  lines.push(`\nWIP ${active}/${wipLimitOf(list, maxActive)}   awaiting gates ${queued}/${list.review_queue_limit ?? "-"}`);
   return lines.join("\n");
 }
 
@@ -77,13 +87,14 @@ export function formatStatus(list: FeatureList): string {
  * started everywhere and finished nowhere) and the Definition of Ready.
  *
  */
-export function activate(list: FeatureList, id: string): QueueItem {
-  const wipLimit = list.wip_limit ?? 1;
+export function activate(list: FeatureList, id: string, { maxActive }: { maxActive?: number } = {}): QueueItem {
+  const wipLimit = wipLimitOf(list, maxActive);
   const active = list.items.filter((i) => i.state === "active");
   if (active.length >= wipLimit) {
     throw new HarnessError(
       `WIP limit reached — "${active[0]?.id}" is already active`,
-      "finish or block that item first; split attention is what produces work started everywhere and finished nowhere",
+      "finish or block that item first; split attention is what produces work started everywhere and finished nowhere" +
+        " — or, if goals switch often here, raise queue.maxActive in harnessimo.config.json",
     );
   }
   const queueLimit = list.review_queue_limit ?? Infinity;
@@ -112,11 +123,11 @@ export function activate(list: FeatureList, id: string): QueueItem {
  * thing is ceremony, and ceremony gets skipped rather than followed.
  *
  */
-export function verifyItem(list: FeatureList, id: string, runner: (command: string) => { ok: boolean, output: string }, options: { terminalByKind?: Record<string,string> } = {}) {
+export function verifyItem(list: FeatureList, id: string, runner: (command: string) => { ok: boolean, output: string }, options: { terminalByKind?: Record<string,string>, maxActive?: number } = {}) {
   const terminalByKind = { ...DEFAULT_TERMINAL, ...(options.terminalByKind ?? {}) };
   let item = findItem(list, id);
   if (item.state === "not_started" || item.state === "blocked") {
-    activate(list, id);
+    activate(list, id, { maxActive: options.maxActive });
     item = findItem(list, id);
   }
   if (item.state !== "active") {
@@ -148,10 +159,10 @@ export function verifyItem(list: FeatureList, id: string, runner: (command: stri
  * @param }} options
  * @returns {string[]} problems, each already formatted as what / why / fix
  */
-export function checkQueue(list: FeatureList, options: { reverify?: boolean, runner?: (command: string) => { ok: boolean, output: string } } = {}): string[] {
+export function checkQueue(list: FeatureList, options: { reverify?: boolean, runner?: (command: string) => { ok: boolean, output: string }, maxActive?: number } = {}): string[] {
   const { reverify = false, runner } = options;
   const problems = [];
-  const wipLimit = list.wip_limit ?? 1;
+  const wipLimit = wipLimitOf(list, options.maxActive);
 
   const active = list.items.filter((i) => i.state === "active");
   if (active.length > wipLimit) {

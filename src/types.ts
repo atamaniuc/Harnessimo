@@ -108,6 +108,8 @@ export interface QueueConfig {
   file: string;
   timeoutMinutes: number;
   terminalByKind: Record<string, string>;
+  /** Items active at once (spec 0012); the queue file's `wip_limit` still counts if higher. */
+  maxActive: number;
 }
 
 export interface LockedConfig {
@@ -193,6 +195,20 @@ export interface WorktreeConfig {
   install: string[] | null;
 }
 
+/** Lane agents in herdr panes (spec 0011): how many at once, how they start, how they back off. */
+export interface HerdConfig {
+  /** Lane agents working at once; the rate-limit cap. */
+  maxWorking: number;
+  /** Seconds between two agent starts. */
+  staggerSeconds: number;
+  /** herdr agent kind each lane agent is started as (`herdr agent start --kind`). */
+  agentKind: string;
+  /** Arguments passed to the agent. */
+  agentArgs: string[];
+  /** Waits before each re-prompt after a rate-limit error, in seconds. */
+  backoffSeconds: number[];
+}
+
 /** A configuration file, read and merged with the defaults of each declared section. */
 export interface LoadedConfig {
   root: string;
@@ -212,6 +228,7 @@ export interface LoadedConfig {
   autonomy?: AutonomyConfig;
   hooks?: HooksConfig;
   worktree?: WorktreeConfig;
+  herd?: HerdConfig;
 }
 
 /** Which checks a configuration turns on. */

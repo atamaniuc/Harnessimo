@@ -208,3 +208,48 @@ command the message names); bundling a memory server (the pattern is vendor-neut
 package takes no dependency); making `worktree` a twelfth check (it decides nothing about
 whether work is finished).
 
+---
+
+## 2026-10-30 — herdr owns the topology; agent teams work inside one lane
+
+`harnessimo herd` starts one herdr pane, one worktree and one agent per lane; Claude Code agent
+teams are used inside a lane, on disjoint files (spec 0012).
+
+**Why:** agent teams have no per-teammate worktree — teammates share the lead's checkout, and
+an `isolation` option on an agent call means it is not a teammate. So a team cannot be the
+unit of parallel lanes without two teammates one edit away from overwriting each other. herdr
+gives each lane its own checkout and reports each agent's state, which makes cross-lane file
+collisions impossible; `## Owns` still decides which lanes may run at once, because a shared
+path collides at merge.
+
+**Rate limits are a design input:** several agents share one API limit, so the defaults cap
+working agents at 3, stagger starts by 20 s, write a 60/120/240 s backoff into every kickoff,
+and keep teammate caches warm for an hour.
+
+**Rejected:** a `TeammateIdle` gate (no re-entry flag, so an unfixable check would loop a
+teammate and burn the limit); `herd` closing panes or stopping the herdr server (it never
+closes what it did not create); making `herd` a twelfth check (it decides nothing about
+whether work is finished).
+
+---
+
+## 2026-10-30 — Rules serve the goal; switching goals is a normal path
+
+`harnessimo track pause|resume`, `queue.maxActive`, and paused-with-a-reason lanes spared the
+task gate, the fences and the staleness rule (spec 0012).
+
+**Why:** the owner works in an agile way — goals change mid-flight, to another lane, to harness
+work, to another branch. Before this, a switch tripped checks that protected nothing: a lane put
+down for a week went stale and turned every turn's Stop gate red; its fence blocked the lane
+that took over its files; its half-ticked task list stayed gated; the one-active-item queue
+forced a fake "blocked". Each of those rules is about live work, and a lane paused with a
+written reason is not live — it is a decision someone recorded.
+
+**What stays:** the hard bounds. Proof markers in a paused lane still resolve; a pause with no
+reason gets no pass; locked surfaces, evidence and never bypassing a check are untouched.
+Resuming restores the gate and the fence, so a real overlap is caught when it becomes real.
+
+**Rejected:** scoping the Stop gate to "what this goal touched" (it would need to guess the
+goal, and a gate that guesses is a gate nobody trusts); a `--force` to skip checks during a
+switch (a bypass by another name).
+

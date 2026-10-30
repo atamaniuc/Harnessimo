@@ -232,7 +232,8 @@
         "hard bounds versus process rules",
         "the decision procedure",
         "scoped, recorded, reversible amendments",
-        "the worked cases"
+        "the worked cases",
+        "switching goals: pause, resume, and what a paused lane is spared"
       ],
       "excludes": [
         {
@@ -254,6 +255,28 @@
         {
           "heading": "Opening and closing a lane",
           "belongs": "GUIDE.md"
+        }
+      ]
+    },
+    "TEAMS.md": {
+      "answers": "How do several Claude Code agents run at once — herdr between lanes, agent teams inside one — without collisions or rate-limit failures?",
+      "profile": "user",
+      "owns": [
+        "why herdr owns the topology",
+        "herdr and agent-teams setup",
+        "harnessimo herd plan, up and status",
+        "agent teams inside one lane",
+        "the lead protocol",
+        "the rate-limit protocol"
+      ],
+      "excludes": [
+        {
+          "heading": "Three roles",
+          "belongs": "ROUTING.md"
+        },
+        {
+          "heading": "A lane says what it owns",
+          "belongs": "PARALLEL.md"
         }
       ]
     }

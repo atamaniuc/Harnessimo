@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkHandoffRefs, checkTracks, liveTrackSpecDirs , staleProblems } from "../src/tracks.ts";
+import { checkHandoffRefs, checkTracks, liveTrackSpecDirs, pauseReason, pausedTrackSpecDirs, staleProblems } from "../src/tracks.ts";
 import { fakeResolver } from "./helpers.ts";
 
 const resolver = fakeResolver({
@@ -91,4 +91,28 @@ test("the rule stays quiet unless it was asked for, and never invents a date", (
     [],
     "a line with no date is the tracks check's business, not this one's",
   );
+});
+
+// ---- spec 0012: switching goals is a normal path
+
+test("a pause carries its reason, and a pause without one is not a pause with a reason", () => {
+  assert.equal(pauseReason("- **A** — [handoff](specs/0001-a/handoff.md) — paused (waiting on the API), 2026-01-01"), "waiting on the API");
+  assert.equal(pauseReason("- **A** — [handoff](specs/0001-a/handoff.md) — paused — owner switched goals"), "owner switched goals");
+  assert.equal(pauseReason("- **A** — [handoff](specs/0001-a/handoff.md) — paused, 2026-01-01"), null);
+  assert.equal(pauseReason("- **A** — [handoff](specs/0001-a/handoff.md) — active, 2026-01-01"), null);
+  assert.deepEqual(
+    pausedTrackSpecDirs(
+      "- **A** — [handoff](specs/0001-a/handoff.md) — paused (x), 2026-01-01\n- **B** — [handoff](specs/0002-b/handoff.md) — active\n",
+    ),
+    ["specs/0001-a"],
+  );
+});
+
+test("a lane paused with a reason is never stale; one paused without a reason still is", () => {
+  const index =
+    "- **A** — [handoff](specs/0001-a/handoff.md) — paused (owner switched to billing), 2026-01-01, next: T3\n" +
+    "- **B** — [handoff](specs/0002-b/handoff.md) — paused, 2026-01-01, next: T1\n";
+  const problems = staleProblems(index, { today: "2026-09-08", afterDays: 14 });
+  assert.deepEqual(problems.map((p) => p.line), [2], "only the pause nobody explained");
+  assert.match(problems[0]!.reason, /track pause <slug> --reason/);
 });
