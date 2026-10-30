@@ -110,6 +110,12 @@ on claims this repository has already fixed.
 The lane-number race above is the worktree case exactly: two sessions, two checkouts, the
 same next number.
 
+For worktrees beside the repository rather than inside `.claude/`, `harnessimo worktree add
+<name>` makes `../<repo>-<name>` on its own branch and runs the install step; `merge` and
+`remove` bring it back and refuse to drop unmerged or uncommitted work. Which streams to fan
+out, which model takes each, and how reviews are batched: [Routing work](ROUTING.md).
+<!-- proof: test/cli.test.ts#worktree add makes a checkout beside the repository, on its branch, with the install run -->
+
 ## What this deliberately does not do
 
 Nothing here locks, waits or schedules. A tool that owns the order of work is a tool a

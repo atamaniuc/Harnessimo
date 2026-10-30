@@ -153,3 +153,13 @@ How much of this repository's work is watched while it happens. A floor, not a s
 | Key | Type | What it does |
 |---|---|---|
 | `level` | `"watched"` \| `"reviewed"` \| `"unattended"` | `watched` — a person is reading each step; the fast checks. `reviewed` — nobody watched the steps but a person will read the diff; adds re-verification and the locked-surface check. `unattended` — nobody looked at all; adds clean exit and cold start. |
+
+## `worktree`
+
+`harnessimo worktree`: one git worktree per independent stream of work, beside the main checkout, with its dependencies installed. Not a check — the command that opens, merges and removes parallel streams.
+
+| Key | Type | What it does |
+|---|---|---|
+| `prefix` | string | Branch prefix. `wt-` (the default) puts `worktree add search` on branch `wt-search`. |
+| `dir` | string | Where worktrees go, relative to the main checkout. `..` (the default) puts `<repo>-<name>` beside it. |
+| `install` | array or null | Commands run inside a fresh worktree, so its first commit can pass the pre-commit hook. Null (the default) takes the install step of `coldStart.commands`, such as `npm ci`; `[]` runs nothing. |

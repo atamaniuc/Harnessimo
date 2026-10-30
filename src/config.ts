@@ -57,6 +57,8 @@ const SECTION_DEFAULTS = {
   // runs at this level or higher, and --autonomy can only raise it.
   autonomy: { level: "watched" },
   hooks: { before: [] }, // project commands the pre-commit hook runs before the gates
+  // Spec 0011. Not a check: the command that opens and closes parallel streams.
+  worktree: { prefix: "wt-", dir: "..", install: null },
 };
 
 export class ConfigError extends Error {}

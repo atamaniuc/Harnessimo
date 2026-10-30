@@ -211,7 +211,10 @@ practice: a fresh session's budget goes on whatever you failed to rule out.
 Once work runs as several agents — subagents in one session, parallel worktrees, a headless
 run beside a person typing — a lane declares which paths it owns, `harnessimo tracks` fails
 when two live lanes claim the same ones, and `hooks install --agent` stops a turn ending
-while `check` is red. [More than one agent](PARALLEL.md) has all of it.
+while `check` is red. [More than one agent](PARALLEL.md) has all of it. Which model takes which
+work, `harnessimo worktree` for parallel streams, and batched review: [Routing work](ROUTING.md).
+When a process rule stands in the way of the goal: [Adapting rules](ADAPTING.md). Connecting an
+external memory: [Memory](MEMORY.md).
 
 ## 7. On every commit
 
@@ -372,7 +375,7 @@ configuration. It gains locked surfaces and cold start, which it never had.
 
 ### After adoption
 
-- Pin the version you adopted: `harnessimo@0.10.1` rather than a range. Tracking the latest
+- Pin the version you adopted: `harnessimo@0.11.0` rather than a range. Tracking the latest
   means a rule can tighten under you between two green runs, which is exactly the surprise
   a gate must not produce.
 - Run `harnessimo doctor` in CI on a schedule, or read it before each release. It is the one

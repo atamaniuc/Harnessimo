@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -94,6 +94,32 @@ test("init scaffolds a working harness that immediately passes its own check", (
   const check = run(dir, "check");
   assert.equal(check.status, 0, check.out);
   rmSync(dir, { recursive: true, force: true });
+});
+
+test("init writes the agent roles and the hooks they assume, and leaves existing settings alone", () => {
+  const dir = fixture({ "README.md": "# Project\n" });
+  try {
+    const init = run(dir, "init");
+    assert.equal(init.status, 0, init.out);
+    for (const role of ["architect", "implementer", "scout"]) {
+      assert.ok(existsSync(join(dir, ".claude", "agents", `${role}.md`)), `${role}.md was not written`);
+    }
+    const settings = readFileSync(join(dir, ".claude", "settings.json"), "utf8");
+    for (const event of ["SessionStart", "Stop", "SubagentStop"]) assert.match(settings, new RegExp(`"${event}"`));
+    assert.ok(existsSync(join(dir, ".claude", "hooks", "harnessimo-gate.sh")), "a Stop hook pointing at nothing");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+
+  const mine = fixture({ "README.md": "# Project\n", ".claude/settings.json": '{ "theme": "light" }\n' });
+  try {
+    const init = run(mine, "init");
+    assert.equal(init.status, 0, init.out);
+    assert.equal(readFileSync(join(mine, ".claude", "settings.json"), "utf8"), '{ "theme": "light" }\n');
+    assert.match(init.out, /= \.claude\/settings\.json/);
+  } finally {
+    rmSync(mine, { recursive: true, force: true });
+  }
 });
 
 // Spec 0004. The guard is the only rule here that answers while the work
@@ -344,4 +370,94 @@ test("a line that crosses a boundary fails, with the reason and not the pattern"
   assert.match(out, /app\/page\.ts:1/);
   assert.match(out, /bypasses row-level security/);
   rmSync(dir, { recursive: true, force: true });
+});
+
+// ---- worktree (spec 0011), against real git repositories
+
+function repo(files: Record<string, string>): { dir: string; git: (...a: string[]) => string; cleanup: () => void } {
+  const dir = fixture(files);
+  const git = (...a: string[]): string =>
+    execFileSync("git", ["-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false", ...a], {
+      cwd: dir,
+      encoding: "utf8",
+    });
+  git("init", "-q", "-b", "main");
+  git("add", "-A");
+  git("commit", "-qm", "init");
+  const parent = dirname(dir);
+  const name = dir.slice(parent.length + 1);
+  const cleanup = (): void => {
+    rmSync(dir, { recursive: true, force: true });
+    for (const suffix of ["-search", "-api"]) rmSync(join(parent, name + suffix), { recursive: true, force: true });
+  };
+  return { dir, git, cleanup };
+}
+
+const WT_CONFIG = JSON.stringify({
+  worktree: { install: ["node -e \"require('fs').writeFileSync('installed.txt', 'yes')\""] },
+});
+
+test("worktree add makes a checkout beside the repository, on its branch, with the install run", () => {
+  const { dir, git, cleanup } = repo({ "harnessimo.config.json": WT_CONFIG, ".gitignore": "installed.txt\n" });
+  try {
+    const add = run(dir, "worktree", "add", "search");
+    assert.equal(add.status, 0, add.out);
+    const path = `${dir}-search`;
+    assert.ok(existsSync(join(path, "installed.txt")), "the install command ran inside the new worktree");
+    assert.match(git("worktree", "list"), /\[wt-search\]/);
+    const again = run(dir, "worktree", "add", "search");
+    assert.equal(again.status, 1);
+    assert.match(again.out, /already exists[\s\S]*fix:/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("worktree merge brings the stream in; remove refuses unmerged or dirty work, then cleans up", () => {
+  const { dir, git, cleanup } = repo({ "harnessimo.config.json": JSON.stringify({ worktree: { install: [] } }) });
+  try {
+    assert.equal(run(dir, "worktree", "add", "api").status, 0);
+    const path = `${dir}-api`;
+    writeFileSync(join(path, "api.txt"), "v1\n");
+    execFileSync("git", ["-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false", "add", "api.txt"], { cwd: path });
+    execFileSync("git", ["-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false", "commit", "-qm", "api"], { cwd: path });
+
+    const early = run(dir, "worktree", "remove", "api");
+    assert.equal(early.status, 1, "an unmerged branch is not deleted");
+    assert.match(early.out, /not merged[\s\S]*worktree merge/);
+
+    writeFileSync(join(path, "scratch.txt"), "unsaved\n");
+    const dirtyMerge = run(dir, "worktree", "merge", "api");
+    assert.equal(dirtyMerge.status, 1);
+    assert.match(dirtyMerge.out, /uncommitted changes/);
+    rmSync(join(path, "scratch.txt"));
+
+    const merge = run(dir, "worktree", "merge", "api");
+    assert.equal(merge.status, 0, merge.out);
+    assert.ok(existsSync(join(dir, "api.txt")), "the stream's commit is in the main checkout");
+
+    writeFileSync(join(path, "scratch.txt"), "unsaved\n");
+    const dirtyRemove = run(dir, "worktree", "remove", "api");
+    assert.equal(dirtyRemove.status, 1);
+    assert.match(dirtyRemove.out, /git worktree remove --force/);
+    rmSync(join(path, "scratch.txt"));
+
+    const remove = run(dir, "worktree", "remove", "api");
+    assert.equal(remove.status, 0, remove.out);
+    assert.ok(!existsSync(path));
+    assert.doesNotMatch(git("branch"), /wt-api/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a worktree name that would escape its directory is refused before git runs", () => {
+  const { dir, cleanup } = repo({ "README.md": "# x\n" });
+  try {
+    const bad = run(dir, "worktree", "add", "../escape");
+    assert.equal(bad.status, 2);
+    assert.match(bad.out, /cannot name a worktree/);
+  } finally {
+    cleanup();
+  }
 });

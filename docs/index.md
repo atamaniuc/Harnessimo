@@ -326,6 +326,9 @@ Every page answers one question. Find yours:
 | look up a config key | [Configuration](CONFIGURATION.md) |
 | put this into a repo that already has its own scripts | [Guide → adopting](GUIDE.md#adopting) |
 | run several agents against one repository | [More than one agent](PARALLEL.md) |
+| route work to the right model, fan out into worktrees | [Routing work](ROUTING.md) |
+| know when an agent may amend a rule that is in its way | [Adapting rules](ADAPTING.md) |
+| connect an external memory without a second source of truth | [Memory](MEMORY.md) |
 | understand why a rule exists at all | [The standard](STANDARD.md) |
 | ask something short that is not a bug | [FAQ](FAQ.md) |
 | fix a run that just went red | [Troubleshooting](TROUBLESHOOTING.md) |
