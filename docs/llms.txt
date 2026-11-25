@@ -259,8 +259,7 @@ $ harnessimo agent
 
 - Run `harnessimo brief` at the start of a session: it prints the live tracks, the
   head of each handoff and what is in flight. Read it before touching anything.
-- Run `harnessimo check` before saying anything is done. Green is the claim; your
-  summary is not.
+- Run `harnessimo check` when delivering project changes.
 - Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
   own command and records the outcome — that is the only way something becomes passing.
 ```
@@ -1098,7 +1097,7 @@ Clean state at session exit (lecture 12): no debris left behind, and progress wr
 | `progressFile` | string | The file a session must update when it changed code. |
 | `codePrefixes` | array of string | What counts as code for the progress rule. Empty means anything that is not Markdown. |
 | `progressThreshold` | number | Changed lines below which the progress rule stays quiet, so a one-line fix is not told to write a progress note. Defaults to 50. |
-| `requireCleanTree` | boolean | Also fail when the working tree has uncommitted changes. |
+| `requireCleanTree` | boolean | Also fail when tracked files have uncommitted changes. |
 
 ## `instructions`
 
@@ -1566,30 +1565,19 @@ A lock would not have helped: no lock in one worktree is visible in another. The
 on the merged tree, which is the only place the collision exists.
 <!-- proof: src/claims.ts:duplicateNumbers -->
 
-## A turn does not end on a claim
+## Checks at delivery
 
-`harnessimo brief` gates the start of a session; the pre-commit hook gates the start of a
-commit. Between those two points an agent can finish a turn saying "done" with the checks
-red — and when the work passes to another agent instead of to a commit, no gate runs at all.
+`harnessimo hooks install --agent` installs the startup brief and the `TaskCompleted`
+gate for agent teams. Run it once in an existing checkout to retire legacy Harnessimo
+`Stop` and `SubagentStop` hooks. It preserves other commands in those events.
+<!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
 
-```bash
-harnessimo hooks install --agent
-```
-
-installs `Stop` and `SubagentStop` alongside the startup hook. A red `check` blocks the end
-of the turn and hands the report back to the agent, so the next thing it reads is the file,
-the line and the fix.
-
-`SubagentStop` matters as much as `Stop`: in a parallel run the subagent is the one
-finishing a lane, and its turn is the one nobody is watching.
-
-The hook does not block a turn that is already continuing because it blocked once. A gate
-that cannot be satisfied is a loop, and a loop is how a gate gets deleted.
-<!-- proof: test/hooks.test.ts#a turn already continuing from this hook is not blocked again -->
-
-It runs `check` — the six rules that take about a second. Cold start, re-verification and
-the test suite stay in CI, for the same reason the pre-commit hook leaves them there: a gate
-that makes every turn slow is a gate somebody removes.
+In a Git checkout, automatic proof and boundary scans use the Git index, including staged
+additions. Boundaries read only files covered by their rules. Local files outside the index
+stay out of discovery even without a Git ignore entry. Required proof documents and task lists
+for live tracks are explicit inputs. The standalone proof command can also take a file path.
+Without Git, scans use their configured roots on disk.
+<!-- proof: test/cli.test.ts#automatic scans cover tracked and staged project files and skip local tools -->
 
 ## Handing one lane to one agent
 
@@ -1810,7 +1798,7 @@ merged into, never replaced:
 }
 ```
 
-plus the `SessionStart` brief and the `Stop`/`SubagentStop` gate. `subagentPromptCacheTtl`
+plus the `SessionStart` brief. `subagentPromptCacheTtl`
 keeps teammates' prompt caches warm for an hour instead of five minutes — a teammate waiting
 on a review would otherwise pay for its whole context again.
 
@@ -2078,9 +2066,7 @@ Save at the end of a piece of work, not continuously, and save **atomic facts**,
 3. Anything about this repository's own state goes into `PROGRESS.md`, `DECISIONS.md` or the
    handoff instead — the memory may hold a pointer to it.
 
-A `Stop` hook can carry the reminder: the gate runs `harnessimo check`; a second command
-beside it can print the checkpoint question. Keep it a prompt, not an automatic dump — a
-memory filled with transcripts is a memory nobody can search.
+Ask the checkpoint question when delivering work. Save the fact a future session needs.
 
 ## A worked example: MemPalace
 
@@ -2940,7 +2926,7 @@ boundary in a written handoff rather than in someone's head.
 **How to use it**
 
 ```bash
-harnessimo hooks install --agent   # SessionStart, Stop and SubagentStop in .claude/settings.json
+harnessimo hooks install --agent   # SessionStart and TaskCompleted in .claude/settings.json
 harnessimo brief                   # the same output, on demand
 ```
 

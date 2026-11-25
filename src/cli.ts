@@ -40,12 +40,12 @@ import { formatLockedViolations, lockedViolations } from "./locked.ts";
 import { coldStartProblems } from "./coldstart.ts";
 import { debrisProblems, instructionProblems, progressProblems } from "./cleanexit.ts";
 import { releaseProblems } from "./release.ts";
-import { boundaryProblems } from "./boundaries.ts";
+import { boundaryApplies, boundaryProblems } from "./boundaries.ts";
 import { thresholdProblems, unprotectedFloors } from "./thresholds.ts";
 import { detectConfig } from "./detect.ts";
 import { DEFAULT_LEVEL, MEANING, addedBy, effectiveLevel, levelProblem, required, unbacked } from "./autonomy.ts";
 import type { Level } from "./autonomy.ts";
-import { AGENT_GATE_PATH, HOOKS_DIR, HOOK_PATH, TASK_COMPLETED_COMMAND, agentGateScript, hookScript, hookStatus, taskCompletedOutcome } from "./hooks.ts";
+import { HOOKS_DIR, HOOK_PATH, TASK_COMPLETED_COMMAND, hookScript, hookStatus, removeTurnGates, taskCompletedOutcome } from "./hooks.ts";
 import {
   HERD_DEFAULTS,
   agentName,
@@ -209,13 +209,38 @@ function makeRunner(timeoutMinutes: number): (cmd: string) => RunResult {
 const git = (...argv: string[]): string =>
   execFileSync("git", argv, { cwd: ROOT, encoding: "utf8" }).trim();
 
+function gitPaths(...argv: string[]): string[] {
+  return execFileSync("git", [...argv, "-z"], {
+    cwd: ROOT, encoding: "utf8", maxBuffer: 32 * 1024 * 1024,
+  }).split("\0").filter(Boolean);
+}
+
+let indexedPaths: ReadonlySet<string> | undefined;
+
+function projectPaths(): ReadonlySet<string> | undefined {
+  if (indexedPaths) return indexedPaths;
+  try {
+    if (execFileSync("git", ["rev-parse", "--is-inside-work-tree"], {
+      cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
+    }).trim() !== "true") return undefined;
+  } catch {
+    // A project can run the harness before initializing Git.
+    return undefined;
+  }
+  indexedPaths = new Set(gitPaths("ls-files", "--cached"));
+  return indexedPaths;
+}
+
 // ---------------------------------------------------------------- checks
 
 function runProof({ strict }: { strict?: boolean } = {}): CheckResult {
   const cfg = config();
   const docs = requireSection(cfg, "docs", 'add a "docs" section naming the roots to scan');
   const resolver = createResolver(ROOT, docs);
-  const paths = positional.length > 0 ? positional : collectDocs(ROOT, docs);
+  const indexed = positional.length === 0 ? projectPaths() : undefined;
+  // A required document is an explicit project input, even before its first git add.
+  const scope = indexed && new Set([...indexed, ...docs.mustCarryProof]);
+  const paths = positional.length > 0 ? positional : collectDocs(ROOT, docs, scope);
   const files = readAll(ROOT, paths);
   const problems = verifyProofs(files, resolver, {
     strict: strict || flags.has("--strict"),
@@ -309,7 +334,8 @@ function runBoundaries(): CheckResult {
   const cfg = config();
   const bounds = requireSection(cfg, "boundaries", 'add a "boundaries" section listing the lines the code may not cross');
   if (!bounds.rules.length) return { problems: [], summary: "no boundaries declared, nothing to cross" };
-  const paths = collectFiles(ROOT, { scan: bounds.scan ?? ["."], skip: cfg.docs?.skip ?? [] });
+  const paths = collectFiles(ROOT, { scan: bounds.scan ?? ["."], skip: cfg.docs?.skip ?? [] }, projectPaths())
+    .filter((path) => bounds.rules.some((rule) => boundaryApplies(rule, path)));
   const files = readAll(ROOT, paths);
   const problems = boundaryProblems(files, bounds.rules);
   return {
@@ -357,7 +383,8 @@ function runTasks() {
   const resolver = createResolver(ROOT, docs);
   if (!resolver.fileExists(tracks.file)) return { problems: [], summary: "no track index, nothing to gate" };
   const tracksText = resolver.readFile(tracks.file);
-  const files = readAll(ROOT, collectDocs(ROOT, docs).filter((p) => p.endsWith(`/${tracks.taskFile}`)));
+  const live = liveTrackSpecDirs(tracksText, tracks.specsDir);
+  const files = readAll(ROOT, live.map((dir) => `${dir}/${tracks.taskFile}`).filter((file) => resolver.fileExists(file)));
   // Spec 0012: a lane paused with a reason is gated again when it resumes, the
   // way a closed lane is not gated at all. Its proof markers still resolve —
   // that is the proof check's, and evidence is never optional.
@@ -370,16 +397,12 @@ function runTasks() {
   // Count what was actually gated, not what was read. A summary that reports
   // every task list in the repository as "live" overstates the gate's reach —
   // the same defect this tool refuses everywhere else.
-  const live = new Set(liveTrackSpecDirs(tracksText, tracks.specsDir));
-  const gated = files.filter((f) => {
-    const dir = f.path.slice(0, -(tracks.taskFile.length + 1));
-    return live.has(dir) && !paused.has(dir);
-  });
+  const gated = files.filter((f) => !paused.has(f.path.slice(0, -(tracks.taskFile.length + 1))));
   return {
     problems,
     summary:
       `checked boxes in ${gated.length} live task list(s) name a passing check` +
-      (files.length > gated.length ? ` (${files.length - gated.length} closed or paused lane(s) not gated)` : ""),
+      (files.length > gated.length ? ` (${files.length - gated.length} paused lane(s) not gated)` : ""),
   };
 }
 
@@ -428,15 +451,14 @@ function runCleanExit(base: string, head: string): CheckResult {
   if (!clean.scan.length) return { problems: [], summary: "no paths configured to scan" };
   let changed: string[] = [];
   try {
-    changed = git("diff", "--name-only", `${base}..${head}`).split("\n").filter(Boolean);
+    changed = gitPaths("diff", "--name-only", `${base}..${head}`);
   } catch {
     return {
       problems: [],
       summary: `cannot resolve ${base}..${head} — unknown revision, or a clone too shallow to hold it; skipped`,
     };
   }
-  const inScope = new Set(collectFiles(ROOT, { scan: clean.scan, skip: cfg.docs?.skip ?? [] }));
-  const touched = changed.filter((p) => inScope.has(p) && existsSync(join(ROOT, p)));
+  const touched = collectFiles(ROOT, { scan: clean.scan, skip: cfg.docs?.skip ?? [] }, new Set(changed));
   const problems = debrisProblems(readAll(ROOT, touched), { markers: clean.markers ?? undefined, allow: clean.allow });
   // Line counts, so the progress rule can stay quiet for a typo fix and speak
   // for a session's worth of work.
@@ -459,7 +481,7 @@ function runCleanExit(base: string, head: string): CheckResult {
     }),
   );
   if (clean.requireCleanTree) {
-    const dirty = git("status", "--porcelain").split("\n").filter(Boolean);
+    const dirty = git("status", "--porcelain", "--untracked-files=no").split("\n").filter(Boolean);
     if (dirty.length > 0) {
       problems.push({
         file: "(working tree)",
@@ -891,8 +913,7 @@ function cmdInit() {
   }
 
   if (!settingsExisted || force) {
-    // Spec 0011: the brief at SessionStart and the gate at Stop/SubagentStop,
-    // so the agent templates written above arrive with the hooks they assume.
+    // Install the startup brief and the team task completion gate.
     installAgentHooks(force);
   }
 
@@ -1018,8 +1039,8 @@ function cmdBrief() {
 }
 
 /**
- * The agent-side hooks: the brief at SessionStart, the gate at Stop and
- * SubagentStop. Shared by `hooks install --agent` and `init`, so a repository
+ * The brief at SessionStart and the explicit completion gate at TaskCompleted.
+ * Shared by `hooks install --agent` and `init`, so a repository
  * adopting the tool gets the same wiring whichever door it came in by.
  */
 function installAgentHooks(force: boolean): void {
@@ -1057,7 +1078,7 @@ function installAgentHooks(force: boolean): void {
   }
 
   const settingsPath = join(ROOT, ".claude", "settings.json");
-  let settings = {};
+  let settings: AgentSettings = {};
   if (existsSync(settingsPath)) {
     try {
       settings = JSON.parse(readFileSync(settingsPath, "utf8")) as AgentSettings;
@@ -1068,27 +1089,11 @@ function installAgentHooks(force: boolean): void {
       );
     }
   }
-  // The other half of the gate (spec 0006): a turn does not end on a claim.
-  // `brief` covers the start of a session and the pre-commit hook covers the
-  // start of a commit; between them an agent can finish a turn saying "done"
-  // with the checks red, and hand the work on before a commit ever happens.
-  const gate = join(ROOT, AGENT_GATE_PATH);
-  if (!existsSync(gate) || force) {
-    writeFileSync(gate, agentGateScript(), { mode: 0o755 });
-    ok(`harnessimo: wrote ${AGENT_GATE_PATH}`);
-  } else {
-    ok(`harnessimo: ${AGENT_GATE_PATH} already exists (--force overwrites)`);
-  }
-  const gateCommand = `$CLAUDE_PROJECT_DIR/${AGENT_GATE_PATH}`;
-
-  let settingsOut: AgentSettings = settings;
+  let settingsOut = removeTurnGates(settings);
+  const migrated = settingsOut !== settings;
   const wired: string[] = [];
   for (const [event, cmd, meta] of [
     ["SessionStart", command, { timeout: 10, statusMessage: "Loading harness state…" }],
-    // SubagentStop as well as Stop: in a parallel run the subagent is the
-    // one finishing a lane, and it is the turn nobody is watching.
-    ["Stop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
-    ["SubagentStop", gateCommand, { timeout: 120, statusMessage: "Running the harness gates…" }],
     // Agent teams: a shared-list task does not close while the gates are red.
     ["TaskCompleted", TASK_COMPLETED_COMMAND, { timeout: 180, statusMessage: "Running the harness gates before the task closes…" }],
   ] as const) {
@@ -1096,9 +1101,10 @@ function installAgentHooks(force: boolean): void {
     settingsOut = next;
     if (added) wired.push(event);
   }
-  if (wired.length > 0) {
+  if (migrated || wired.length > 0) {
     writeFileSync(settingsPath, JSON.stringify(settingsOut, null, 2) + "\n");
-    ok(`harnessimo: added ${wired.join(", ")} to .claude/settings.json`);
+    if (migrated) ok("harnessimo: removed legacy turn gates from .claude/settings.json");
+    if (wired.length) ok(`harnessimo: added ${wired.join(", ")} to .claude/settings.json`);
   } else {
     ok("harnessimo: .claude/settings.json already runs all of them");
   }
@@ -1126,8 +1132,7 @@ function cmdHooks() {
     installAgentHooks(flags.has("--force"));
     return ok(
       "\nA new session now starts with the live tracks, the head of each handoff,\n" +
-        "what is in flight, and what this repository enforces — and a turn does not\n" +
-        "end while `harnessimo check` is red.\n\n" +
+        "what is in flight, and what this repository enforces. Team tasks are checked at completion.\n\n" +
         "Using something other than Claude Code? `harnessimo agent` prints the same\n" +
         "contract for any tool that reads an instruction file.",
     );

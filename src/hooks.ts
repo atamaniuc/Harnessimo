@@ -10,6 +10,8 @@
 // the hook is then a file in the repository that everyone gets, reviewable
 // like any other, instead of a local artifact each person has to be told about.
 
+import type { AgentSettings } from "./types.ts";
+
 export const HOOK_PATH = ".githooks/pre-commit";
 export const HOOKS_DIR = ".githooks";
 
@@ -98,6 +100,31 @@ export function hookStatus({ hookExists, hooksPath }: { hookExists: boolean, hoo
  * re-verification and the tests belong in CI, where waiting costs nobody.
  */
 export const AGENT_GATE_PATH = ".claude/hooks/harnessimo-gate.sh";
+
+/** Remove legacy Harnessimo commands while keeping other hooks in each matcher. */
+export function removeTurnGates(settings: AgentSettings): AgentSettings {
+  if (!settings.hooks) return settings;
+  const hooks = { ...settings.hooks };
+  let changed = false;
+  for (const event of ["Stop", "SubagentStop"]) {
+    const entries = hooks[event];
+    if (!entries) continue;
+    const kept = entries.flatMap((entry) => {
+      if (!entry.hooks) return [entry];
+      const commands = entry.hooks.filter((hook) =>
+        hook.type !== "command" ||
+        (hook.command !== `$CLAUDE_PROJECT_DIR/${AGENT_GATE_PATH}` &&
+          hook.command !== "npx --no-install harnessimo check")
+      );
+      if (commands.length === entry.hooks.length) return [entry];
+      changed = true;
+      return commands.length ? [{ ...entry, hooks: commands }] : [];
+    });
+    if (kept.length) hooks[event] = kept;
+    else delete hooks[event];
+  }
+  return changed ? { ...settings, hooks } : settings;
+}
 
 export function agentGateScript() {
   return (

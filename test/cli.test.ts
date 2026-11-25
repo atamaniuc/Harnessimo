@@ -105,13 +105,13 @@ test("init writes the agent roles and the hooks they assume, and leaves existing
       assert.ok(existsSync(join(dir, ".claude", "agents", `${role}.md`)), `${role}.md was not written`);
     }
     const settings = readFileSync(join(dir, ".claude", "settings.json"), "utf8");
-    for (const event of ["SessionStart", "Stop", "SubagentStop", "TaskCompleted"]) assert.match(settings, new RegExp(`"${event}"`));
+    for (const event of ["SessionStart", "TaskCompleted"]) assert.match(settings, new RegExp(`"${event}"`));
+    assert.doesNotMatch(settings, /"Stop"|"SubagentStop"|harnessimo-gate\.sh/);
     const parsed = JSON.parse(settings) as { env: Record<string, string>; teammateMode: string; subagentPromptCacheTtl: string };
     assert.equal(parsed.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, "1", "agent teams are on");
     assert.equal(parsed.teammateMode, "auto");
     assert.equal(parsed.subagentPromptCacheTtl, "1h");
-    assert.equal(settings.split("harnessimo-gate.sh").length - 1, 2, "the merge did not duplicate the template's hooks");
-    assert.ok(existsSync(join(dir, ".claude", "hooks", "harnessimo-gate.sh")), "a Stop hook pointing at nothing");
+    assert.ok(!existsSync(join(dir, ".claude", "hooks", "harnessimo-gate.sh")));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -125,6 +125,33 @@ test("init writes the agent roles and the hooks they assume, and leaves existing
   } finally {
     rmSync(mine, { recursive: true, force: true });
   }
+});
+
+test("agent hook installation retires legacy turn gates and preserves other commands", (t) => {
+  const settings = {
+    theme: "light",
+    hooks: {
+      Stop: [{ matcher: "*", hooks: [
+        { type: "command", command: "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-gate.sh" },
+        { type: "command", command: "my-custom-check" },
+      ] }],
+      SubagentStop: [{ hooks: [{ type: "command", command: "npx --no-install harnessimo check" }] }],
+    },
+  };
+  const path = ".claude/settings.json";
+  const dir = fixture({ ...BASE, [path]: JSON.stringify(settings) });
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const install = run(dir, "hooks", "install", "--agent");
+  assert.equal(install.status, 0, install.out);
+  const result = readFileSync(join(dir, path), "utf8");
+  const actual = JSON.parse(result);
+  assert.equal(actual.theme, settings.theme);
+  assert.deepEqual(actual.hooks.Stop, [{ matcher: "*", hooks: [{ type: "command", command: "my-custom-check" }] }]);
+  assert.equal(actual.hooks.SubagentStop, undefined);
+  assert.equal(actual.hooks.SessionStart.length, 1);
+  assert.equal(actual.hooks.TaskCompleted.length, 1);
+  assert.equal(run(dir, "hooks", "install", "--agent").status, 0);
+  assert.equal(readFileSync(join(dir, path), "utf8"), result);
 });
 
 // Spec 0004. The guard is the only rule here that answers while the work
@@ -375,6 +402,57 @@ test("a line that crosses a boundary fails, with the reason and not the pattern"
   assert.match(out, /app\/page\.ts:1/);
   assert.match(out, /bypasses row-level security/);
   rmSync(dir, { recursive: true, force: true });
+});
+
+test("automatic scans cover tracked and staged project files and skip local tools", (t) => {
+  const config = JSON.parse(BOUNDED["harnessimo.config.json"]);
+  config.docs.roots.push("app");
+  const { dir, git, cleanup } = repo({
+    ...BOUNDED,
+    "harnessimo.config.json": JSON.stringify(config),
+    ".gitignore": "app/ignored/\napp/already-versioned.ts\n",
+  });
+  t.after(cleanup);
+  const write = (path: string, content: string) => {
+    mkdirSync(dirname(join(dir, path)), { recursive: true });
+    writeFileSync(join(dir, path), content);
+  };
+  write("app/ignored/noise.ts", "service_role\n");
+  write("app/ignored/noise.md", "<!-- proof: make broken -->\n");
+  write("app/local tool.ts", "service_role\n");
+  write("app/.local-tool/noise.ts", "service_role\n");
+  write("LOCAL.md", "<!-- proof: make broken -->\n");
+  write("app/already-versioned.ts", "export const ok = 1;\n");
+  git("add", "-f", "app/already-versioned.ts");
+  git("commit", "-qm", "Track a file that matches an ignore pattern");
+  const local = run(dir, "check");
+  assert.equal(local.status, 0, local.out);
+  assert.match(local.out, /hold across 2 file\(s\)/);
+  assert.equal(run(dir, "proof", "LOCAL.md").status, 1, "an explicit proof file still gets checked");
+
+  git("add", "app/local tool.ts", "LOCAL.md");
+  write("app/already-versioned.ts", "service_role\n");
+  const staged = run(dir, "check");
+  assert.equal(staged.status, 1, staged.out);
+  assert.match(staged.out, /app\/local tool\.ts:1/);
+  assert.match(staged.out, /app\/already-versioned\.ts:1/);
+  assert.match(staged.out, /LOCAL\.md:1/);
+  assert.doesNotMatch(staged.out, /app\/ignored/);
+});
+
+test("clean exit accepts untracked local files and still catches modified tracked files", (t) => {
+  const { dir, cleanup } = repo({
+    "harnessimo.config.json": JSON.stringify({ cleanExit: { scan: ["."], requireCleanTree: true } }),
+    "app.ts": "export const ok = 1;\n",
+  });
+  t.after(cleanup);
+  writeFileSync(join(dir, "local-tool.ts"), "export const local = true;\n");
+  const local = run(dir, "clean-exit", "HEAD", "HEAD");
+  assert.equal(local.status, 0, local.out);
+  writeFileSync(join(dir, "app.ts"), "export const ok = 2;\n");
+  const dirty = run(dir, "clean-exit", "HEAD", "HEAD");
+  assert.equal(dirty.status, 1, dirty.out);
+  assert.match(dirty.out, /1 uncommitted change\(s\)/);
 });
 
 // ---- worktree (spec 0011), against real git repositories

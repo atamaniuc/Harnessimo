@@ -57,30 +57,19 @@ A lock would not have helped: no lock in one worktree is visible in another. The
 on the merged tree, which is the only place the collision exists.
 <!-- proof: src/claims.ts:duplicateNumbers -->
 
-## A turn does not end on a claim
+## Checks at delivery
 
-`harnessimo brief` gates the start of a session; the pre-commit hook gates the start of a
-commit. Between those two points an agent can finish a turn saying "done" with the checks
-red — and when the work passes to another agent instead of to a commit, no gate runs at all.
+`harnessimo hooks install --agent` installs the startup brief and the `TaskCompleted`
+gate for agent teams. Run it once in an existing checkout to retire legacy Harnessimo
+`Stop` and `SubagentStop` hooks. It preserves other commands in those events.
+<!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
 
-```bash
-harnessimo hooks install --agent
-```
-
-installs `Stop` and `SubagentStop` alongside the startup hook. A red `check` blocks the end
-of the turn and hands the report back to the agent, so the next thing it reads is the file,
-the line and the fix.
-
-`SubagentStop` matters as much as `Stop`: in a parallel run the subagent is the one
-finishing a lane, and its turn is the one nobody is watching.
-
-The hook does not block a turn that is already continuing because it blocked once. A gate
-that cannot be satisfied is a loop, and a loop is how a gate gets deleted.
-<!-- proof: test/hooks.test.ts#a turn already continuing from this hook is not blocked again -->
-
-It runs `check` — the six rules that take about a second. Cold start, re-verification and
-the test suite stay in CI, for the same reason the pre-commit hook leaves them there: a gate
-that makes every turn slow is a gate somebody removes.
+In a Git checkout, automatic proof and boundary scans use the Git index, including staged
+additions. Boundaries read only files covered by their rules. Local files outside the index
+stay out of discovery even without a Git ignore entry. Required proof documents and task lists
+for live tracks are explicit inputs. The standalone proof command can also take a file path.
+Without Git, scans use their configured roots on disk.
+<!-- proof: test/cli.test.ts#automatic scans cover tracked and staged project files and skip local tools -->
 
 ## Handing one lane to one agent
 

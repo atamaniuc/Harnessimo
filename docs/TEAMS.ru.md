@@ -64,7 +64,7 @@ npx harnessimo doctor      # сообщает, есть ли herdr в PATH и п
 }
 ```
 
-плюс брифинг на `SessionStart` и гейт на `Stop`/`SubagentStop`. `subagentPromptCacheTtl`
+плюс брифинг на `SessionStart`. `subagentPromptCacheTtl`
 держит кэш промптов тиммейтов тёплым час вместо пяти минут — иначе тиммейт, ждущий ревью,
 заново платит за весь свой контекст.
 

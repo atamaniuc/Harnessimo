@@ -47,9 +47,7 @@ Save at the end of a piece of work, not continuously, and save **atomic facts**,
 3. Anything about this repository's own state goes into `PROGRESS.md`, `DECISIONS.md` or the
    handoff instead — the memory may hold a pointer to it.
 
-A `Stop` hook can carry the reminder: the gate runs `harnessimo check`; a second command
-beside it can print the checkpoint question. Keep it a prompt, not an automatic dump — a
-memory filled with transcripts is a memory nobody can search.
+Ask the checkpoint question when delivering work. Save the fact a future session needs.
 
 ## A worked example: MemPalace
 

@@ -60,8 +60,7 @@ export function boundaryProblems(files: SourceFile[], rules: BoundaryRule[]): Pr
 
     const hits: Problem[] = [];
     for (const file of files) {
-      if (!rule.paths.some((path) => covers(path, file.path))) continue;
-      if ((rule.allow ?? []).some((path) => covers(path, file.path))) continue;
+      if (!boundaryApplies(rule, file.path)) continue;
 
       file.text.split("\n").forEach((line, at) => {
         const found = matcher.exec(line);
@@ -89,6 +88,11 @@ export function boundaryProblems(files: SourceFile[], rules: BoundaryRule[]): Pr
   });
 
   return problems;
+}
+
+export function boundaryApplies(rule: BoundaryRule, file: string): boolean {
+  return (rule.paths ?? []).some((path) => covers(path, file)) &&
+    !(rule.allow ?? []).some((path) => covers(path, file));
 }
 
 /** Whether a declared path covers a file: the same containment claims use. */

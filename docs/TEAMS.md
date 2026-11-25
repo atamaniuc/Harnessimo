@@ -63,7 +63,7 @@ merged into, never replaced:
 }
 ```
 
-plus the `SessionStart` brief and the `Stop`/`SubagentStop` gate. `subagentPromptCacheTtl`
+plus the `SessionStart` brief. `subagentPromptCacheTtl`
 keeps teammates' prompt caches warm for an hour instead of five minutes — a teammate waiting
 on a review would otherwise pay for its whole context again.
 

@@ -95,7 +95,7 @@ Clean state at session exit (lecture 12): no debris left behind, and progress wr
 | `progressFile` | string | The file a session must update when it changed code. |
 | `codePrefixes` | array of string | What counts as code for the progress rule. Empty means anything that is not Markdown. |
 | `progressThreshold` | number | Changed lines below which the progress rule stays quiet, so a one-line fix is not told to write a progress note. Defaults to 50. |
-| `requireCleanTree` | boolean | Also fail when the working tree has uncommitted changes. |
+| `requireCleanTree` | boolean | Also fail when tracked files have uncommitted changes. |
 
 ## `instructions`
 

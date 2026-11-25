@@ -121,7 +121,7 @@
     "statePath": ".harness/3-environment/.reads.json"
   },
   "autonomy": {
-    "$comment": "Spec 0007. Deliberately the lowest level: work here happens with someone reading each step, and `check` runs at the end of every turn through the Stop hook — a floor that re-verified the whole queue would make that gate slow enough to be removed, which is the failure mode the pre-commit hook is already shaped around. CI raises it to `unattended`, which is what CI honestly is.",
+    "$comment": "Spec 0007. Local checks default to watched. CI raises the level to unattended and re-verifies the queue.",
     "level": "watched"
   }
 }

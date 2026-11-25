@@ -2,9 +2,9 @@
 // this is the one place that reads the world, so the rules stay testable
 // without a fixture tree and the world stays swappable in tests.
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import type { DocsConfig, Resolver, SourceFile } from "./types.ts";
-import { join, relative } from "node:path";
+import { join, posix, relative, sep } from "node:path";
 
 /**
  * Parses the names a project's command runner exposes, so a
@@ -67,31 +67,53 @@ function isOwnRepository(dir: string): boolean {
   return existsSync(join(dir, ".git"));
 }
 
+const repoRelative = (root: string, path: string): string => relative(root, path).split(sep).join("/");
+
+/** Limit traversal to the ancestors of the selected files when given an index. */
+function scanScope(paths?: ReadonlySet<string>) {
+  const directories = new Set(["."]);
+  for (const path of paths ?? []) {
+    for (let dir = posix.dirname(path); !directories.has(dir); dir = posix.dirname(dir)) {
+      directories.add(dir);
+    }
+  }
+  return {
+    file: (path: string) => !paths || paths.has(path),
+    directory: (path: string) => !paths || directories.has(path || "."),
+  };
+}
+
 /**
  * Every Markdown document the gate should read, from the configured roots.
  *
  * Returns repo-relative paths, sorted.
  */
-export function collectDocs(root: string, docs: { roots: string[], skip: string[], maxDepth: number }): string[] {
+export function collectDocs(root: string, docs: { roots: string[], skip: string[], maxDepth: number }, paths?: ReadonlySet<string>): string[] {
   const skip = new Set(docs.skip ?? []);
+  const scope = scanScope(paths);
   const out: string[] = [];
   const walk = (dir: string, depth: number): void => {
     if (depth > (docs.maxDepth ?? 4)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.name.startsWith(".") || skip.has(entry.name)) continue;
+      if (skip.has(entry.name) || (!paths && entry.name.startsWith("."))) continue;
       const full = join(dir, entry.name);
+      const rel = repoRelative(root, full);
       if (entry.isDirectory()) {
-        if (isOwnRepository(full)) continue;
+        if (!scope.directory(rel) || isOwnRepository(full)) continue;
         walk(full, depth + 1);
-      } else if (entry.name.endsWith(".md")) out.push(relative(root, full));
+      } else if (entry.isFile() && entry.name.endsWith(".md") && scope.file(rel)) {
+        out.push(rel);
+      }
     }
   };
   for (const sub of docs.roots ?? ["."]) {
     const dir = join(root, sub);
-    if (!existsSync(dir) || !statSync(dir).isDirectory()) continue;
+    const rel = repoRelative(root, dir);
+    if (!scope.directory(rel) || !existsSync(dir) || !lstatSync(dir).isDirectory()) continue;
+    if (rel && isOwnRepository(dir)) continue;
     if (sub === ".") {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        if (entry.isFile() && entry.name.endsWith(".md")) out.push(entry.name);
+        if (entry.isFile() && entry.name.endsWith(".md") && scope.file(entry.name)) out.push(entry.name);
       }
     } else {
       walk(dir, 0);
@@ -106,25 +128,35 @@ export function collectDocs(root: string, docs: { roots: string[], skip: string[
  *
  * Returns repo-relative paths, sorted.
  */
-export function collectFiles(root: string, { scan, skip = [], maxDepth = 8 }: { scan: string[], skip?: string[], maxDepth?: number }): string[] {
+export function collectFiles(
+  root: string,
+  { scan, skip = [], maxDepth = 8 }: { scan: string[], skip?: string[], maxDepth?: number },
+  paths?: ReadonlySet<string>,
+): string[] {
   const skipped = new Set(skip);
+  const scope = scanScope(paths);
   const out: string[] = [];
   const walk = (dir: string, depth: number): void => {
     if (depth > maxDepth || !existsSync(dir)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.name.startsWith(".") || skipped.has(entry.name)) continue;
+      if (skipped.has(entry.name) || (!paths && entry.name.startsWith("."))) continue;
       const full = join(dir, entry.name);
+      const rel = repoRelative(root, full);
       if (entry.isDirectory()) {
-        if (isOwnRepository(full)) continue;
+        if (!scope.directory(rel) || isOwnRepository(full)) continue;
         walk(full, depth + 1);
-      } else out.push(relative(root, full));
+      } else if (entry.isFile() && scope.file(rel)) out.push(rel);
     }
   };
   for (const sub of scan) {
     const dir = join(root, sub);
+    const rel = repoRelative(root, dir);
+    if (!scope.directory(rel) && !scope.file(rel)) continue;
     if (!existsSync(dir)) continue;
-    if (statSync(dir).isDirectory()) walk(dir, 0);
-    else out.push(sub);
+    const entry = lstatSync(dir);
+    if (entry.isDirectory()) {
+      if (!rel || !isOwnRepository(dir)) walk(dir, 0);
+    } else if (entry.isFile() && scope.file(rel)) out.push(rel);
   }
   return [...new Set(out)].sort();
 }

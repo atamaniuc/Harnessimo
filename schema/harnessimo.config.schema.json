@@ -215,7 +215,7 @@
         },
         "requireCleanTree": {
           "type": "boolean",
-          "description": "Also fail when the working tree has uncommitted changes."
+          "description": "Also fail when tracked files have uncommitted changes."
         }
       }
     },

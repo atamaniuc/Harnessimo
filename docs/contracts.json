@@ -189,7 +189,7 @@
       "owns": [
         "a lane declares the paths it owns",
         "two lanes cannot answer to one number",
-        "the Stop and SubagentStop gate",
+        "the task completion gate and migration from legacy turn hooks",
         "handing one lane to one agent",
         "what this deliberately does not do"
       ],

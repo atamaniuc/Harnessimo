@@ -222,8 +222,7 @@ $ harnessimo agent
 
 - Run `harnessimo brief` at the start of a session: it prints the live tracks, the
   head of each handoff and what is in flight. Read it before touching anything.
-- Run `harnessimo check` before saying anything is done. Green is the claim; your
-  summary is not.
+- Run `harnessimo check` when delivering project changes.
 - Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
   own command and records the outcome — that is the only way something becomes passing.
 ```

@@ -13,9 +13,11 @@ work happens, a lane lifecycle (`track new` / `track close`), the rules that onl
 once more than one agent is working (spec 0006), and a declared supervision level that
 decides how much of the nine a given run is held to (spec 0007).
 
-- `harnessimo check` runs at the level this repository declares — `watched` here, because
-  the Stop hook runs it at the end of every turn and a floor that re-verified the whole
-  queue would make that gate slow enough to be removed. CI is honestly `unattended`.
+- Local checks default to `watched`. CI raises the level to `unattended`. The agent installer
+  wires startup and team task completion and retires the legacy turn gates. Automatic proof
+  and boundary scans use the Git index in Git checkouts.
+  <!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
+  <!-- proof: test/cli.test.ts#automatic scans cover tracked and staged project files and skip local tools -->
 - Verified inside real `git worktree` checkouts, not by argument: the checks pass in a
   worktree, the main checkout does not scan the worktree's copy, and the lane-number race
   spec 0006 describes reproduces exactly — two checkouts, one number, caught on the merge.
@@ -116,4 +118,4 @@ decides how much of the nine a given run is held to (spec 0007).
 - None blocking. The one judgement call worth revisiting: `locked.paths` here covers CI
   and the constraints file only. Widening it is a human decision by design.
 
-_Last updated: 2026-10-30_
+_Last updated: 2026-11-25_
