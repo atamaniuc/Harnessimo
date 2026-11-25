@@ -13,7 +13,8 @@ work happens, a lane lifecycle (`track new` / `track close`), the rules that onl
 once more than one agent is working (spec 0006), and a declared supervision level that
 decides how much of the nine a given run is held to (spec 0007).
 
-- Local checks default to `watched`. CI raises the level to `unattended`. The agent installer
+- Version 0.14.0 brings delivery-time agent checks and Git-scoped scans. Local checks default
+  to `watched`. CI raises the level to `unattended`. The agent installer
   wires startup and team task completion and retires the legacy turn gates. Automatic proof
   and boundary scans use the Git index in Git checkouts.
   <!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->

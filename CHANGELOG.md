@@ -7,6 +7,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.14.0] — 2026-11-25
+
+### Changed
+
+- Agent hooks run the startup brief and check at team task completion. On existing
+  installations, `harnessimo hooks install --agent` removes Harnessimo's legacy `Stop`
+  and `SubagentStop` commands and preserves other hooks.
+  <!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
+- Automatic proof and boundary scans in Git checkouts use tracked and staged files.
+  Boundary rules read only files they cover. Local files outside the index require no
+  ignore entries.
+  <!-- proof: test/cli.test.ts#automatic scans cover tracked and staged project files and skip local tools -->
+- The optional clean-tree check allows untracked local files and still catches
+  uncommitted changes to tracked files.
+  <!-- proof: test/cli.test.ts#clean exit accepts untracked local files and still catches modified tracked files -->
+
 ## [0.13.0] — 2026-10-30
 
 A lane agent now starts on **the model of the role it plays**, and `herd up` keeps the
@@ -508,6 +524,7 @@ by hand because the tool could not say it.
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.14.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.14.0
 [0.13.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.13.0
 [0.12.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.12.0
 [0.11.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.11.0
