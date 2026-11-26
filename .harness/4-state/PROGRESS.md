@@ -4,7 +4,7 @@ State carried between sessions. Read this first; update it before you stop.
 
 ## Now
 
-- The README and site describe cost-efficient defaults and credit Harness² for the method
+- In 0.15.1, the README and site describe cost-efficient defaults and credit Harness² for the method
   used to compare process changes.
   <!-- proof: README.md -->
 

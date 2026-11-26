@@ -7,6 +7,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.15.1] — 2026-11-26
+
+### Changed
+
+- The English and Russian docs highlight cost-efficient defaults and credit Google Harness²
+  for the method used to compare process changes.
+  <!-- proof: README.md -->
+  <!-- proof: README.ru.md -->
+
 ## [0.15.0] — 2026-11-26
 
 ### Changed
@@ -537,6 +546,7 @@ by hand because the tool could not say it.
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.15.1]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.15.1
 [0.15.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.15.0
 [0.14.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.14.0
 [0.13.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.13.0
