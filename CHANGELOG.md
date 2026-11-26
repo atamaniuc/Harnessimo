@@ -7,6 +7,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 release workflow refuses to cut one from a commit that does not pass its own checks, and
 `test/changelog.test.ts` refuses a version that is not written down here.
 
+## [0.15.0] — 2026-11-26
+
+### Changed
+
+- `init` leaves agent hooks opt-in. `hooks install --agent` enables the startup brief.
+  Add `--team` to also check team task completion. `hooks uninstall --agent` removes
+  Harnessimo agent hooks while preserving other hooks and the Git configuration.
+  <!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
+  <!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
+- Agent instructions reuse verification for the same inputs. The adaptation guide
+  describes comparing the quality and cost of one process change at a time.
+  <!-- proof: docs/ADAPTING.md -->
+
 ## [0.14.0] — 2026-11-25
 
 ### Changed

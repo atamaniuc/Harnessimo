@@ -4,7 +4,7 @@ State carried between sessions. Read this first; update it before you stop.
 
 ## Now
 
-- Agent-session hooks are opt-in. `init` creates a hook-free settings template, and
+- In 0.15.0, agent-session hooks are opt-in. `init` creates a hook-free settings template, and
   `hooks install --agent --team` enables the team gate. The adaptation guide describes how
   to compare one change at a time and retain the baseline when the evidence is unclear.
   <!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
