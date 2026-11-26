@@ -537,6 +537,7 @@ by hand because the tool could not say it.
 - The five-subsystem scaffold (`.harness/`) and the `specs/` track index, spec and handoff
   templates.
 
+[0.15.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.15.0
 [0.14.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.14.0
 [0.13.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.13.0
 [0.12.0]: https://github.com/atamaniuc/Harnessimo/releases/tag/v0.12.0
