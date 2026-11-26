@@ -264,7 +264,7 @@ harnessimo check --reverify                # CI перезапускает ка�
 **Как пользоваться**
 
 ```bash
-harnessimo hooks install --agent   # SessionStart и TaskCompleted в .claude/settings.json
+harnessimo hooks install --agent --team   # подключить SessionStart и TaskCompleted
 harnessimo brief                   # тот же вывод, по требованию
 ```
 

@@ -19,7 +19,7 @@ moves.
 `harnessimo init` writes three agent definitions into `.claude/agents/` — starting points to
 edit, not rules to obey. Each rule in them carries its _why_, so an agent can tell when one has
 stopped applying.
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 | Role | Model | Gets | Never |
 | --- | --- | --- | --- |

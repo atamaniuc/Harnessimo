@@ -59,9 +59,10 @@ on the merged tree, which is the only place the collision exists.
 
 ## Checks at delivery
 
-`harnessimo hooks install --agent` installs the startup brief and the `TaskCompleted`
-gate for agent teams. Run it once in an existing checkout to retire legacy Harnessimo
-`Stop` and `SubagentStop` hooks. It preserves other commands in those events.
+Use `harnessimo hooks install --agent` for the optional startup brief, and add `--team` to
+enable the `TaskCompleted` gate. Installing either mode retires legacy Harnessimo
+`Stop` and `SubagentStop` hooks. Use `harnessimo hooks uninstall --agent` to remove the
+Harnessimo agent hooks and keep other commands and Git hooks.
 <!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
 
 In a Git checkout, automatic proof and boundary scans use the Git index, including staged

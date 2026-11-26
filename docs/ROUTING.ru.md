@@ -20,7 +20,7 @@ lane'ы в панелях herdr и agent teams внутри lane — [«Agent te
 `harnessimo init` кладёт в `.claude/agents/` три определения агентов — заготовки, которые
 нужно править, а не правила, которым надо подчиняться. Каждое правило в них несёт своё
 _зачем_, чтобы агент мог понять, когда оно перестало работать.
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 | Роль | Модель | Получает | Никогда |
 | --- | --- | --- | --- |

@@ -210,8 +210,8 @@ practice: a fresh session's budget goes on whatever you failed to rule out.
 
 Once work runs as several agents — subagents in one session, parallel worktrees, a headless
 run beside a person typing — a lane declares which paths it owns, `harnessimo tracks` fails
-when two live lanes claim the same ones, and `hooks install --agent` stops a turn ending
-while `check` is red. [More than one agent](PARALLEL.md) has all of it. Which model takes which
+when two live lanes claim the same ones. Teams can opt into a check at task completion with
+`hooks install --agent --team`. [More than one agent](PARALLEL.md) has all of it. Which model takes which
 work, `harnessimo worktree` for parallel streams, and batched review: [Routing work](ROUTING.md).
 Lanes in herdr panes and agent teams, under the rate limit: [Agent teams and herdr](TEAMS.md).
 When a process rule stands in the way of the goal: [Adapting rules](ADAPTING.md). Connecting an

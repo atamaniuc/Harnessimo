@@ -197,9 +197,10 @@ export function agentContract(runner = "harnessimo"): string {
   return [
     "## Harness",
     "",
-    `- Run \`${runner} brief\` at the start of a session: it prints the live tracks, the`,
-    "  head of each handoff and what is in flight. Read it before touching anything.",
-    `- Run \`${runner} check\` when delivering project changes.`,
+    `- When starting or resuming a work track, read its handoff. Use \`${runner} brief\``,
+    "  for the live tracks and what is in flight.",
+    `- Run \`${runner} check\` when delivering project changes if a configured delivery gate`,
+    "  hasn't checked the same changes. For read-only work, reuse existing evidence.",
     "- Never edit state in the queue file. `" + runner + " queue verify <id>` runs the item's",
     "  own command and records the outcome — that is the only way something becomes passing.",
   ].join("\n");

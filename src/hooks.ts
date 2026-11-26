@@ -100,21 +100,27 @@ export function hookStatus({ hookExists, hooksPath }: { hookExists: boolean, hoo
  * re-verification and the tests belong in CI, where waiting costs nobody.
  */
 export const AGENT_GATE_PATH = ".claude/hooks/harnessimo-gate.sh";
+export const AGENT_BRIEF_PATH = ".claude/hooks/harnessimo-brief.sh";
+export const AGENT_BRIEF_COMMAND = `$CLAUDE_PROJECT_DIR/${AGENT_BRIEF_PATH}`;
 
-/** Remove legacy Harnessimo commands while keeping other hooks in each matcher. */
-export function removeTurnGates(settings: AgentSettings): AgentSettings {
+export function removeAgentHooks(settings: AgentSettings, { brief = false, team = false } = {}): AgentSettings {
   if (!settings.hooks) return settings;
   const hooks = { ...settings.hooks };
   let changed = false;
-  for (const event of ["Stop", "SubagentStop"]) {
+  const legacy = [`$CLAUDE_PROJECT_DIR/${AGENT_GATE_PATH}`, "npx --no-install harnessimo check"];
+  const removals = { Stop: legacy, SubagentStop: legacy };
+  for (const [event, owned] of Object.entries({
+    ...removals,
+    ...(brief ? { SessionStart: [AGENT_BRIEF_COMMAND] } : {}),
+    ...(team ? { TaskCompleted: [TASK_COMPLETED_COMMAND] } : {}),
+  })) {
     const entries = hooks[event];
     if (!entries) continue;
     const kept = entries.flatMap((entry) => {
       if (!entry.hooks) return [entry];
       const commands = entry.hooks.filter((hook) =>
         hook.type !== "command" ||
-        (hook.command !== `$CLAUDE_PROJECT_DIR/${AGENT_GATE_PATH}` &&
-          hook.command !== "npx --no-install harnessimo check")
+        !owned.some((command) => hook.command === command)
       );
       if (commands.length === entry.hooks.length) return [entry];
       changed = true;

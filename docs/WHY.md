@@ -37,11 +37,11 @@ Harnessimo is only the right-hand box, and only the parts a command can settle.
 
 ## Configure it once, and it runs without you
 
-Three hooks and one CI line, set up a single time:
+Run the brief when tracked work starts or resumes. Set up Git and CI checks at delivery.
 
 ```mermaid
 flowchart LR
-    S["Session starts"] -->|"SessionStart hook<br/>harnessimo brief"| A["Agent knows the tracks,<br/>the handoffs, what is in flight"]
+    S["Tracked work starts or resumes"] -->|"harnessimo brief"| A["Agent knows the tracks,<br/>the handoffs, what is in flight"]
     A --> W["It works"]
     W -->|"pre-commit hook<br/>harnessimo check"| C["Commit — or a red gate<br/>naming the file and the fix"]
     C -->|"push"| CI["CI: harnessimo check --reverify<br/>every passing claim re-run"]

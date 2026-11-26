@@ -263,7 +263,7 @@ boundary in a written handoff rather than in someone's head.
 **How to use it**
 
 ```bash
-harnessimo hooks install --agent   # SessionStart and TaskCompleted in .claude/settings.json
+harnessimo hooks install --agent --team   # opt into SessionStart and TaskCompleted
 harnessimo brief                   # the same output, on demand
 ```
 

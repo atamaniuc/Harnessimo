@@ -28,9 +28,8 @@ add refuses with a fix.
 <!-- proof: test/cli.test.ts#worktree merge brings the stream in; remove refuses unmerged or dirty work, then cleans up -->
 
 **AC-03** — GIVEN a repository WHEN `harnessimo init` runs THEN `.claude/agents/` holds the
-three roles and `.claude/settings.json` runs the brief and the gate; an existing settings file
-is left untouched.
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+three roles and the settings template starts without agent hooks. Existing settings are preserved.
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 **AC-04** — Routing, adapting and memory are documented, in both languages, with contracts.
 <!-- proof: docs/ROUTING.md -->

@@ -8,8 +8,8 @@
       <!-- proof: test/worktree.test.ts#remove refuses a dirty worktree and an unmerged branch, naming the deliberate way out -->
 - [x] T3 — `harnessimo worktree` against real git repositories
       <!-- proof: test/cli.test.ts#worktree merge brings the stream in; remove refuses unmerged or dirty work, then cleans up -->
-- [x] T4 — `init` writes the agent roles and the agent hooks
-      <!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+- [x] T4 — `init` writes the agent roles and settings template
+      <!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 ## P1
 

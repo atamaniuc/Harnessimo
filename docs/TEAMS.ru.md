@@ -14,7 +14,7 @@
 | Уровень | Инструмент | Что даёт | Что делает это безопасным |
 | --- | --- | --- | --- |
 | Между lane'ами | [herdr](https://herdr.dev) + `harnessimo herd` | worktree, панель и `claude` на каждую lane | отдельные checkout'ы — столкновение файлов между lane'ами невозможно |
-| Внутри одной lane | agent teams в Claude Code | лид и несколько тиммейтов на общем списке задач | непересекающиеся файлы у тиммейтов; гейт `TaskCompleted` |
+| Внутри одной lane | agent teams в Claude Code | лид и несколько тиммейтов на общем списке задач | непересекающиеся файлы у тиммейтов и опциональный гейт `TaskCompleted` |
 
 ## Почему топологией владеет herdr
 
@@ -50,21 +50,20 @@ npx harnessimo doctor      # сообщает, есть ли herdr в PATH и п
 запущена внутри tmux или iTerm2, и in-process в остальных случаях. Шаблон ставит `auto`. В
 любом случае тиммейты работают в checkout'е лида — меняется отображение, а не топология.
 
-`init` пишет `.claude/settings.json`, только если в проекте его нет; в существующий файл
-хуки вливаются, файл не заменяется:
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+`init` записывает эти настройки, если в проекте ещё нет `.claude/settings.json`.
+Существующие настройки сохраняются даже при запуске с `--force`.
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 ```json
 {
   "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" },
   "teammateMode": "auto",
-  "subagentPromptCacheTtl": "1h",
-  "hooks": { "TaskCompleted": [{ "hooks": [{ "type": "command",
-    "command": "npx --no-install harnessimo hook task-completed" }] }] }
+  "subagentPromptCacheTtl": "1h"
 }
 ```
 
-плюс брифинг на `SessionStart`. `subagentPromptCacheTtl`
+Чтобы подключить стартовый брифинг и проверку при закрытии командной задачи, выполните
+`harnessimo hooks install --agent --team`. `subagentPromptCacheTtl`
 держит кэш промптов тиммейтов тёплым час вместо пяти минут — иначе тиммейт, ждущий ревью,
 заново платит за весь свой контекст.
 
@@ -156,7 +155,7 @@ each starts as (lane, role, flags after `herdr agent start … --`, tab):
   определения *вместо* системного промпта по умолчанию, поэтому каждый шаблон несёт свои
   ключевые правила и раздел «As a teammate»: брать задачу из общего списка, трогать только
   свои файлы, писать лиду, остановиться, когда закончил.
-- **Задача не закрывается на красной проверке.** `harnessimo hook task-completed` запускает
+- **При включённом командном гейте задача закрывается после успешной проверки.** `harnessimo hook task-completed` запускает
   гейты и выходит с кодом 2 и упавшими строками; Claude Code показывает их тиммейту и не даёт
   закрыть задачу.
   <!-- proof: test/cli.test.ts#hook task-completed exits 2 with the failure while check is red, and 0 when green -->

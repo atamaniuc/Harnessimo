@@ -20,8 +20,9 @@ _Why: a reviewer who loads everything reviews nothing; the handoff says what mat
 ## You own
 
 - `specs/**`, ADRs, `.harness/4-state/DECISIONS.md`.
-- Gate verdicts. A lane closes only when `harnessimo check` and the project's test command are
-  green **with their output quoted**, and every ticked task carries a resolving proof marker.
+- Gate verdicts. Close a lane after the delivery gates pass **with their output quoted** and
+  every ticked task carries a resolving proof marker. Reuse command output for the exact change
+  under review. Run the relevant check if its inputs changed or the evidence raises a specific concern.
   _Why: a verdict without output is an opinion; the next session cannot re-run an opinion._
 - Re-scoping a task when an implementer escalates with evidence.
 
@@ -72,6 +73,7 @@ rules that matter are written here rather than only in `AGENTS.md`.
   lead and to the author.
 - **Never edit the files under review.** _Why: a reviewer who fixes the code has stopped
   reviewing it, and another teammate shares this checkout._
-- **Complete the review task only with `harnessimo check` green** — the `TaskCompleted` hook
-  enforces it. On a rate-limit error (429), tell the lead and wait instead of retrying.
+- **Use existing delivery evidence for the review.** If the team enabled the
+  `TaskCompleted` hook, it runs the Harnessimo check when the task is marked complete.
+  On a rate-limit error (429), tell the lead and wait.
 - **Stop when the review is delivered.**

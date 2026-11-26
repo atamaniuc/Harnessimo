@@ -13,7 +13,8 @@ you tell when a rule has stopped applying.
 ## Load first
 
 `AGENTS.md`, then the lane's `handoff.md` ("What to load" — and respect "What NOT to load"),
-`spec.md`, `tasks.md`. Run `harnessimo brief --track <slug>` for the fence around other lanes.
+`spec.md`, `tasks.md`. When starting or resuming a track, run `harnessimo brief --track <slug>`
+for the fence around other lanes.
 
 ## Work loop, per task
 
@@ -21,16 +22,17 @@ you tell when a rule has stopped applying.
    _Why: a test you never saw fail may not be testing anything._
 2. Make the smallest change that passes. Stay inside the lane's `## Owns`.
    _Why: another agent may own the path next to yours._
-3. Run [the full check command, e.g. `npm run check`] once, at the end of the task.
-4. Tick the task only now, with a resolving `<!-- proof: … -->` marker. Run `harnessimo check`.
-5. Update the handoff's "State" and "First step".
+3. Once the acceptance check passes, tick the task with a resolving `<!-- proof: … -->` marker.
+4. Update the handoff's "State" and "First step".
+5. At delivery, run the project's full check once. Run `harnessimo check` if the project's
+   command or active delivery hook does not cover it.
 
 ## Speed and evidence
 
 - **A fresh worktree needs its install first** (`harnessimo worktree add` runs it).
   _Why: the pre-commit hook fails without dependencies, far from the cause._
-- **Inner loop: only what you touched** — one test file, one workspace. The full gate once per
-  task. _Why: a full suite on every edit is minutes spent re-proving what did not change._
+- **Inner loop:** run checks for the test file or workspace you touched. Reuse results for
+  unchanged inputs. _Why: running the full suite after each edit spends time on unrelated work._
 - **Capture every gate whole:** `[cmd] > /tmp/<task>.log 2>&1; echo "exit=$?"`, then quote the
   summary lines. Never pipe a gate through `tail`. _Why: the pipe's exit code replaces the
   gate's, and a red run reports green._
@@ -70,8 +72,9 @@ rules that matter are written here rather than only in `AGENTS.md`.
 - **Touch only your task's files** and the lane's `## Owns`. Another teammate shares this
   checkout — there is no worktree between you. _Why: two teammates editing one file overwrite
   each other silently._
-- **Mark the task completed only when `harnessimo check` is green**; the `TaskCompleted` hook
-  refuses it otherwise and shows you why. Then message the lead with the summary lines.
+- **Report the delivery check result to the lead.** If the team enabled the `TaskCompleted`
+  hook, let it run the Harnessimo check when marking the task complete. Use its feedback
+  to fix any failure before retrying.
 - **On a rate-limit error (429) do not retry in a loop**: tell the lead and wait.
   _Why: every retry spends the limit the other teammates are waiting on._
 - **Stop when your tasks are done.** Do not invent follow-up work. _Why: an idle teammate

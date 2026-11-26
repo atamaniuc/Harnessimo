@@ -59,6 +59,19 @@ stream, and nothing merges unreviewed. The cadence changed; the gate did not.
 a way around `harnessimo locked`. It writes the exact diff and the command into its report,
 and the human applies it.
 
+## Measure the cost of a rule change
+
+Start with a concrete cost you observed, such as repeated checks on the same changes. Pick one
+process change and run the same task twice from the same commit with the same model: once with
+the current rule and once with the proposed rule. Verify the task output against the same
+acceptance checks, then compare the number of check invocations, elapsed time, and tokens when
+available. Keep the current rule when the evidence is inconclusive.
+
+For a first comparison, resume a task whose lane depends on another lane. Compare
+`harnessimo brief` with `harnessimo brief --track <slug>`, and check whether the agent accounted
+for the dependency before comparing costs. In `DECISIONS.md`, record when the change applies,
+what changed, and a link to the evidence. [Harness² research](https://arxiv.org/html/2610.14224v1)
+
 ## Switching goals
 
 Goals change mid-flight — to another lane, to harness work, to another branch — and that is a

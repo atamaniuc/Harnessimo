@@ -59,9 +59,10 @@ git сливает их молча, и в индексе оказываются 
 
 ## Проверки при сдаче работы
 
-`harnessimo hooks install --agent` устанавливает стартовый брифинг и гейт `TaskCompleted`
-для команд агентов. В существующем проекте эта команда удаляет старые хуки Harnessimo
-`Stop` и `SubagentStop` и сохраняет остальные команды этих событий.
+`harnessimo hooks install --agent` подключает стартовый брифинг. Чтобы включить гейт
+`TaskCompleted`, добавьте `--team`. Оба режима установки убирают старые хуки Harnessimo
+`Stop` и `SubagentStop`. Команда `harnessimo hooks uninstall --agent` убирает хуки
+агента Harnessimo и сохраняет сторонние команды и Git-хуки.
 <!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
 
 В Git-репозитории поиск документов и файлов для проверки границ опирается на индекс Git,

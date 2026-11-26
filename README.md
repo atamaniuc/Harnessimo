@@ -142,7 +142,7 @@ proof, tracks, tasks, queue, coldStart, cleanExit
 not enforced: locked, instructions
 ```
 
-One command wires that into your agent: `harnessimo hooks install --agent`.
+For automatic startup briefs in Claude Code, opt in with `harnessimo hooks install --agent`.
 <!-- proof: src/brief.ts:briefText -->
 
 ## All eleven checks
@@ -204,26 +204,11 @@ walk your git history — so they work the same under Claude Code, Codex, Cursor
 a self-hosted DeepSeek, two of them at once, or nobody at all.
 <!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
 
-One piece is tool-specific, and only because tools differ: the automatic session briefing.
-`harnessimo hooks install --agent` writes it as a SessionStart hook for Claude Code, which
-has an API for that. Every other tool gets the same thing in one line — `harnessimo agent`
-prints the contract to paste into whatever instruction file it reads, be that `AGENTS.md`,
-`CLAUDE.md`, `GEMINI.md` or a Cursor rule:
-
-```
-$ harnessimo agent
-## Harness
-
-- Run `harnessimo brief` at the start of a session: it prints the live tracks, the
-  head of each handoff and what is in flight. Read it before touching anything.
-- Run `harnessimo check` when delivering project changes.
-- Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
-  own command and records the outcome — that is the only way something becomes passing.
-```
-
-That is the whole integration surface. There is no plugin to install, no model to configure
-and nothing to migrate when you switch — which is the point of keeping the rules in files
-rather than in a vendor's format.
+`harnessimo agent` prints a short contract for `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
+or a Cursor rule. Use `harnessimo brief` when starting or resuming tracked work.
+At delivery, run `harnessimo check` if the project's delivery command or active Git hook
+has yet to cover it. For read-only reviews or discussions, reuse evidence for the same
+inputs. Run a check again when those inputs change or the evidence raises a specific concern.
 
 ## Using it, by hand and by agent
 
@@ -234,23 +219,27 @@ and `harnessimo doctor` when they want to know what this repository actually gua
 Nothing else is required: the checks read files and run commands, so they work in a
 repository with no agents anywhere near it.
 
-**An agent** gets three things it cannot get from an instruction file. At session start a
-hook hands it the live tracks, the head of each handoff and what is in flight, so it does
-not re-derive them. During the work, `harnessimo queue verify <id>` is the only way an item
-becomes `passing` — the agent runs the command, the tool records the outcome. At commit, the
-same gate a person gets.
+**An agent** uses `harnessimo brief` to see the live tracks, the head of each handoff and what
+is in flight. During the work, `harnessimo queue verify <id>` runs the item's command and
+records its outcome. At delivery, Git and CI can run the same checks for people and agents.
 
 ```bash
-harnessimo hooks install --agent   # SessionStart briefing, merged into .claude/settings.json
-harnessimo hooks install           # the fast gates, before every commit
+harnessimo hooks install                 # Git pre-commit checks
+harnessimo hooks install --agent         # optional Claude Code startup brief
+harnessimo hooks install --agent --team  # startup brief and checks at team task completion
+harnessimo hooks uninstall --agent       # remove Harnessimo's agent hooks
 ```
+
+`init` leaves session hooks opt-in, including with `--force`. Re-run the install command
+for the agent mode you want in an existing project. Agent hook removal keeps Git hooks
+and other tools' settings.
 
 Both flows in detail: [Use cases](https://atamaniuc.github.io/Harnessimo/REFERENCE/).
 
 ## How to use it well
 
-`npx harnessimo init`, then the daily loop: `harnessimo brief` → work one lane from its handoff
-→ `harnessimo check` → commit. [Guide](https://atamaniuc.github.io/Harnessimo/GUIDE/)
+`npx harnessimo init`, then start or resume one lane with `harnessimo brief`.
+Work from its handoff and verify what changed at delivery. [Guide](https://atamaniuc.github.io/Harnessimo/GUIDE/)
 <!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
 
 **Several agents.** [herdr](https://herdr.dev), a terminal workspace manager for coding agents,
@@ -258,7 +247,8 @@ gives each lane its own worktree and its own `claude` in a pane, so lanes cannot
 other's files and every agent's state (idle, working, blocked, done) is visible. **Agent teams**
 — Claude Code's lead plus a few teammates on a shared task list — work inside one lane; `init`
 turns them on in `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`,
-`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`, a `TaskCompleted` gate).
+`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`) in new projects.
+Use `harnessimo hooks install --agent --team` for a `TaskCompleted` gate.
 
 | Command | What for |
 | --- | --- |

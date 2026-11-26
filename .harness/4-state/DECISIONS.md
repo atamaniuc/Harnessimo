@@ -317,3 +317,17 @@ opens a new tab for further agents; `herd plan` shows where each agent lands (0.
 
 **Rejected:** refusing to start when the tab is full (the point is to keep working); closing
 or rearranging panes the owner opened (herd never closes what it did not create).
+
+---
+
+## 2026-11-26 — Check on delivery, opt in to agent hooks
+
+Keep read-only work light. Reuse existing evidence while the inputs and claim are the same.
+Explicit delivery checks and Git/CI gates own verification. A team that needs a completion
+gate enables it with `hooks install --agent --team`.
+<!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
+
+When a recurring cost warrants a process change, compare one change at a time and retain
+the baseline if the observed result is inconclusive. Record the situation and the evidence
+before promoting a change to the default.
+<!-- proof: docs/ADAPTING.md -->

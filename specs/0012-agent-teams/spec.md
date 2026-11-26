@@ -36,8 +36,9 @@ failing lines; green exits 0.
 <!-- proof: test/cli.test.ts#hook task-completed exits 2 with the failure while check is red, and 0 when green -->
 
 **AC-06** — `init` writes `.claude/settings.json` with agent teams on, `teammateMode: "auto"`,
-`subagentPromptCacheTtl: "1h"` and the `TaskCompleted` hook, only when the file is absent.
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+`subagentPromptCacheTtl: "1h"` and no agent hooks, only when the file is absent. Team checks are
+enabled by `hooks install --agent --team`.
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 **AC-07** — GIVEN two live lanes on one path WHEN one is paused with a reason THEN `check` is
 green — the paused lane is not gated, fenced or stale — and after `track resume` the overlap

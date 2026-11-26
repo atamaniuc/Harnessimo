@@ -311,10 +311,8 @@ this safe: a process can change because the definition of done cannot.
   deciding to abandon a direction. Models trained on successful outcomes are badly
   calibrated about when to stop.
 - **Observability and loop/graph engineering** (lectures 11, 13, 14). They are the layer
-  above this one. Several agents on one repository are now handled — a lane declares what it
-  owns and what it waits on, and a turn does not end while a check is red — but nothing here
-  schedules, routes or supervises a running loop. Naming the gap is better than implying it
-  is covered.
+  above this one. Each lane declares what it owns and what it waits on. Checks run at
+  delivery, and teams can opt into a check when closing a shared task.
 - **Skill and prompt hygiene.** A skill whose description never fires is a real failure, and
   it is not one this package has seen twice. Every rule here came from watching two
   independent repositories write the same thing by hand; a rule built on one vendor's

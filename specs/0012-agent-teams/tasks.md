@@ -9,7 +9,7 @@
 - [x] T3 — `hook task-completed` exit mapping
       <!-- proof: test/hooks.test.ts#a red check refuses the task's completion with exit 2 and the failing lines -->
 - [x] T4 — Settings template and teammate sections in the agent roles
-      <!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+      <!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 - [x] T6 — Goal switches: `track pause|resume`, paused lanes spared, `queue.maxActive`
       <!-- proof: test/cli.test.ts#switching goals: pause with a reason, start the new lane on the same paths, and check stays green -->

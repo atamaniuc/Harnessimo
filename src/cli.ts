@@ -45,7 +45,7 @@ import { thresholdProblems, unprotectedFloors } from "./thresholds.ts";
 import { detectConfig } from "./detect.ts";
 import { DEFAULT_LEVEL, MEANING, addedBy, effectiveLevel, levelProblem, required, unbacked } from "./autonomy.ts";
 import type { Level } from "./autonomy.ts";
-import { HOOKS_DIR, HOOK_PATH, TASK_COMPLETED_COMMAND, hookScript, hookStatus, removeTurnGates, taskCompletedOutcome } from "./hooks.ts";
+import { AGENT_BRIEF_COMMAND, AGENT_BRIEF_PATH, HOOKS_DIR, HOOK_PATH, TASK_COMPLETED_COMMAND, hookScript, hookStatus, removeAgentHooks, taskCompletedOutcome } from "./hooks.ts";
 import {
   HERD_DEFAULTS,
   agentName,
@@ -876,8 +876,7 @@ function cmdInit() {
       const rel = dest.slice(ROOT.length + 1);
       // The configuration is written from this repository, not copied.
       if (rel === CONFIG_FILE) return false;
-      // A project's own settings are merged into, never replaced — not even by
-      // --force, which asks for the hooks, not for the loss of everything else.
+      // Only explicit hook commands change existing agent settings.
       if (rel === join(".claude", "settings.json") && settingsExisted) return false;
       // An existing file is never overwritten without --force: adopting the
       // harness must not silently rewrite rules a project already wrote.
@@ -889,10 +888,6 @@ function cmdInit() {
       return true;
     },
   });
-
-  // The agent hooks are merged, not copied: a project that already has a
-  // .claude/settings.json keeps it untouched unless --force asks for the merge.
-  if (settingsExisted && !force) skipped.push(".claude/settings.json");
 
   // The configuration is detected rather than templated. A template full of
   // paths the reader has to correct is how adoption stalls: the first run fails
@@ -912,17 +907,13 @@ function cmdInit() {
     written.push(CONFIG_FILE);
   }
 
-  if (!settingsExisted || force) {
-    // Install the startup brief and the team task completion gate.
-    installAgentHooks(force);
-  }
-
   ok(`harnessimo init: wrote ${written.length} file(s)`);
   for (const f of written) ok(`  + ${f}`);
   if (skipped.length > 0) {
     ok(`\nkept ${skipped.length} existing file(s) (pass --force to overwrite):`);
     for (const f of skipped) ok(`  = ${f}`);
   }
+  if (settingsExisted) ok("\nkept existing agent settings:\n  = .claude/settings.json");
 
   if (detected) {
     ok(`\nconfigured from what this repository has:`);
@@ -1038,17 +1029,30 @@ function cmdBrief() {
   return ok(text || "harnessimo: nothing to brief — no track index, queue or progress file configured");
 }
 
-/**
- * The brief at SessionStart and the explicit completion gate at TaskCompleted.
- * Shared by `hooks install --agent` and `init`, so a repository
- * adopting the tool gets the same wiring whichever door it came in by.
- */
-function installAgentHooks(force: boolean): void {
+function configureAgentHooks({ uninstall, team, force }: { uninstall: boolean; team: boolean; force: boolean }): void {
+  const settingsPath = join(ROOT, ".claude", "settings.json");
+  let settings: AgentSettings = {};
+  if (existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, "utf8")) as AgentSettings;
+    } catch (error) {
+      die(
+        `harnessimo: .claude/settings.json is not valid JSON (${error as Error})\n` +
+          "  fix:  repair it before changing hooks",
+      );
+    }
+  }
+
+  let settingsOut = removeAgentHooks(settings, { brief: uninstall, team: uninstall || !team });
+  if (uninstall) {
+    if (settingsOut !== settings) writeFileSync(settingsPath, JSON.stringify(settingsOut, null, 2) + "\n");
+    return ok("harnessimo: agent hooks are uninstalled");
+  }
+
   // The agent-side hook: a session receives the harness state at startup
   // instead of being trusted to go and read it.
   const dir = join(ROOT, ".claude", "hooks");
-  const script = join(dir, "harnessimo-brief.sh");
-  const command = "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-brief.sh";
+  const script = join(ROOT, AGENT_BRIEF_PATH);
   mkdirSync(dir, { recursive: true });
   if (!existsSync(script) || force) {
     writeFileSync(
@@ -1077,41 +1081,26 @@ function installAgentHooks(force: boolean): void {
     ok("harnessimo: .claude/hooks/harnessimo-brief.sh already exists (--force overwrites)");
   }
 
-  const settingsPath = join(ROOT, ".claude", "settings.json");
-  let settings: AgentSettings = {};
-  if (existsSync(settingsPath)) {
-    try {
-      settings = JSON.parse(readFileSync(settingsPath, "utf8")) as AgentSettings;
-    } catch (error) {
-      die(
-        `harnessimo: .claude/settings.json is not valid JSON (${(error as Error).message})\n` +
-          "  fix:  repair it before installing, so nothing here overwrites what it holds",
-      );
-    }
+  settingsOut = mergeSessionStartHook(settingsOut, AGENT_BRIEF_COMMAND).settings;
+  if (team) {
+    settingsOut = mergeHook(settingsOut, "TaskCompleted", TASK_COMPLETED_COMMAND, {
+      timeout: 180, statusMessage: "Running the harness gates before the task closes…",
+    }).settings;
   }
-  let settingsOut = removeTurnGates(settings);
-  const migrated = settingsOut !== settings;
-  const wired: string[] = [];
-  for (const [event, cmd, meta] of [
-    ["SessionStart", command, { timeout: 10, statusMessage: "Loading harness state…" }],
-    // Agent teams: a shared-list task does not close while the gates are red.
-    ["TaskCompleted", TASK_COMPLETED_COMMAND, { timeout: 180, statusMessage: "Running the harness gates before the task closes…" }],
-  ] as const) {
-    const { settings: next, added } = mergeHook(settingsOut, event, cmd, meta);
-    settingsOut = next;
-    if (added) wired.push(event);
-  }
-  if (migrated || wired.length > 0) {
-    writeFileSync(settingsPath, JSON.stringify(settingsOut, null, 2) + "\n");
-    if (migrated) ok("harnessimo: removed legacy turn gates from .claude/settings.json");
-    if (wired.length) ok(`harnessimo: added ${wired.join(", ")} to .claude/settings.json`);
-  } else {
-    ok("harnessimo: .claude/settings.json already runs all of them");
-  }
+  if (settingsOut !== settings) writeFileSync(settingsPath, JSON.stringify(settingsOut, null, 2) + "\n");
+  ok(`harnessimo: agent hooks enabled for ${team ? "SessionStart and TaskCompleted" : "SessionStart"}`);
 }
 
 function cmdHooks() {
   const sub = positional[0] ?? "status";
+  const forAgent = flags.has("--agent");
+  const team = flags.has("--team");
+  if (team && (sub !== "install" || !forAgent)) {
+    die("harnessimo: --team requires `hooks install --agent --team`");
+  }
+  if (forAgent && (sub === "install" || sub === "uninstall")) {
+    return configureAgentHooks({ uninstall: sub === "uninstall", team, force: flags.has("--force") });
+  }
   const cfg = config();
   const hookFile = join(ROOT, HOOK_PATH);
   const currentPath = () => {
@@ -1126,16 +1115,6 @@ function cmdHooks() {
     const status = hookStatus({ hookExists: existsSync(hookFile), hooksPath: currentPath() });
     if (!status.ok) die(`harnessimo: ${status.message}`);
     return ok(`harnessimo: ${status.message}`);
-  }
-
-  if (sub === "install" && flags.has("--agent")) {
-    installAgentHooks(flags.has("--force"));
-    return ok(
-      "\nA new session now starts with the live tracks, the head of each handoff,\n" +
-        "what is in flight, and what this repository enforces. Team tasks are checked at completion.\n\n" +
-        "Using something other than Claude Code? `harnessimo agent` prints the same\n" +
-        "contract for any tool that reads an instruction file.",
-    );
   }
 
   if (sub === "install") {
@@ -1188,7 +1167,9 @@ usage: harnessimo <command> [options]
   budget [--reset]       what this session read, and what it read twice
   guard read <path>      refuse a re-read of a file that has not changed (exit 2)
   agent                  the contract to paste into any agent's instruction file
-  hooks <sub>            status | install [--agent] | uninstall — the gates, on commit
+  hooks <sub>            status | install | uninstall — Git delivery gates
+  hooks install --agent [--team]  opt in to a startup brief, and optionally team completion checks
+  hooks uninstall --agent         remove Harnessimo agent hooks
   worktree <sub> <name>  add [--no-install] | merge | remove | list — one checkout per stream
   herd <sub> [lane…]     plan | up [lane…] | status — one herdr pane, worktree and agent per lane
   hook task-completed    agent-teams hook: refuse a task's completion while check is red (exit 2)

@@ -96,7 +96,7 @@ test("init scaffolds a working harness that immediately passes its own check", (
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("init writes the agent roles and the hooks they assume, and leaves existing settings alone", () => {
+test("init writes agent roles without hooks and preserves existing settings even with --force", () => {
   const dir = fixture({ "README.md": "# Project\n" });
   try {
     const init = run(dir, "init");
@@ -105,20 +105,21 @@ test("init writes the agent roles and the hooks they assume, and leaves existing
       assert.ok(existsSync(join(dir, ".claude", "agents", `${role}.md`)), `${role}.md was not written`);
     }
     const settings = readFileSync(join(dir, ".claude", "settings.json"), "utf8");
-    for (const event of ["SessionStart", "TaskCompleted"]) assert.match(settings, new RegExp(`"${event}"`));
-    assert.doesNotMatch(settings, /"Stop"|"SubagentStop"|harnessimo-gate\.sh/);
+    assert.equal(JSON.parse(settings).hooks, undefined);
     const parsed = JSON.parse(settings) as { env: Record<string, string>; teammateMode: string; subagentPromptCacheTtl: string };
     assert.equal(parsed.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, "1", "agent teams are on");
     assert.equal(parsed.teammateMode, "auto");
     assert.equal(parsed.subagentPromptCacheTtl, "1h");
-    assert.ok(!existsSync(join(dir, ".claude", "hooks", "harnessimo-gate.sh")));
+    assert.ok(!existsSync(join(dir, ".claude", "hooks")));
+    assert.equal(run(dir, "init", "--force").status, 0);
+    assert.equal(readFileSync(join(dir, ".claude", "settings.json"), "utf8"), settings);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 
   const mine = fixture({ "README.md": "# Project\n", ".claude/settings.json": '{ "theme": "light" }\n' });
   try {
-    const init = run(mine, "init");
+    const init = run(mine, "init", "--force");
     assert.equal(init.status, 0, init.out);
     assert.equal(readFileSync(join(mine, ".claude", "settings.json"), "utf8"), '{ "theme": "light" }\n');
     assert.match(init.out, /= \.claude\/settings\.json/);
@@ -136,6 +137,11 @@ test("agent hook installation retires legacy turn gates and preserves other comm
         { type: "command", command: "my-custom-check" },
       ] }],
       SubagentStop: [{ hooks: [{ type: "command", command: "npx --no-install harnessimo check" }] }],
+      TaskCompleted: [{ hooks: [
+        { type: "command", command: "npx --no-install harnessimo hook task-completed" },
+        { type: "command", command: "my-team-check" },
+      ] }],
+      SessionStart: [{ matcher: "resume", hooks: [{ type: "command", command: "my-brief" }] }],
     },
   };
   const path = ".claude/settings.json";
@@ -148,10 +154,31 @@ test("agent hook installation retires legacy turn gates and preserves other comm
   assert.equal(actual.theme, settings.theme);
   assert.deepEqual(actual.hooks.Stop, [{ matcher: "*", hooks: [{ type: "command", command: "my-custom-check" }] }]);
   assert.equal(actual.hooks.SubagentStop, undefined);
-  assert.equal(actual.hooks.SessionStart.length, 1);
-  assert.equal(actual.hooks.TaskCompleted.length, 1);
+  assert.deepEqual(actual.hooks.SessionStart[0], settings.hooks.SessionStart[0]);
+  assert.equal(actual.hooks.SessionStart[1].hooks[0].command, "$CLAUDE_PROJECT_DIR/.claude/hooks/harnessimo-brief.sh");
+  const thirdPartyTeam = [{ hooks: [{ type: "command", command: "my-team-check" }] }];
+  assert.deepEqual(actual.hooks.TaskCompleted, thirdPartyTeam);
   assert.equal(run(dir, "hooks", "install", "--agent").status, 0);
   assert.equal(readFileSync(join(dir, path), "utf8"), result);
+
+  const teamArgs = ["hooks", "install", "--agent", "--team"];
+  assert.equal(run(dir, ...teamArgs).status, 0);
+  const withTeam = readFileSync(join(dir, path), "utf8");
+  assert.equal(JSON.parse(withTeam).hooks.TaskCompleted[1].hooks[0].command, "npx --no-install harnessimo hook task-completed");
+  assert.equal(run(dir, ...teamArgs).status, 0);
+  assert.equal(readFileSync(join(dir, path), "utf8"), withTeam);
+
+  execFileSync("git", ["init", "-q"], { cwd: dir });
+  execFileSync("git", ["config", "core.hooksPath", ".custom-hooks"], { cwd: dir });
+  assert.equal(run(dir, "hooks", "uninstall", "--agent").status, 0);
+  const uninstalled = readFileSync(join(dir, path), "utf8");
+  assert.deepEqual(JSON.parse(uninstalled), {
+    theme: settings.theme,
+    hooks: { Stop: actual.hooks.Stop, TaskCompleted: thirdPartyTeam, SessionStart: settings.hooks.SessionStart },
+  });
+  assert.equal(execFileSync("git", ["config", "core.hooksPath"], { cwd: dir, encoding: "utf8" }).trim(), ".custom-hooks");
+  assert.equal(run(dir, "hooks", "uninstall", "--agent").status, 0);
+  assert.equal(readFileSync(join(dir, path), "utf8"), uninstalled);
 });
 
 // Spec 0004. The guard is the only rule here that answers while the work

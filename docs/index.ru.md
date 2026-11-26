@@ -158,7 +158,7 @@ proof, tracks, tasks, queue, coldStart, cleanExit
 not enforced: locked, instructions
 ```
 
-Одна команда встраивает это в вашего агента: `harnessimo hooks install --agent`.
+Автоматический брифинг в Claude Code можно включить командой `harnessimo hooks install --agent`.
 <!-- proof: src/brief.ts:briefText -->
 
 ## Все одиннадцать проверок
@@ -221,27 +221,12 @@ pnpm exec harnessimo init && pnpm exec harnessimo check
 Gemini CLI, self-hosted DeepSeek, двумя из них одновременно или вообще без агентов.
 <!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
 
-Единственная привязанная к инструменту часть — автоматический брифинг сессии, и только
-потому, что инструменты разные. `harnessimo hooks install --agent` ставит его
-SessionStart-хуком для Claude Code, у которого для этого есть API. Любой другой инструмент
-получает то же самое одной строкой: `harnessimo agent` печатает контракт, который надо
-вставить в тот файл инструкций, который он читает, — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`
-или правило Cursor:
-
-```
-$ harnessimo agent
-## Harness
-
-- Run `harnessimo brief` at the start of a session: it prints the live tracks, the
-  head of each handoff and what is in flight. Read it before touching anything.
-- Run `harnessimo check` when delivering project changes.
-- Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
-  own command and records the outcome — that is the only way something becomes passing.
-```
-
-Это вся поверхность интеграции. Нет ни плагина, ни модели для настройки, ни того, что
-придётся мигрировать при переезде, — ради этого правила и держатся в файлах, а не в формате
-вендора.
+`harnessimo agent` печатает краткий контракт для `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`
+или правила Cursor. Используйте `harnessimo brief`, когда начинаете или возобновляете работу
+по треку. При сдаче запустите `harnessimo check`, если команда сдачи или активный Git-хук
+ещё его не выполнили. Для обзора или обсуждения используйте результаты на тех же входных
+данных. Повторите проверку, если входные данные изменились или в результате есть конкретное
+сомнение.
 
 ## Как этим пользоваться: руками и агентом
 
@@ -252,23 +237,28 @@ $ harnessimo agent
 Больше ничего не требуется: проверки читают файлы и запускают команды, поэтому работают и в
 репозитории, рядом с которым никаких агентов нет.
 
-**Агент** получает три вещи, которых не даст строчка в файле инструкций. На старте сессии хук
-печатает состояние: живые треки, начало каждого handoff'а, что в работе. Во время работы
-`harnessimo queue verify <id>` — единственный способ перевести задачу в `passing`: агент
-запускает команду, инструмент записывает результат. На коммите — тот же гейт, что и у
-человека.
+**Агент** использует `harnessimo brief`, чтобы увидеть живые треки, начало каждого handoff'а
+и что сейчас в работе. Команда `harnessimo queue verify <id>` запускает проверку пункта
+очереди и записывает результат. При сдаче Git и CI могут выполнить одинаковые проверки
+для людей и агентов.
 
 ```bash
-harnessimo hooks install --agent   # брифинг на старте сессии, в .claude/settings.json
-harnessimo hooks install           # быстрые проверки перед каждым коммитом
+harnessimo hooks install                 # проверки Git перед коммитом
+harnessimo hooks install --agent         # брифинг на старте Claude Code по желанию
+harnessimo hooks install --agent --team  # брифинг и проверки при закрытии командной задачи
+harnessimo hooks uninstall --agent       # убрать хуки Harnessimo из настроек агента
 ```
+
+`init`, включая запуск с `--force`, оставляет подключение сессионных хуков на ваше усмотрение.
+В существующем проекте повторите команду установки с нужным режимом. При удалении хуков
+агента сохраняются Git-хуки и настройки других инструментов.
 
 Оба сценария подробно: [Сценарии](REFERENCE.md).
 
 ## Как пользоваться этим хорошо
 
-`npx harnessimo init`, дальше ежедневный цикл: `harnessimo brief` → одна lane по её handoff'у →
-`harnessimo check` → коммит. [Гайд](GUIDE.md)
+`npx harnessimo init`, затем начните или возобновите работу по одной lane с `harnessimo brief`.
+Работайте по её handoff и проверьте изменения при сдаче. [Гайд](GUIDE.md)
 <!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
 
 **Несколько агентов.** [herdr](https://herdr.dev), менеджер рабочих пространств терминала для
@@ -276,7 +266,8 @@ harnessimo hooks install           # быстрые проверки перед 
 друга, а состояние каждого агента (idle, working, blocked, done) видно. **Agent teams** — лид
 Claude Code и несколько тиммейтов на общем списке задач — работают внутри одной lane; `init`
 включает их в `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`,
-`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`, гейт `TaskCompleted`).
+`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`) в новых проектах.
+Гейт `TaskCompleted` подключает `harnessimo hooks install --agent --team`.
 
 | Команда | Зачем |
 | --- | --- |

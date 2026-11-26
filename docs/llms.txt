@@ -185,7 +185,7 @@ proof, tracks, tasks, queue, coldStart, cleanExit
 not enforced: locked, instructions
 ```
 
-One command wires that into your agent: `harnessimo hooks install --agent`.
+For automatic startup briefs in Claude Code, opt in with `harnessimo hooks install --agent`.
 <!-- proof: src/brief.ts:briefText -->
 
 ## All eleven checks
@@ -247,26 +247,11 @@ walk your git history — so they work the same under Claude Code, Codex, Cursor
 a self-hosted DeepSeek, two of them at once, or nobody at all.
 <!-- proof: test/brief.test.ts#nothing in the contract is specific to one vendor's agent -->
 
-One piece is tool-specific, and only because tools differ: the automatic session briefing.
-`harnessimo hooks install --agent` writes it as a SessionStart hook for Claude Code, which
-has an API for that. Every other tool gets the same thing in one line — `harnessimo agent`
-prints the contract to paste into whatever instruction file it reads, be that `AGENTS.md`,
-`CLAUDE.md`, `GEMINI.md` or a Cursor rule:
-
-```
-$ harnessimo agent
-## Harness
-
-- Run `harnessimo brief` at the start of a session: it prints the live tracks, the
-  head of each handoff and what is in flight. Read it before touching anything.
-- Run `harnessimo check` when delivering project changes.
-- Never edit state in the queue file. `harnessimo queue verify <id>` runs the item's
-  own command and records the outcome — that is the only way something becomes passing.
-```
-
-That is the whole integration surface. There is no plugin to install, no model to configure
-and nothing to migrate when you switch — which is the point of keeping the rules in files
-rather than in a vendor's format.
+`harnessimo agent` prints a short contract for `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
+or a Cursor rule. Use `harnessimo brief` when starting or resuming tracked work.
+At delivery, run `harnessimo check` if the project's delivery command or active Git hook
+has yet to cover it. For read-only reviews or discussions, reuse evidence for the same
+inputs. Run a check again when those inputs change or the evidence raises a specific concern.
 
 ## Using it, by hand and by agent
 
@@ -277,23 +262,27 @@ and `harnessimo doctor` when they want to know what this repository actually gua
 Nothing else is required: the checks read files and run commands, so they work in a
 repository with no agents anywhere near it.
 
-**An agent** gets three things it cannot get from an instruction file. At session start a
-hook hands it the live tracks, the head of each handoff and what is in flight, so it does
-not re-derive them. During the work, `harnessimo queue verify <id>` is the only way an item
-becomes `passing` — the agent runs the command, the tool records the outcome. At commit, the
-same gate a person gets.
+**An agent** uses `harnessimo brief` to see the live tracks, the head of each handoff and what
+is in flight. During the work, `harnessimo queue verify <id>` runs the item's command and
+records its outcome. At delivery, Git and CI can run the same checks for people and agents.
 
 ```bash
-harnessimo hooks install --agent   # SessionStart briefing, merged into .claude/settings.json
-harnessimo hooks install           # the fast gates, before every commit
+harnessimo hooks install                 # Git pre-commit checks
+harnessimo hooks install --agent         # optional Claude Code startup brief
+harnessimo hooks install --agent --team  # startup brief and checks at team task completion
+harnessimo hooks uninstall --agent       # remove Harnessimo's agent hooks
 ```
+
+`init` leaves session hooks opt-in, including with `--force`. Re-run the install command
+for the agent mode you want in an existing project. Agent hook removal keeps Git hooks
+and other tools' settings.
 
 Both flows in detail: [Use cases](REFERENCE.md).
 
 ## How to use it well
 
-`npx harnessimo init`, then the daily loop: `harnessimo brief` → work one lane from its handoff
-→ `harnessimo check` → commit. [Guide](GUIDE.md)
+`npx harnessimo init`, then start or resume one lane with `harnessimo brief`.
+Work from its handoff and verify what changed at delivery. [Guide](GUIDE.md)
 <!-- proof: test/cli.test.ts#init scaffolds a working harness that immediately passes its own check -->
 
 **Several agents.** [herdr](https://herdr.dev), a terminal workspace manager for coding agents,
@@ -301,7 +290,8 @@ gives each lane its own worktree and its own `claude` in a pane, so lanes cannot
 other's files and every agent's state (idle, working, blocked, done) is visible. **Agent teams**
 — Claude Code's lead plus a few teammates on a shared task list — work inside one lane; `init`
 turns them on in `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`,
-`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`, a `TaskCompleted` gate).
+`teammateMode: "auto"`, `subagentPromptCacheTtl: "1h"`) in new projects.
+Use `harnessimo hooks install --agent --team` for a `TaskCompleted` gate.
 
 | Command | What for |
 | --- | --- |
@@ -463,11 +453,11 @@ Harnessimo is only the right-hand box, and only the parts a command can settle.
 
 ## Configure it once, and it runs without you
 
-Three hooks and one CI line, set up a single time:
+Run the brief when tracked work starts or resumes. Set up Git and CI checks at delivery.
 
 ```mermaid
 flowchart LR
-    S["Session starts"] -->|"SessionStart hook<br/>harnessimo brief"| A["Agent knows the tracks,<br/>the handoffs, what is in flight"]
+    S["Tracked work starts or resumes"] -->|"harnessimo brief"| A["Agent knows the tracks,<br/>the handoffs, what is in flight"]
     A --> W["It works"]
     W -->|"pre-commit hook<br/>harnessimo check"| C["Commit — or a red gate<br/>naming the file and the fix"]
     C -->|"push"| CI["CI: harnessimo check --reverify<br/>every passing claim re-run"]
@@ -817,8 +807,8 @@ practice: a fresh session's budget goes on whatever you failed to rule out.
 
 Once work runs as several agents — subagents in one session, parallel worktrees, a headless
 run beside a person typing — a lane declares which paths it owns, `harnessimo tracks` fails
-when two live lanes claim the same ones, and `hooks install --agent` stops a turn ending
-while `check` is red. [More than one agent](PARALLEL.md) has all of it. Which model takes which
+when two live lanes claim the same ones. Teams can opt into a check at task completion with
+`hooks install --agent --team`. [More than one agent](PARALLEL.md) has all of it. Which model takes which
 work, `harnessimo worktree` for parallel streams, and batched review: [Routing work](ROUTING.md).
 Lanes in herdr panes and agent teams, under the rate limit: [Agent teams and herdr](TEAMS.md).
 When a process rule stands in the way of the goal: [Adapting rules](ADAPTING.md). Connecting an
@@ -1567,9 +1557,10 @@ on the merged tree, which is the only place the collision exists.
 
 ## Checks at delivery
 
-`harnessimo hooks install --agent` installs the startup brief and the `TaskCompleted`
-gate for agent teams. Run it once in an existing checkout to retire legacy Harnessimo
-`Stop` and `SubagentStop` hooks. It preserves other commands in those events.
+Use `harnessimo hooks install --agent` for the optional startup brief, and add `--team` to
+enable the `TaskCompleted` gate. Installing either mode retires legacy Harnessimo
+`Stop` and `SubagentStop` hooks. Use `harnessimo hooks uninstall --agent` to remove the
+Harnessimo agent hooks and keep other commands and Git hooks.
 <!-- proof: test/cli.test.ts#agent hook installation retires legacy turn gates and preserves other commands -->
 
 In a Git checkout, automatic proof and boundary scans use the Git index, including staged
@@ -1648,7 +1639,7 @@ moves.
 `harnessimo init` writes three agent definitions into `.claude/agents/` — starting points to
 edit, not rules to obey. Each rule in them carries its _why_, so an agent can tell when one has
 stopped applying.
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 | Role | Model | Gets | Never |
 | --- | --- | --- | --- |
@@ -1749,7 +1740,7 @@ Two tools, two levels, one rule: **never two agents on one file.**
 | Level | Tool | What it gives | What keeps it safe |
 | --- | --- | --- | --- |
 | Between lanes | [herdr](https://herdr.dev) + `harnessimo herd` | one worktree, one pane, one `claude` per lane | separate checkouts — a cross-lane file collision cannot happen |
-| Inside one lane | Claude Code agent teams | a lead and a few teammates on a shared task list | disjoint files per teammate; the `TaskCompleted` gate |
+| Inside one lane | Claude Code agent teams | a lead and a few teammates on a shared task list | disjoint files per teammate and an optional `TaskCompleted` gate |
 
 ## Why herdr owns the topology
 
@@ -1784,21 +1775,20 @@ or `iterm2` (a split pane per teammate), or `auto`, which picks split panes when
 runs inside tmux or iTerm2 and in-process otherwise. The template sets `auto`. Either way the
 teammates share the lead's checkout — the display changes, the topology does not.
 
-`init` writes `.claude/settings.json` only when the project has none; an existing one is
-merged into, never replaced:
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+`init` writes these settings when the project has no `.claude/settings.json`. Existing
+settings are preserved, including with `--force`.
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 ```json
 {
   "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" },
   "teammateMode": "auto",
-  "subagentPromptCacheTtl": "1h",
-  "hooks": { "TaskCompleted": [{ "hooks": [{ "type": "command",
-    "command": "npx --no-install harnessimo hook task-completed" }] }] }
+  "subagentPromptCacheTtl": "1h"
 }
 ```
 
-plus the `SessionStart` brief. `subagentPromptCacheTtl`
+Run `harnessimo hooks install --agent --team` to enable the startup brief and the
+team task gate. `subagentPromptCacheTtl`
 keeps teammates' prompt caches warm for an hour instead of five minutes — a teammate waiting
 on a review would otherwise pay for its whole context again.
 
@@ -1886,7 +1876,7 @@ When a lane is done: review it, `harnessimo worktree merge <slug>`, then
   of* the default system prompt, so each template carries its key rules and an
   "As a teammate" section: claim from the shared list, touch only your files, message the
   lead, stop when done.
-- **A task does not close on a red check.** `harnessimo hook task-completed` runs the gates
+- **With the team gate enabled, a task closes only after the check passes.** `harnessimo hook task-completed` runs the gates
   and exits 2 with the failing lines, which Claude Code shows the teammate and uses to refuse
   the completion.
   <!-- proof: test/cli.test.ts#hook task-completed exits 2 with the failure while check is red, and 0 when green -->
@@ -1988,6 +1978,19 @@ stream, and nothing merges unreviewed. The cadence changed; the gate did not.
 `CONSTRAINTS.md`, which is a locked surface. The agent does not commit it and does not look for
 a way around `harnessimo locked`. It writes the exact diff and the command into its report,
 and the human applies it.
+
+## Measure the cost of a rule change
+
+Start with a concrete cost you observed, such as repeated checks on the same changes. Pick one
+process change and run the same task twice from the same commit with the same model: once with
+the current rule and once with the proposed rule. Verify the task output against the same
+acceptance checks, then compare the number of check invocations, elapsed time, and tokens when
+available. Keep the current rule when the evidence is inconclusive.
+
+For a first comparison, resume a task whose lane depends on another lane. Compare
+`harnessimo brief` with `harnessimo brief --track <slug>`, and check whether the agent accounted
+for the dependency before comparing costs. In `DECISIONS.md`, record when the change applies,
+what changed, and a link to the evidence. [Harness² research](https://arxiv.org/html/2610.14224v1)
 
 ## Switching goals
 
@@ -2405,10 +2408,8 @@ this safe: a process can change because the definition of done cannot.
   deciding to abandon a direction. Models trained on successful outcomes are badly
   calibrated about when to stop.
 - **Observability and loop/graph engineering** (lectures 11, 13, 14). They are the layer
-  above this one. Several agents on one repository are now handled — a lane declares what it
-  owns and what it waits on, and a turn does not end while a check is red — but nothing here
-  schedules, routes or supervises a running loop. Naming the gap is better than implying it
-  is covered.
+  above this one. Each lane declares what it owns and what it waits on. Checks run at
+  delivery, and teams can opt into a check when closing a shared task.
 - **Skill and prompt hygiene.** A skill whose description never fires is a real failure, and
   it is not one this package has seen twice. Every rule here came from watching two
   independent repositories write the same thing by hand; a rule built on one vendor's
@@ -2926,7 +2927,7 @@ boundary in a written handoff rather than in someone's head.
 **How to use it**
 
 ```bash
-harnessimo hooks install --agent   # SessionStart and TaskCompleted in .claude/settings.json
+harnessimo hooks install --agent --team   # opt into SessionStart and TaskCompleted
 harnessimo brief                   # the same output, on demand
 ```
 

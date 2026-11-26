@@ -14,7 +14,7 @@ Two tools, two levels, one rule: **never two agents on one file.**
 | Level | Tool | What it gives | What keeps it safe |
 | --- | --- | --- | --- |
 | Between lanes | [herdr](https://herdr.dev) + `harnessimo herd` | one worktree, one pane, one `claude` per lane | separate checkouts — a cross-lane file collision cannot happen |
-| Inside one lane | Claude Code agent teams | a lead and a few teammates on a shared task list | disjoint files per teammate; the `TaskCompleted` gate |
+| Inside one lane | Claude Code agent teams | a lead and a few teammates on a shared task list | disjoint files per teammate and an optional `TaskCompleted` gate |
 
 ## Why herdr owns the topology
 
@@ -49,21 +49,20 @@ or `iterm2` (a split pane per teammate), or `auto`, which picks split panes when
 runs inside tmux or iTerm2 and in-process otherwise. The template sets `auto`. Either way the
 teammates share the lead's checkout — the display changes, the topology does not.
 
-`init` writes `.claude/settings.json` only when the project has none; an existing one is
-merged into, never replaced:
-<!-- proof: test/cli.test.ts#init writes the agent roles and the hooks they assume, and leaves existing settings alone -->
+`init` writes these settings when the project has no `.claude/settings.json`. Existing
+settings are preserved, including with `--force`.
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
 ```json
 {
   "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" },
   "teammateMode": "auto",
-  "subagentPromptCacheTtl": "1h",
-  "hooks": { "TaskCompleted": [{ "hooks": [{ "type": "command",
-    "command": "npx --no-install harnessimo hook task-completed" }] }] }
+  "subagentPromptCacheTtl": "1h"
 }
 ```
 
-plus the `SessionStart` brief. `subagentPromptCacheTtl`
+Run `harnessimo hooks install --agent --team` to enable the startup brief and the
+team task gate. `subagentPromptCacheTtl`
 keeps teammates' prompt caches warm for an hour instead of five minutes — a teammate waiting
 on a review would otherwise pay for its whole context again.
 
@@ -151,7 +150,7 @@ When a lane is done: review it, `harnessimo worktree merge <slug>`, then
   of* the default system prompt, so each template carries its key rules and an
   "As a teammate" section: claim from the shared list, touch only your files, message the
   lead, stop when done.
-- **A task does not close on a red check.** `harnessimo hook task-completed` runs the gates
+- **With the team gate enabled, a task closes only after the check passes.** `harnessimo hook task-completed` runs the gates
   and exits 2 with the failing lines, which Claude Code shows the teammate and uses to refuse
   the completion.
   <!-- proof: test/cli.test.ts#hook task-completed exits 2 with the failure while check is red, and 0 when green -->
