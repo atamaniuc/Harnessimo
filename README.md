@@ -13,7 +13,15 @@
        width="720">
 </p>
 
-**Spec-driven development, and the harness that makes it stick.**
+**Keep spec-driven development cost efficient.**
+
+Run checks at delivery and opt in to agent hooks when they earn their keep.
+<!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
+
+From Google's Harness², we borrowed a way to improve the harness: try one change on the same
+task, verify the result, then compare the number of checks, time, and tokens. Keep the current
+setup when the evidence is inconclusive, and record what worked with the evidence. [How to compare changes](https://atamaniuc.github.io/Harnessimo/ADAPTING/) · [Harness² research](https://arxiv.org/html/2610.14224v1)
+<!-- proof: docs/ADAPTING.md -->
 
 Two halves that need each other. **SDD**: work is a lane — a numbered spec whose acceptance
 criteria can actually run. **The harness**: eleven checks that refuse to call that lane

@@ -4,6 +4,10 @@ State carried between sessions. Read this first; update it before you stop.
 
 ## Now
 
+- The README and site describe cost-efficient defaults and credit Harness² for the method
+  used to compare process changes.
+  <!-- proof: README.md -->
+
 - In 0.15.0, agent-session hooks are opt-in. `init` creates a hook-free settings template, and
   `hooks install --agent --team` enables the team gate. The adaptation guide describes how
   to compare one change at a time and retain the baseline when the evidence is unclear.
