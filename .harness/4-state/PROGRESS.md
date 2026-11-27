@@ -4,8 +4,8 @@ State carried between sessions. Read this first; update it before you stop.
 
 ## Now
 
-- In 0.15.1, the README and site describe cost-efficient defaults and credit Harness² for the method
-  used to compare process changes.
+- The README and site describe cost-efficient defaults and name Google Harness2 in a dedicated
+  block that explains the method used to compare process changes.
   <!-- proof: README.md -->
 
 - In 0.15.0, agent-session hooks are opt-in. `init` creates a hook-free settings template, and

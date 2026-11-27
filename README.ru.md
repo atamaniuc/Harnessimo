@@ -22,7 +22,10 @@
 Проверки запускаются на доставке, а хуки агента можно подключить по необходимости.
 <!-- proof: test/cli.test.ts#init writes agent roles without hooks and preserves existing settings even with --force -->
 
-Из исследования Google Harness² мы переняли способ улучшать харнесс: попробовать одно
+**Что мы переняли из Harness2**
+
+Из проекта Google [Harness2](https://github.com/google-research/harness2) (Harness²) мы
+переняли способ улучшать харнесс: попробовать одно
 изменение на той же задаче, проверить результат и сравнить число проверок, время и токены.
 При неясном результате оставляем текущий вариант, а удачные изменения записываем со ссылкой
 на доказательства. [Как сравнивать изменения](https://atamaniuc.github.io/Harnessimo/ru/ADAPTING/) · [Исследование Harness²](https://arxiv.org/html/2610.14224v1)
